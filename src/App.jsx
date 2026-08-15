@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login.jsx';
 import Dashboard from './Dashboard.jsx';
+import { getToken, clearToken, fetchCurrentUser } from './api.js';
 
 function ProtectedRoute({ user, children }) {
   if (!user) {
@@ -31,14 +32,42 @@ function App() {
     }
   });
 
+  // On mount, validate stored token against backend
+  useEffect(() => {
+    const token = getToken();
+    if (token && user) {
+      fetchCurrentUser()
+        .then((apiUser) => {
+          // Update stored user with latest data from backend
+          const updatedUser = {
+            name: apiUser.full_name || apiUser.email,
+            role: apiUser.role || 'Admin',
+            email: apiUser.email,
+            id: apiUser.id,
+          };
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        })
+        .catch(() => {
+          // Token is invalid or expired — clear session
+          console.warn('Token validation failed, clearing session.');
+          clearToken();
+          localStorage.removeItem('user');
+          setUser(null);
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleLogin = (userData) => {
-    const adminUser = userData || { name: 'Sruthy M S', role: 'Admin' };
+    const adminUser = userData || { name: 'Admin', role: 'Admin' };
     setUser(adminUser);
     localStorage.setItem('user', JSON.stringify(adminUser));
   };
 
   const handleLogout = () => {
     setUser(null);
+    clearToken();
     localStorage.removeItem('user');
   };
 
@@ -75,4 +104,3 @@ function App() {
 }
 
 export default App;
-

@@ -1525,3 +1525,58 @@
   background-color: #9F1239;
 }
 
+/* ─── Loading & Error States ─────────────────────────────── */
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 3rem 2rem;
+  color: var(--muted-text);
+  font-size: 0.95rem;
+  font-family: inherit;
+  min-height: 200px;
+}
+
+.loading-overlay .spinner {
+  animation: spin 1s linear infinite;
+  color: var(--primary-rose);
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  margin: 0 28px 16px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  color: #991B1B;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.retry-btn {
+  padding: 6px 16px;
+  border: 1px solid #FECACA;
+  border-radius: 6px;
+  background: white;
+  color: #991B1B;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: #FEF2F2;
+  border-color: #F87171;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

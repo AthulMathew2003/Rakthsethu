@@ -1,0 +1,190 @@
+[33mcommit 8087f922e99e615731bfd7499115fdd3a1d982be[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: sruthy ms <sruthyms@sruthys-MacBook-Air.local>
+Date:   Sat Aug 15 09:36:48 2026 +0530
+
+    Add Rakthasedu admin dashboard
+
+[1mdiff --git a/package-lock.json b/package-lock.json[m
+[1mindex f43716d..8992536 100644[m
+[1m--- a/package-lock.json[m
+[1m+++ b/package-lock.json[m
+[36m@@ -10,7 +10,8 @@[m
+       "dependencies": {[m
+         "lucide-react": "^1.31.0",[m
+         "react": "^19.2.8",[m
+[31m-        "react-dom": "^19.2.8"[m
+[32m+[m[32m        "react-dom": "^19.2.8",[m
+[32m+[m[32m        "react-router-dom": "^7.18.2"[m
+       },[m
+       "devDependencies": {[m
+         "@types/react": "^19.2.17",[m
+[36m@@ -686,6 +687,19 @@[m
+         }[m
+       }[m
+     },[m
+[32m+[m[32m    "node_modules/cookie": {[m
+[32m+[m[32m      "version": "1.1.1",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/cookie/-/cookie-1.1.1.tgz",[m
+[32m+[m[32m      "integrity": "sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=18"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "funding": {[m
+[32m+[m[32m        "type": "opencollective",[m
+[32m+[m[32m        "url": "https://opencollective.com/express"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+     "node_modules/csstype": {[m
+       "version": "3.2.3",[m
+       "resolved": "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz",[m
+[36m@@ -1156,6 +1170,44 @@[m
+         "react": "^19.2.8"[m
+       }[m
+     },[m
+[32m+[m[32m    "node_modules/react-router": {[m
+[32m+[m[32m      "version": "7.18.2",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/react-router/-/react-router-7.18.2.tgz",[m
+[32m+[m[32m      "integrity": "sha512-aUVMjFm3GAPTTZL7oYr5E7ETiqfQCHRLH+B+5afnICvf0r7kkK4eR6SMuwbSTJw/7t+12khT/Kahij49fqOCIg==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "cookie": "^1.0.1",[m
+[32m+[m[32m        "set-cookie-parser": "^2.6.0"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=20.0.0"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "peerDependencies": {[m
+[32m+[m[32m        "react": ">=18",[m
+[32m+[m[32m        "react-dom": ">=18"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "peerDependenciesMeta": {[m
+[32m+[m[32m        "react-dom": {[m
+[32m+[m[32m          "optional": true[m
+[32m+[m[32m        }[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/react-router-dom": {[m
+[32m+[m[32m      "version": "7.18.2",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/react-router-dom/-/react-router-dom-7.18.2.tgz",[m
+[32m+[m[32m      "integrity": "sha512-AIKJ/jgGlFb3EbfCXk5Gzshiwt+l3mqbCrNjmEWMMjqQxNJ3svBa6bgzFyCC2Sw3RA0VWF1kg3uQf2OFhxb8hw==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "react-router": "7.18.2"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=20.0.0"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "peerDependencies": {[m
+[32m+[m[32m        "react": ">=18",[m
+[32m+[m[32m        "react-dom": ">=18"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+     "node_modules/rolldown": {[m
+       "version": "1.2.3",[m
+       "resolved": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.3.tgz",[m
+[36m@@ -1195,6 +1247,12 @@[m
+       "integrity": "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==",[m
+       "license": "MIT"[m
+     },[m
+[32m+[m[32m    "node_modules/set-cookie-parser": {[m
+[32m+[m[32m      "version": "2.7.2",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/set-cookie-parser/-/set-cookie-parser-2.7.2.tgz",[m
+[32m+[m[32m      "integrity": "sha512-oeM1lpU/UvhTxw+g3cIfxXHyJRc/uidd3yK1P242gzHds0udQBYzs3y8j4gCCW+ZJ7ad0yctld8RYO+bdurlvw==",[m
+[32m+[m[32m      "license": "MIT"[m
+[32m+[m[32m    },[m
+     "node_modules/source-map-js": {[m
+       "version": "1.2.1",[m
+       "resolved": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz",[m
+[1mdiff --git a/package.json b/package.json[m
+[1mindex 2d848d4..d60150a 100644[m
+[1m--- a/package.json[m
+[1m+++ b/package.json[m
+[36m@@ -12,7 +12,8 @@[m
+   "dependencies": {[m
+     "lucide-react": "^1.31.0",[m
+     "react": "^19.2.8",[m
+[31m-    "react-dom": "^19.2.8"[m
+[32m+[m[32m    "react-dom": "^19.2.8",[m
+[32m+[m[32m    "react-router-dom": "^7.18.2"[m
+   },[m
+   "devDependencies": {[m
+     "@types/react": "^19.2.17",[m
+[1mdiff --git a/src/App.jsx b/src/App.jsx[m
+[1mindex c235689..1be6e5e 100644[m
+[1m--- a/src/App.jsx[m
+[1m+++ b/src/App.jsx[m
+[36m@@ -1,10 +1,78 @@[m
+[31m-import React from 'react';[m
+[32m+[m[32mimport React, { useState } from 'react';[m
+[32m+[m[32mimport { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';[m
+ import Login from './Login.jsx';[m
+[32m+[m[32mimport Dashboard from './Dashboard.jsx';[m
+[32m+[m
+[32m+[m[32mfunction ProtectedRoute({ user, children }) {[m
+[32m+[m[32m  if (!user) {[m
+[32m+[m[32m    return <Navigate to="/login" replace />;[m
+[32m+[m[32m  }[m
+[32m+[m[32m  if (user.role !== 'Admin') {[m
+[32m+[m[32m    return <Navigate to="/login" replace />;[m
+[32m+[m[32m  }[m
+[32m+[m[32m  return children;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mfunction LoginWrapper({ user, onLoginSuccess }) {[m
+[32m+[m[32m  if (user && user.role === 'Admin') {[m
+[32m+[m[32m    return <Navigate to="/admin/dashboard" replace />;[m
+[32m+[m[32m  }[m
+[32m+[m[32m  return <Login onLoginSuccess={onLoginSuccess} />;[m
+[32m+[m[32m}[m
+ [m
+ function App() {[m
+[32m+[m[32m  const [user, setUser] = useState(() => {[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      const savedUser = localStorage.getItem('user');[m
+[32m+[m[32m      return savedUser ? JSON.parse(savedUser) : null;[m
+[32m+[m[32m    } catch (e) {[m
+[32m+[m[32m      console.error('Error loading user from localStorage:', e);[m
+[32m+[m[32m      return null;[m
+[32m+[m[32m    }[m
+[32m+[m[32m  });[m
+[32m+[m
+[32m+[m[32m  const handleLogin = (userData) => {[m
+[32m+[m[32m    const adminUser = userData || { name: 'Sruthy M S', role: 'Admin' };[m
+[32m+[m[32m    setUser(adminUser);[m
+[32m+[m[32m    localStorage.setItem('user', JSON.stringify(adminUser));[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const handleLogout = () => {[m
+[32m+[m[32m    setUser(null);[m
+[32m+[m[32m    localStorage.removeItem('user');[m
+[32m+[m[32m  };[m
+[32m+[m
+   return ([m
+[31m-    <Login />[m
+[32m+[m[32m    <BrowserRouter>[m
+[32m+[m[32m      <Routes>[m
+[32m+[m[32m        <Route[m
+[32m+[m[32m          path="/login"[m
+[32m+[m[32m          element={<LoginWrapper user={user} onLoginSuccess={handleLogin} />}[m
+[32m+[m[32m        />[m
+[32m+[m[32m        <Route[m
+[32m+[m[32m          path="/admin/dashboard"[m
+[32m+[m[32m          element={[m
+[32m+[m[32m            <ProtectedRoute user={user}>[m
+[32m+[m[32m              <Dashboard user={user} onLogout={handleLogout} />[m
+[32m+[m[32m            </ProtectedRoute>[m
+[32m+[m[32m          }[m
+[32m+[m[32m        />[m
+[32m+[m[32m        <Route[m
+[32m+[m[32m          path="/"[m
+[32m+[m[32m          element={[m
+[32m+[m[32m            <Navigate to={user && user.role === 'Admin' ? '/admin/dashboard' : '/login'} replace />[m
+[32m+[m[32m          }[m
+[32m+[m[32m        />[m
+[32m+[m[32m        <Route[m
+[32m+[m[32m          path="*"[m
+[32m+[m[32m          element={[m
+[32m+[m[32m            <Navigate to={user && user.role === 'Admin' ? '/admin/dashboard' : '/login'} replace />[m
+[32m+[m[32m          }[m
+[32m+[m[32m    

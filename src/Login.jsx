@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { loginUser } from './api.js';
 import './Login.css';
 
 export default function Login({ onLoginSuccess }) {
@@ -17,6 +18,7 @@ export default function Login({ onLoginSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -30,6 +32,9 @@ export default function Login({ onLoginSuccess }) {
         ...prev,
         [name]: '',
       }));
+    }
+    if (serverError) {
+      setServerError('');
     }
   };
 
@@ -54,30 +59,37 @@ export default function Login({ onLoginSuccess }) {
     return isValid;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
     setIsLoading(true);
     setLoginSuccess(false);
+    setServerError('');
 
-    // Simulate API request
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const data = await loginUser(formData.email, formData.password);
+
       setLoginSuccess(true);
-      
+
       // Navigate to dashboard after showing success banner for a brief moment
       setTimeout(() => {
         if (onLoginSuccess) {
           onLoginSuccess({
-            name: 'Sruthy M S',
-            role: 'Admin',
-            email: formData.email,
+            name: data.user.full_name || data.user.email,
+            role: data.user.role || 'Admin',
+            email: data.user.email,
+            id: data.user.id,
           });
         }
       }, 800);
-    }, 1200);
+    } catch (err) {
+      console.error('Login failed:', err);
+      setServerError(err.message || 'Invalid email or password');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -143,6 +155,12 @@ export default function Login({ onLoginSuccess }) {
         {loginSuccess && (
           <div className="success-banner">
             <span>Signed in successfully!</span>
+          </div>
+        )}
+
+        {serverError && (
+          <div className="error-banner-login">
+            <span>{serverError}</span>
           </div>
         )}
 

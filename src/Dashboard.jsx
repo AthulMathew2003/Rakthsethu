@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Menu,
   Bell,
@@ -18,25 +18,58 @@ import {
   Eye,
   Edit2,
   Trash2,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
+import {
+  fetchDashboardStats,
+  fetchDonors,
+  createDonor,
+  updateDonor,
+  deleteDonorApi,
+  logoutUser
+} from './api.js';
 import './Dashboard.css';
+
+// Map iconType strings from API to actual Lucide components
+const ICON_MAP = {
+  Users: Users,
+  ClipboardList: ClipboardList,
+  Droplet: Droplet,
+  Package: Package,
+  User: User,
+  Activity: Activity,
+  BarChart2: BarChart2,
+};
+
+function getIconComponent(iconType) {
+  const IconComp = ICON_MAP[iconType];
+  return IconComp ? <IconComp size={20} className="stat-icon-svg" /> : <Package size={20} className="stat-icon-svg" />;
+}
 
 export default function Dashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [notificationCount, setNotificationCount] = useState(3);
   const [inventoryPeriod, setInventoryPeriod] = useState('This Month');
 
-  // Donors State
-  const [donorsList, setDonorsList] = useState([
-    { id: 'DON001', name: 'Anil Kumar', group: 'O+', phone: '+91 98456 12345', email: 'anil.kumar@gmail.com', location: 'Kottayam', lastDonation: '12 May 2025', status: 'Active' },
-    { id: 'DON002', name: 'Neha Nair', group: 'B+', phone: '+91 94472 56789', email: 'neha.nair@gmail.com', location: 'Changanassery', lastDonation: '20 Jun 2025', status: 'Active' },
-    { id: 'DON003', name: 'Vishnu Prasad', group: 'A+', phone: '+91 97441 23456', email: 'vishnu.prasad@gmail.com', location: 'Erumely', lastDonation: '05 Apr 2025', status: 'Active' },
-    { id: 'DON004', name: 'Sreelekha S', group: 'AB+', phone: '+91 96543 98765', email: 'sreelekha.s@gmail.com', location: 'Punalur', lastDonation: '14 Jul 2025', status: 'Active' },
-    { id: 'DON005', name: 'Ramesh Babu', group: 'O−', phone: '+91 98950 45612', email: 'ramesh.babu@gmail.com', location: 'Kottayam', lastDonation: '30 May 2025', status: 'Active' },
-    { id: 'DON006', name: 'Arun M', group: 'A−', phone: '+91 94951 78901', email: 'arun.m@gmail.com', location: 'Kanjirappally', lastDonation: '10 Feb 2025', status: 'Inactive' },
-    { id: 'DON007', name: 'Divya Tom', group: 'B−', phone: '+91 97472 34567', email: 'divya.tom@gmail.com', location: 'Kottayam', lastDonation: '18 Jun 2025', status: 'Active' }
-  ]);
+  // ─── Dashboard Stats State (from API) ─────────────────────
+  const [stats, setStats] = useState([]);
+  const [donorStats, setDonorStats] = useState([]);
+  const [inventoryData, setInventoryData] = useState([]);
+  const [recentRequests, setRecentRequests] = useState([]);
+  const [upcomingCamp, setUpcomingCamp] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [totalDonorsCount, setTotalDonorsCount] = useState(0);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState(null);
+
+  // ─── Donors State (from API) ──────────────────────────────
+  const [donorsList, setDonorsList] = useState([]);
+  const [donorsLoading, setDonorsLoading] = useState(false);
+  const [donorsError, setDonorsError] = useState(null);
+  const [donorsTotalCount, setDonorsTotalCount] = useState(0);
+  const [donorsTotalPages, setDonorsTotalPages] = useState(1);
+  const [locations, setLocations] = useState(['All']);
+  const [bloodGroups, setBloodGroups] = useState(['All', 'A+', 'A−', 'B+', 'B−', 'O+', 'O−', 'AB+', 'AB−']);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,6 +86,7 @@ export default function Dashboard({ user, onLogout }) {
   const [viewingDonor, setViewingDonor] = useState(null);
   const [editingDonor, setEditingDonor] = useState(null);
   const [deletingDonorId, setDeletingDonorId] = useState(null);
+  const [savingDonor, setSavingDonor] = useState(false);
 
   // Form State for Add/Edit
   const [donorForm, setDonorForm] = useState({
@@ -64,122 +98,6 @@ export default function Dashboard({ user, onLogout }) {
     lastDonation: '',
     status: 'Active'
   });
-
-  const stats = [
-    {
-      title: 'Total Donors',
-      value: '1,248',
-      growth: '↑ 12% from last month',
-      icon: <Users size={20} className="stat-icon-svg" />,
-      colorClass: 'stat-donors'
-    },
-    {
-      title: 'Blood Requests',
-      value: '86',
-      growth: '↑ 8% from last month',
-      icon: <ClipboardList size={20} className="stat-icon-svg" />,
-      colorClass: 'stat-requests'
-    },
-    {
-      title: 'Units Donated',
-      value: '532',
-      growth: '↑ 15% from last month',
-      icon: <Droplet size={20} className="stat-icon-svg" />,
-      colorClass: 'stat-units'
-    },
-    {
-      title: 'Blood Inventory',
-      value: '320',
-      status: 'Sufficient',
-      icon: <Package size={20} className="stat-icon-svg" />,
-      colorClass: 'stat-inventory'
-    }
-  ];
-
-  const donorStats = [
-    {
-      title: 'Total Donors',
-      value: '1,248',
-      growth: '↑ 12% from last month',
-      icon: <Users size={20} className="stat-icon-svg" />,
-      colorClass: 'stat-donors'
-    },
-    {
-      title: 'Active Donors',
-      value: '986',
-      growth: '↑ 8% from last month',
-      icon: <User size={20} className="stat-icon-svg" />,
-      colorClass: 'stat-inventory'
-    },
-    {
-      title: 'Donated This Month',
-      value: '156',
-      growth: '↑ 15% from last month',
-      icon: <Droplet size={20} className="stat-icon-svg" />,
-      colorClass: 'stat-units'
-    },
-    {
-      title: 'Lifetime Donations',
-      value: '3,245',
-      growth: '↑ 10% from last month',
-      icon: <ClipboardList size={20} className="stat-icon-svg" />,
-      colorClass: 'stat-requests'
-    }
-  ];
-
-  const inventoryData = [
-    { group: 'A+', value: 80 },
-    { group: 'A−', value: 28 },
-    { group: 'B+', value: 60 },
-    { group: 'B−', value: 20 },
-    { group: 'O+', value: 90 },
-    { group: 'O−', value: 25 },
-    { group: 'AB+', value: 12 },
-    { group: 'AB−', value: 5 }
-  ];
-
-  const recentRequests = [
-    {
-      group: 'O+',
-      name: 'Anil Kumar',
-      location: 'Kottayam',
-      time: '2 hours ago',
-      status: 'Pending',
-      statusClass: 'status-pending'
-    },
-    {
-      group: 'B+',
-      name: 'Neha Nair',
-      location: 'Changanassery',
-      time: '4 hours ago',
-      status: 'In Progress',
-      statusClass: 'status-inprogress'
-    },
-    {
-      group: 'A+',
-      name: 'Vishnu Prasad',
-      location: 'Erumely',
-      time: '6 hours ago',
-      status: 'Pending',
-      statusClass: 'status-pending'
-    },
-    {
-      group: 'AB+',
-      name: 'Sreelekha S',
-      location: 'Punalur',
-      time: '1 day ago',
-      status: 'Completed',
-      statusClass: 'status-completed'
-    },
-    {
-      group: 'O−',
-      name: 'Ramesh Babu',
-      location: 'Kottayam',
-      time: '1 day ago',
-      status: 'In Progress',
-      statusClass: 'status-inprogress'
-    }
-  ];
 
   const menuItems = [
     { name: 'Dashboard', icon: <ClipboardList size={18} /> },
@@ -193,38 +111,99 @@ export default function Dashboard({ user, onLogout }) {
     { name: 'Settings', icon: <Settings size={18} /> }
   ];
 
-  // Locations list derived from initial list
-  const locations = ['All', 'Kottayam', 'Changanassery', 'Erumely', 'Punalur', 'Kanjirappally'];
-  const bloodGroups = ['All', 'A+', 'A−', 'B+', 'B−', 'O+', 'O−', 'AB+', 'AB−'];
+  // ─── Fetch Dashboard Stats from API ───────────────────────
+  const loadDashboardStats = useCallback(async () => {
+    setDashboardLoading(true);
+    setDashboardError(null);
+    try {
+      const data = await fetchDashboardStats(inventoryPeriod);
 
-  // Handle Filtering
-  const filteredDonors = donorsList.filter((donor) => {
-    const matchesSearch =
-      donor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      donor.phone.includes(searchQuery) ||
-      donor.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      donor.group.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesGroup = groupFilter === 'All' || donor.group === groupFilter;
-    const matchesStatus = statusFilter === 'All' || donor.status === statusFilter;
-    const matchesLocation = locationFilter === 'All' || donor.location === locationFilter;
+      // Map stats cards with icons
+      setStats(data.stats.map((s) => ({
+        ...s,
+        icon: getIconComponent(s.iconType),
+      })));
 
-    return matchesSearch && matchesGroup && matchesStatus && matchesLocation;
-  });
+      setDonorStats(data.donorStats.map((s) => ({
+        ...s,
+        icon: getIconComponent(s.iconType),
+      })));
 
-  // Pagination logic
-  const totalItems = filteredDonors.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredDonors.slice(indexOfFirstItem, indexOfLastItem);
+      setInventoryData(data.inventoryData);
+      setRecentRequests(data.recentRequests);
+      setUpcomingCamp(data.upcomingCamp);
+      setTotalDonorsCount(data.totalDonorsCount);
+      setNotificationCount(3); // Could come from a notifications endpoint
+    } catch (err) {
+      console.error('Failed to load dashboard stats:', err);
+      setDashboardError(err.message);
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, [inventoryPeriod]);
 
+  useEffect(() => {
+    loadDashboardStats();
+  }, [loadDashboardStats]);
+
+  // ─── Fetch Donors from API ────────────────────────────────
+  const loadDonors = useCallback(async () => {
+    setDonorsLoading(true);
+    setDonorsError(null);
+    try {
+      const data = await fetchDonors({
+        search: searchQuery,
+        group: groupFilter,
+        status: statusFilter,
+        location: locationFilter,
+        page: currentPage,
+        limit: itemsPerPage,
+      });
+
+      // Map API donor fields to the shape used in the UI
+      const mapped = data.items.map((d) => ({
+        id: d.donor_code,
+        dbId: d.id,
+        name: d.name,
+        group: d.blood_group,
+        phone: d.phone,
+        email: d.email,
+        location: d.location,
+        lastDonation: d.last_donation,
+        status: d.status,
+      }));
+
+      setDonorsList(mapped);
+      setDonorsTotalCount(data.total);
+      setDonorsTotalPages(data.pages);
+      if (data.locations && data.locations.length > 0) {
+        setLocations(data.locations);
+      }
+      if (data.blood_groups && data.blood_groups.length > 0) {
+        setBloodGroups(data.blood_groups);
+      }
+    } catch (err) {
+      console.error('Failed to load donors:', err);
+      setDonorsError(err.message);
+    } finally {
+      setDonorsLoading(false);
+    }
+  }, [searchQuery, groupFilter, statusFilter, locationFilter, currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    if (activeTab === 'Donors') {
+      loadDonors();
+    }
+  }, [activeTab, loadDonors]);
+
+  // ─── Pagination ───────────────────────────────────────────
   const handlePageChange = (pageNumber) => {
-    if (pageNumber >= 1 && pageNumber <= totalPages) {
+    if (pageNumber >= 1 && pageNumber <= donorsTotalPages) {
       setCurrentPage(pageNumber);
     }
   };
 
-  // Add / Edit submission handlers
+  // ─── Add / Edit submission handlers ───────────────────────
   const handleOpenAddModal = () => {
     setDonorForm({
       name: '',
@@ -239,44 +218,92 @@ export default function Dashboard({ user, onLogout }) {
   };
 
   const handleOpenEditModal = (donor) => {
-    setDonorForm({ ...donor });
+    setDonorForm({
+      name: donor.name,
+      group: donor.group,
+      phone: donor.phone,
+      email: donor.email,
+      location: donor.location,
+      lastDonation: donor.lastDonation,
+      status: donor.status,
+    });
     setEditingDonor(donor);
   };
 
-  const handleSaveDonor = (e) => {
+  const handleSaveDonor = async (e) => {
     e.preventDefault();
     if (!donorForm.name || !donorForm.phone || !donorForm.email || !donorForm.location) {
       alert('Please fill in all required fields.');
       return;
     }
 
-    if (editingDonor) {
-      // Update existing
-      setDonorsList((prev) =>
-        prev.map((d) => (d.id === editingDonor.id ? { ...d, ...donorForm } : d))
-      );
-      setEditingDonor(null);
-    } else {
-      // Create new
-      const nextId = `DON${String(donorsList.length + 1).padStart(3, '0')}`;
-      const newDonor = {
-        id: nextId,
-        ...donorForm,
-        lastDonation: donorForm.lastDonation || 'Never'
+    setSavingDonor(true);
+    try {
+      const apiPayload = {
+        name: donorForm.name,
+        blood_group: donorForm.group,
+        phone: donorForm.phone,
+        email: donorForm.email,
+        location: donorForm.location,
+        last_donation: donorForm.lastDonation || 'Never',
+        status: donorForm.status || 'Active',
       };
-      setDonorsList((prev) => [newDonor, ...prev]);
-      setIsAddingDonor(false);
+
+      if (editingDonor) {
+        await updateDonor(editingDonor.dbId, apiPayload);
+        setEditingDonor(null);
+      } else {
+        await createDonor(apiPayload);
+        setIsAddingDonor(false);
+      }
+
+      // Refresh donors list and dashboard stats
+      await loadDonors();
+      loadDashboardStats();
+    } catch (err) {
+      console.error('Failed to save donor:', err);
+      alert(`Error saving donor: ${err.message}`);
+    } finally {
+      setSavingDonor(false);
     }
   };
 
-  const handleDeleteDonor = () => {
-    setDonorsList((prev) => prev.filter((d) => d.id !== deletingDonorId));
-    setDeletingDonorId(null);
-    // Adjust current page if needed
-    if (currentPage > 1 && currentItems.length === 1) {
-      setCurrentPage((prev) => prev - 1);
+  const handleDeleteDonor = async () => {
+    const donor = donorsList.find((d) => d.id === deletingDonorId);
+    if (!donor) {
+      setDeletingDonorId(null);
+      return;
+    }
+
+    try {
+      await deleteDonorApi(donor.dbId);
+      setDeletingDonorId(null);
+
+      // Adjust current page if needed
+      if (currentPage > 1 && donorsList.length === 1) {
+        setCurrentPage((prev) => prev - 1);
+      } else {
+        await loadDonors();
+      }
+      loadDashboardStats();
+    } catch (err) {
+      console.error('Failed to delete donor:', err);
+      alert(`Error deleting donor: ${err.message}`);
+      setDeletingDonorId(null);
     }
   };
+
+  const handleLogout = () => {
+    logoutUser();
+    onLogout();
+  };
+
+  // ─── Format today's date ──────────────────────────────────
+  const todayFormatted = new Date().toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
 
   return (
     <div className="dashboard-wrapper">
@@ -316,7 +343,7 @@ export default function Dashboard({ user, onLogout }) {
               <span className="menu-text">{item.name}</span>
             </button>
           ))}
-          <button className="menu-btn logout-btn" onClick={onLogout}>
+          <button className="menu-btn logout-btn" onClick={handleLogout}>
             <span className="menu-icon"><LogOut size={18} /></span>
             <span className="menu-text">Log Out</span>
           </button>
@@ -347,7 +374,7 @@ export default function Dashboard({ user, onLogout }) {
             <div className="header-greeting">
               {activeTab === 'Dashboard' ? (
                 <>
-                  <h1>Welcome back, {user?.name || 'Sruthy M S'} 🩸</h1>
+                  <h1>Welcome back, {user?.name || 'Admin'} 🩸</h1>
                   <p>Here's what's happening with Rakthasedu today.</p>
                 </>
               ) : (
@@ -373,10 +400,10 @@ export default function Dashboard({ user, onLogout }) {
             {/* Profile Dropdown */}
             <div className="profile-dropdown">
               <div className="avatar-circle">
-                <span>{(user?.name || 'S')[0]}</span>
+                <span>{(user?.name || 'A')[0]}</span>
               </div>
               <div className="profile-info">
-                <span className="profile-name">{user?.name || 'Sruthy M S'}</span>
+                <span className="profile-name">{user?.name || 'Admin'}</span>
                 <span className="profile-role">{user?.role || 'Admin'}</span>
               </div>
               <ChevronDown size={16} className="dropdown-arrow" />
@@ -385,7 +412,7 @@ export default function Dashboard({ user, onLogout }) {
             {/* Date Selector */}
             <div className="date-picker-pill">
               <Calendar size={16} className="calendar-icon" />
-              <span>11 August 2025</span>
+              <span>{todayFormatted}</span>
             </div>
           </div>
         </header>
@@ -393,162 +420,187 @@ export default function Dashboard({ user, onLogout }) {
         {/* Tab-dependent Views */}
         {activeTab === 'Dashboard' ? (
           <>
-            {/* Dashboard Summary Stats Grid */}
-            <section className="stats-grid">
-              {stats.map((stat, idx) => (
-                <div key={idx} className="stat-card">
-                  <div className="stat-card-left">
-                    <div className={`stat-icon-wrapper ${stat.colorClass}`}>
-                      {stat.icon}
-                    </div>
-                  </div>
-                  <div className="stat-card-right">
-                    <span className="stat-card-title">{stat.title}</span>
-                    <h3 className="stat-card-value">{stat.value}</h3>
-                    {stat.growth && (
-                      <span className="stat-card-growth growth-positive">{stat.growth}</span>
-                    )}
-                    {stat.status && (
-                      <span className="stat-card-status status-sufficient">{stat.status}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </section>
-
-            {/* Dashboard Visual Grid */}
-            <div className="dashboard-grid">
-              {/* Left Column - Inventory and Upcoming Camps */}
-              <div className="grid-column-left">
-                {/* Blood Inventory Overview */}
-                <div className="content-card inventory-card">
-                  <div className="card-header">
-                    <div className="header-title-group">
-                      <div className="card-icon-indicator indicator-red">
-                        <Droplet size={16} fill="currentColor" />
-                      </div>
-                      <h3>Blood Inventory Overview</h3>
-                    </div>
-                    <div className="period-selector">
-                      <select
-                        value={inventoryPeriod}
-                        onChange={(e) => setInventoryPeriod(e.target.value)}
-                        className="period-dropdown"
-                      >
-                        <option value="This Month">This Month</option>
-                        <option value="Last Month">Last Month</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="card-body chart-body">
-                    <div className="y-axis-label">Units</div>
-                    <div className="chart-container">
-                      <div className="chart-grid-lines">
-                        <div className="grid-line" data-value="100"></div>
-                        <div className="grid-line" data-value="80"></div>
-                        <div className="grid-line" data-value="60"></div>
-                        <div className="grid-line" data-value="40"></div>
-                        <div className="grid-line" data-value="20"></div>
-                        <div className="grid-line" data-value="0"></div>
-                      </div>
-
-                      <div className="chart-bars">
-                        {inventoryData.map((data, index) => (
-                          <div key={index} className="chart-bar-wrapper">
-                            <div className="chart-bar-value-tooltip">{data.value}</div>
-                            <div
-                              className="chart-bar"
-                              style={{ '--bar-height': `${data.value}%` }}
-                            ></div>
-                            <div className="chart-bar-label">{data.group}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="x-axis-label">Blood Groups</div>
-                  </div>
-                </div>
-
-                {/* Upcoming Camp */}
-                <div className="content-card camp-card">
-                  <div className="camp-card-content">
-                    <div className="camp-icon-wrapper">
-                      <Calendar size={20} className="camp-icon" />
-                    </div>
-                    <div className="camp-details">
-                      <span className="camp-badge">Upcoming Camp</span>
-                      <h4>Kanjirappally Blood Donation Camp</h4>
-                      <p>15 Aug 2025 | 9:00 AM – 2:00 PM</p>
-                    </div>
-                    <button className="view-details-btn">View Details</button>
-                  </div>
-                </div>
+            {/* Loading / Error States */}
+            {dashboardLoading && (
+              <div className="loading-overlay">
+                <Loader2 size={32} className="spinner" />
+                <span>Loading dashboard data...</span>
               </div>
+            )}
 
-              {/* Right Column - Recent Blood Requests */}
-              <div className="grid-column-right">
-                <div className="content-card requests-card">
-                  <div className="card-header">
-                    <div className="header-title-group">
-                      <div className="card-icon-indicator indicator-orange">
-                        <ClipboardList size={16} />
+            {dashboardError && (
+              <div className="error-banner">
+                <span>⚠️ Failed to load dashboard: {dashboardError}</span>
+                <button onClick={loadDashboardStats} className="retry-btn">Retry</button>
+              </div>
+            )}
+
+            {!dashboardLoading && !dashboardError && (
+              <>
+                {/* Dashboard Summary Stats Grid */}
+                <section className="stats-grid">
+                  {stats.map((stat, idx) => (
+                    <div key={idx} className="stat-card">
+                      <div className="stat-card-left">
+                        <div className={`stat-icon-wrapper ${stat.colorClass}`}>
+                          {stat.icon}
+                        </div>
                       </div>
-                      <h3>Recent Blood Requests</h3>
+                      <div className="stat-card-right">
+                        <span className="stat-card-title">{stat.title}</span>
+                        <h3 className="stat-card-value">{stat.value}</h3>
+                        {stat.growth && (
+                          <span className="stat-card-growth growth-positive">{stat.growth}</span>
+                        )}
+                        {stat.status && (
+                          <span className="stat-card-status status-sufficient">{stat.status}</span>
+                        )}
+                      </div>
                     </div>
-                    <a href="#view-all" className="view-all-link" onClick={(e) => e.preventDefault()}>
-                      View All
-                    </a>
-                  </div>
+                  ))}
+                </section>
 
-                  <div className="card-body table-body">
-                    <div className="requests-list">
-                      {recentRequests.map((req, index) => (
-                        <div key={index} className="request-row">
-                          <div className="request-blood-badge">
-                            <span>{req.group}</span>
+                {/* Dashboard Visual Grid */}
+                <div className="dashboard-grid">
+                  {/* Left Column - Inventory and Upcoming Camps */}
+                  <div className="grid-column-left">
+                    {/* Blood Inventory Overview */}
+                    <div className="content-card inventory-card">
+                      <div className="card-header">
+                        <div className="header-title-group">
+                          <div className="card-icon-indicator indicator-red">
+                            <Droplet size={16} fill="currentColor" />
                           </div>
-                          <div className="request-patient-info">
-                            <span className="patient-name">{req.name}</span>
+                          <h3>Blood Inventory Overview</h3>
+                        </div>
+                        <div className="period-selector">
+                          <select
+                            value={inventoryPeriod}
+                            onChange={(e) => setInventoryPeriod(e.target.value)}
+                            className="period-dropdown"
+                          >
+                            <option value="This Month">This Month</option>
+                            <option value="Last Month">Last Month</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="card-body chart-body">
+                        <div className="y-axis-label">Units</div>
+                        <div className="chart-container">
+                          <div className="chart-grid-lines">
+                            <div className="grid-line" data-value="100"></div>
+                            <div className="grid-line" data-value="80"></div>
+                            <div className="grid-line" data-value="60"></div>
+                            <div className="grid-line" data-value="40"></div>
+                            <div className="grid-line" data-value="20"></div>
+                            <div className="grid-line" data-value="0"></div>
                           </div>
-                          <div className="request-location">
-                            <span className="location-text">{req.location}</span>
-                          </div>
-                          <div className="request-time">
-                            <span className="time-text">{req.time}</span>
-                          </div>
-                          <div className="request-status">
-                            <span className={`status-pill ${req.statusClass}`}>{req.status}</span>
+
+                          <div className="chart-bars">
+                            {inventoryData.map((data, index) => (
+                              <div key={index} className="chart-bar-wrapper">
+                                <div className="chart-bar-value-tooltip">{data.value}</div>
+                                <div
+                                  className="chart-bar"
+                                  style={{ '--bar-height': `${data.value}%` }}
+                                ></div>
+                                <div className="chart-bar-label">{data.group}</div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      ))}
+                        <div className="x-axis-label">Blood Groups</div>
+                      </div>
+                    </div>
+
+                    {/* Upcoming Camp */}
+                    <div className="content-card camp-card">
+                      <div className="camp-card-content">
+                        <div className="camp-icon-wrapper">
+                          <Calendar size={20} className="camp-icon" />
+                        </div>
+                        <div className="camp-details">
+                          <span className="camp-badge">Upcoming Camp</span>
+                          <h4>{upcomingCamp?.title || 'No upcoming camps'}</h4>
+                          <p>{upcomingCamp ? `${upcomingCamp.event_date} | ${upcomingCamp.time_slot}` : ''}</p>
+                        </div>
+                        <button className="view-details-btn">View Details</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column - Recent Blood Requests */}
+                  <div className="grid-column-right">
+                    <div className="content-card requests-card">
+                      <div className="card-header">
+                        <div className="header-title-group">
+                          <div className="card-icon-indicator indicator-orange">
+                            <ClipboardList size={16} />
+                          </div>
+                          <h3>Recent Blood Requests</h3>
+                        </div>
+                        <a href="#view-all" className="view-all-link" onClick={(e) => e.preventDefault()}>
+                          View All
+                        </a>
+                      </div>
+
+                      <div className="card-body table-body">
+                        <div className="requests-list">
+                          {recentRequests.length > 0 ? (
+                            recentRequests.map((req, index) => (
+                              <div key={req.id || index} className="request-row">
+                                <div className="request-blood-badge">
+                                  <span>{req.group}</span>
+                                </div>
+                                <div className="request-patient-info">
+                                  <span className="patient-name">{req.name}</span>
+                                </div>
+                                <div className="request-location">
+                                  <span className="location-text">{req.location}</span>
+                                </div>
+                                <div className="request-time">
+                                  <span className="time-text">{req.time}</span>
+                                </div>
+                                <div className="request-status">
+                                  <span className={`status-pill ${req.statusClass}`}>{req.status}</span>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="no-records-cell" style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
+                              No recent blood requests found.
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Bottom CTA Banner */}
-            <section className="bottom-cta-banner">
-              <div className="cta-left">
-                <div className="cta-icon-wrapper">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="cta-icon">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    <path d="M12 8v8" />
-                    <path d="M8 12h8" />
-                  </svg>
-                </div>
-                <div className="cta-text">
-                  <h3>Be a Hero, Donate Blood</h3>
-                  <p>Your support can save countless lives.</p>
-                </div>
-              </div>
-              <div className="cta-right">
-                <button className="cta-button">
-                  Add New Request
-                </button>
-              </div>
-            </section>
+                {/* Bottom CTA Banner */}
+                <section className="bottom-cta-banner">
+                  <div className="cta-left">
+                    <div className="cta-icon-wrapper">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="cta-icon">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <path d="M12 8v8" />
+                        <path d="M8 12h8" />
+                      </svg>
+                    </div>
+                    <div className="cta-text">
+                      <h3>Be a Hero, Donate Blood</h3>
+                      <p>Your support can save countless lives.</p>
+                    </div>
+                  </div>
+                  <div className="cta-right">
+                    <button className="cta-button">
+                      Add New Request
+                    </button>
+                  </div>
+                </section>
+              </>
+            )}
           </>
         ) : (
           <>
@@ -644,113 +696,131 @@ export default function Dashboard({ user, onLogout }) {
 
             {/* Donor Records Table */}
             <section className="content-card table-card">
-              <div className="table-responsive-container">
-                <table className="donors-table">
-                  <thead>
-                    <tr>
-                      <th>Donor ID</th>
-                      <th>Name</th>
-                      <th>Blood Group</th>
-                      <th>Phone</th>
-                      <th>Email</th>
-                      <th>Location</th>
-                      <th>Last Donation</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentItems.length > 0 ? (
-                      currentItems.map((donor) => (
-                        <tr key={donor.id}>
-                          <td className="donor-id-cell">{donor.id}</td>
-                          <td className="donor-name-cell">{donor.name}</td>
-                          <td>
-                            <span className="blood-group-badge">{donor.group}</span>
-                          </td>
-                          <td className="donor-phone-cell">{donor.phone}</td>
-                          <td className="donor-email-cell">{donor.email}</td>
-                          <td>{donor.location}</td>
-                          <td>{donor.lastDonation}</td>
-                          <td>
-                            <span className={`status-pill-badge ${donor.status === 'Active' ? 'active-badge' : 'inactive-badge'}`}>
-                              {donor.status}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="actions-cell-wrapper">
-                              <button
-                                className="action-icon-btn view"
-                                onClick={() => setViewingDonor(donor)}
-                                title="View Details"
-                              >
-                                <Eye size={16} />
-                              </button>
-                              <button
-                                className="action-icon-btn edit"
-                                onClick={() => handleOpenEditModal(donor)}
-                                title="Edit Donor"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                className="action-icon-btn delete"
-                                onClick={() => setDeletingDonorId(donor.id)}
-                                title="Delete Donor"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
+              {donorsLoading && (
+                <div className="loading-overlay" style={{ position: 'relative', minHeight: '200px' }}>
+                  <Loader2 size={28} className="spinner" />
+                  <span>Loading donors...</span>
+                </div>
+              )}
+
+              {donorsError && (
+                <div className="error-banner">
+                  <span>⚠️ Failed to load donors: {donorsError}</span>
+                  <button onClick={loadDonors} className="retry-btn">Retry</button>
+                </div>
+              )}
+
+              {!donorsLoading && !donorsError && (
+                <>
+                  <div className="table-responsive-container">
+                    <table className="donors-table">
+                      <thead>
+                        <tr>
+                          <th>Donor ID</th>
+                          <th>Name</th>
+                          <th>Blood Group</th>
+                          <th>Phone</th>
+                          <th>Email</th>
+                          <th>Location</th>
+                          <th>Last Donation</th>
+                          <th>Status</th>
+                          <th>Actions</th>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="9" className="no-records-cell">
-                          No donors found matching the filters.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+                      <tbody>
+                        {donorsList.length > 0 ? (
+                          donorsList.map((donor) => (
+                            <tr key={donor.id}>
+                              <td className="donor-id-cell">{donor.id}</td>
+                              <td className="donor-name-cell">{donor.name}</td>
+                              <td>
+                                <span className="blood-group-badge">{donor.group}</span>
+                              </td>
+                              <td className="donor-phone-cell">{donor.phone}</td>
+                              <td className="donor-email-cell">{donor.email}</td>
+                              <td>{donor.location}</td>
+                              <td>{donor.lastDonation}</td>
+                              <td>
+                                <span className={`status-pill-badge ${donor.status === 'Active' ? 'active-badge' : 'inactive-badge'}`}>
+                                  {donor.status}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="actions-cell-wrapper">
+                                  <button
+                                    className="action-icon-btn view"
+                                    onClick={() => setViewingDonor(donor)}
+                                    title="View Details"
+                                  >
+                                    <Eye size={16} />
+                                  </button>
+                                  <button
+                                    className="action-icon-btn edit"
+                                    onClick={() => handleOpenEditModal(donor)}
+                                    title="Edit Donor"
+                                  >
+                                    <Edit2 size={16} />
+                                  </button>
+                                  <button
+                                    className="action-icon-btn delete"
+                                    onClick={() => setDeletingDonorId(donor.id)}
+                                    title="Delete Donor"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="9" className="no-records-cell">
+                              No donors found matching the filters.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
 
-              {/* Table Footer / Pagination */}
-              <div className="table-footer">
-                <div className="footer-info-text">
-                  Showing {totalItems > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} donors (filtered from 1,248)
-                </div>
-                <div className="pagination-controls">
-                  <button
-                    className="pagination-btn"
-                    disabled={currentPage === 1}
-                    onClick={() => handlePageChange(currentPage - 1)}
-                  >
-                    Previous
-                  </button>
-                  
-                  {Array.from({ length: totalPages }, (_, index) => {
-                    const pageNum = index + 1;
-                    return (
+                  {/* Table Footer / Pagination */}
+                  <div className="table-footer">
+                    <div className="footer-info-text">
+                      Showing {donorsTotalCount > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0} to {Math.min(currentPage * itemsPerPage, donorsTotalCount)} of {donorsTotalCount} donors
+                    </div>
+                    <div className="pagination-controls">
                       <button
-                        key={pageNum}
-                        className={`pagination-number-btn ${currentPage === pageNum ? 'active-page' : ''}`}
-                        onClick={() => handlePageChange(pageNum)}
+                        className="pagination-btn"
+                        disabled={currentPage === 1}
+                        onClick={() => handlePageChange(currentPage - 1)}
                       >
-                        {pageNum}
+                        Previous
                       </button>
-                    );
-                  })}
+                      
+                      {Array.from({ length: donorsTotalPages }, (_, index) => {
+                        const pageNum = index + 1;
+                        return (
+                          <button
+                            key={pageNum}
+                            className={`pagination-number-btn ${currentPage === pageNum ? 'active-page' : ''}`}
+                            onClick={() => handlePageChange(pageNum)}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
 
-                  <button
-                    className="pagination-btn"
-                    disabled={currentPage === totalPages}
-                    onClick={() => handlePageChange(currentPage + 1)}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
+                      <button
+                        className="pagination-btn"
+                        disabled={currentPage === donorsTotalPages}
+                        onClick={() => handlePageChange(currentPage + 1)}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
           </>
         )}
@@ -875,8 +945,8 @@ export default function Dashboard({ user, onLogout }) {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="modal-primary-btn">
-                  Save Changes
+                <button type="submit" className="modal-primary-btn" disabled={savingDonor}>
+                  {savingDonor ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>

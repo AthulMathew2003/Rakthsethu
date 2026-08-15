@@ -2,9 +2,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base
-from app.routers import auth_router
+from app.routers import (
+    auth_router,
+    dashboard_router,
+    donors_router,
+    inventory_router,
+    requests_router,
+    donations_router,
+    camps_router,
+    users_router
+)
 
-# Initialize database tables automatically
+# Initialize database tables automatically in PostgreSQL
 try:
     Base.metadata.create_all(bind=engine)
 except Exception as e:
@@ -12,7 +21,7 @@ except Exception as e:
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="FastAPI Backend connected to PostgreSQL database 'rakthasethu' for Rakthasethu application.",
+    description="FastAPI Backend connected to PostgreSQL database 'rakthasethu' for Rakthasethu Blood Bank application.",
     version="1.0.0"
 )
 
@@ -25,8 +34,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# Include All Routers
 app.include_router(auth_router.router)
+app.include_router(dashboard_router.router)
+app.include_router(donors_router.router)
+app.include_router(inventory_router.router)
+app.include_router(requests_router.router)
+app.include_router(donations_router.router)
+app.include_router(camps_router.router)
+app.include_router(users_router.router)
 
 @app.get("/")
 def read_root():
