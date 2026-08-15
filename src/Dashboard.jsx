@@ -1,653 +1,971 @@
 import React, { useState } from 'react';
-import { 
-  Users, 
-  Heart, 
-  AlertCircle, 
-  CheckCircle2, 
-  LogOut, 
-  Plus, 
-  Search, 
-  Droplets, 
-  PhoneCall,
-  UserPlus,
-  KeyRound,
-  UserCheck,
-  UserCog,
-  Loader2
+import {
+  Menu,
+  Bell,
+  ChevronDown,
+  Calendar,
+  Users,
+  ClipboardList,
+  Droplet,
+  Package,
+  Activity,
+  User,
+  BarChart2,
+  Settings,
+  LogOut,
+  Search,
+  Filter,
+  Eye,
+  Edit2,
+  Trash2,
+  X
 } from 'lucide-react';
 import './Dashboard.css';
 
 export default function Dashboard({ user, onLogout }) {
-  const [activeUser, setActiveUser] = useState(user || {
-    full_name: 'Rajesh Kumar',
-    email: 'donor@rakthasethu.org',
-    phone_number: '+91 9876543210'
-  });
+  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [notificationCount, setNotificationCount] = useState(3);
+  const [inventoryPeriod, setInventoryPeriod] = useState('This Month');
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [bloodFilter, setBloodFilter] = useState('ALL');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
-
-  // Profile Edit State
-  const [profileData, setProfileData] = useState({
-    full_name: activeUser.full_name || '',
-    email: activeUser.email || '',
-    phone_number: activeUser.phone_number || ''
-  });
-  const [profileStatus, setProfileStatus] = useState({ loading: false, error: '', success: '' });
-
-  // Change Password state
-  const [pwdData, setPwdData] = useState({
-    old_password: '',
-    new_password: '',
-    confirm_password: ''
-  });
-  const [pwdStatus, setPwdStatus] = useState({ loading: false, error: '', success: '' });
-
-  // Mock initial blood requests
-  const [requests, setRequests] = useState([
-    { id: 'REQ-101', patient: 'Ananya Sharma', group: 'O+', units: 2, hospital: 'City General Hospital', urgency: 'Critical', status: 'Pending', phone: '+91 9811223344' },
-    { id: 'REQ-102', patient: 'Vikram Patel', group: 'A-', units: 1, hospital: 'Apollo Emergency Care', urgency: 'Urgent', status: 'Approved', phone: '+91 9722334455' },
-    { id: 'REQ-103', patient: 'Siddharth Nair', group: 'B+', units: 3, hospital: 'St. Marys Medical Centre', urgency: 'Normal', status: 'Fulfilled', phone: '+91 9633445566' },
-    { id: 'REQ-104', patient: 'Priya Verma', group: 'AB+', units: 1, hospital: 'Max Super Specialty', urgency: 'Critical', status: 'Pending', phone: '+91 9544556677' },
+  // Donors State
+  const [donorsList, setDonorsList] = useState([
+    { id: 'DON001', name: 'Anil Kumar', group: 'O+', phone: '+91 98456 12345', email: 'anil.kumar@gmail.com', location: 'Kottayam', lastDonation: '12 May 2025', status: 'Active' },
+    { id: 'DON002', name: 'Neha Nair', group: 'B+', phone: '+91 94472 56789', email: 'neha.nair@gmail.com', location: 'Changanassery', lastDonation: '20 Jun 2025', status: 'Active' },
+    { id: 'DON003', name: 'Vishnu Prasad', group: 'A+', phone: '+91 97441 23456', email: 'vishnu.prasad@gmail.com', location: 'Erumely', lastDonation: '05 Apr 2025', status: 'Active' },
+    { id: 'DON004', name: 'Sreelekha S', group: 'AB+', phone: '+91 96543 98765', email: 'sreelekha.s@gmail.com', location: 'Punalur', lastDonation: '14 Jul 2025', status: 'Active' },
+    { id: 'DON005', name: 'Ramesh Babu', group: 'O−', phone: '+91 98950 45612', email: 'ramesh.babu@gmail.com', location: 'Kottayam', lastDonation: '30 May 2025', status: 'Active' },
+    { id: 'DON006', name: 'Arun M', group: 'A−', phone: '+91 94951 78901', email: 'arun.m@gmail.com', location: 'Kanjirappally', lastDonation: '10 Feb 2025', status: 'Inactive' },
+    { id: 'DON007', name: 'Divya Tom', group: 'B−', phone: '+91 97472 34567', email: 'divya.tom@gmail.com', location: 'Kottayam', lastDonation: '18 Jun 2025', status: 'Active' }
   ]);
 
-  // Registered Donors Quick View
-  const [donors] = useState([
-    { id: 'DON-01', name: 'Rajesh Kumar', group: 'O+', phone: '+91 9876543210', location: 'Bengaluru', status: 'Available' },
-    { id: 'DON-02', name: 'Meera Deshmukh', group: 'B+', phone: '+91 9822114433', location: 'Mumbai', status: 'Available' },
-    { id: 'DON-03', name: 'Arjun Reddy', group: 'AB-', phone: '+91 9900112233', location: 'Hyderabad', status: 'Donated Recently' },
-  ]);
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [groupFilter, setGroupFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [locationFilter, setLocationFilter] = useState('All');
 
-  // Handle status update
-  const handleFulfillRequest = (id) => {
-    setRequests(prev => prev.map(req => req.id === id ? { ...req, status: 'Fulfilled' } : req));
-  };
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
 
-  const handleApproveRequest = (id) => {
-    setRequests(prev => prev.map(req => req.id === id ? { ...req, status: 'Approved' } : req));
-  };
+  // Modal States
+  const [isAddingDonor, setIsAddingDonor] = useState(false);
+  const [viewingDonor, setViewingDonor] = useState(null);
+  const [editingDonor, setEditingDonor] = useState(null);
+  const [deletingDonorId, setDeletingDonorId] = useState(null);
 
-  // Handle profile details update
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    setProfileStatus({ loading: true, error: '', success: '' });
+  // Form State for Add/Edit
+  const [donorForm, setDonorForm] = useState({
+    name: '',
+    group: 'O+',
+    phone: '',
+    email: '',
+    location: '',
+    lastDonation: '',
+    status: 'Active'
+  });
 
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/auth/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(profileData)
-      });
+  const stats = [
+    {
+      title: 'Total Donors',
+      value: '1,248',
+      growth: '↑ 12% from last month',
+      icon: <Users size={20} className="stat-icon-svg" />,
+      colorClass: 'stat-donors'
+    },
+    {
+      title: 'Blood Requests',
+      value: '86',
+      growth: '↑ 8% from last month',
+      icon: <ClipboardList size={20} className="stat-icon-svg" />,
+      colorClass: 'stat-requests'
+    },
+    {
+      title: 'Units Donated',
+      value: '532',
+      growth: '↑ 15% from last month',
+      icon: <Droplet size={20} className="stat-icon-svg" />,
+      colorClass: 'stat-units'
+    },
+    {
+      title: 'Blood Inventory',
+      value: '320',
+      status: 'Sufficient',
+      icon: <Package size={20} className="stat-icon-svg" />,
+      colorClass: 'stat-inventory'
+    }
+  ];
 
-      const data = await response.json();
+  const donorStats = [
+    {
+      title: 'Total Donors',
+      value: '1,248',
+      growth: '↑ 12% from last month',
+      icon: <Users size={20} className="stat-icon-svg" />,
+      colorClass: 'stat-donors'
+    },
+    {
+      title: 'Active Donors',
+      value: '986',
+      growth: '↑ 8% from last month',
+      icon: <User size={20} className="stat-icon-svg" />,
+      colorClass: 'stat-inventory'
+    },
+    {
+      title: 'Donated This Month',
+      value: '156',
+      growth: '↑ 15% from last month',
+      icon: <Droplet size={20} className="stat-icon-svg" />,
+      colorClass: 'stat-units'
+    },
+    {
+      title: 'Lifetime Donations',
+      value: '3,245',
+      growth: '↑ 10% from last month',
+      icon: <ClipboardList size={20} className="stat-icon-svg" />,
+      colorClass: 'stat-requests'
+    }
+  ];
 
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to update profile details');
-      }
+  const inventoryData = [
+    { group: 'A+', value: 80 },
+    { group: 'A−', value: 28 },
+    { group: 'B+', value: 60 },
+    { group: 'B−', value: 20 },
+    { group: 'O+', value: 90 },
+    { group: 'O−', value: 25 },
+    { group: 'AB+', value: 12 },
+    { group: 'AB−', value: 5 }
+  ];
 
-      // Update active user state and localStorage
-      const updatedUser = { ...activeUser, ...data };
-      setActiveUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+  const recentRequests = [
+    {
+      group: 'O+',
+      name: 'Anil Kumar',
+      location: 'Kottayam',
+      time: '2 hours ago',
+      status: 'Pending',
+      statusClass: 'status-pending'
+    },
+    {
+      group: 'B+',
+      name: 'Neha Nair',
+      location: 'Changanassery',
+      time: '4 hours ago',
+      status: 'In Progress',
+      statusClass: 'status-inprogress'
+    },
+    {
+      group: 'A+',
+      name: 'Vishnu Prasad',
+      location: 'Erumely',
+      time: '6 hours ago',
+      status: 'Pending',
+      statusClass: 'status-pending'
+    },
+    {
+      group: 'AB+',
+      name: 'Sreelekha S',
+      location: 'Punalur',
+      time: '1 day ago',
+      status: 'Completed',
+      statusClass: 'status-completed'
+    },
+    {
+      group: 'O−',
+      name: 'Ramesh Babu',
+      location: 'Kottayam',
+      time: '1 day ago',
+      status: 'In Progress',
+      statusClass: 'status-inprogress'
+    }
+  ];
 
-      setProfileStatus({ loading: false, error: '', success: 'Profile details updated successfully!' });
-      setTimeout(() => {
-        setShowProfileModal(false);
-        setProfileStatus({ loading: false, error: '', success: '' });
-      }, 1500);
+  const menuItems = [
+    { name: 'Dashboard', icon: <ClipboardList size={18} /> },
+    { name: 'Donors', icon: <Users size={18} /> },
+    { name: 'Blood Requests', icon: <ClipboardList size={18} /> },
+    { name: 'Donations', icon: <Droplet size={18} /> },
+    { name: 'Blood Inventory', icon: <Package size={18} /> },
+    { name: 'Camps / Events', icon: <Activity size={18} /> },
+    { name: 'Users', icon: <User size={18} /> },
+    { name: 'Reports', icon: <BarChart2 size={18} /> },
+    { name: 'Settings', icon: <Settings size={18} /> }
+  ];
 
-    } catch (err) {
-      setProfileStatus({ loading: false, error: err.message, success: '' });
+  // Locations list derived from initial list
+  const locations = ['All', 'Kottayam', 'Changanassery', 'Erumely', 'Punalur', 'Kanjirappally'];
+  const bloodGroups = ['All', 'A+', 'A−', 'B+', 'B−', 'O+', 'O−', 'AB+', 'AB−'];
+
+  // Handle Filtering
+  const filteredDonors = donorsList.filter((donor) => {
+    const matchesSearch =
+      donor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      donor.phone.includes(searchQuery) ||
+      donor.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      donor.group.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesGroup = groupFilter === 'All' || donor.group === groupFilter;
+    const matchesStatus = statusFilter === 'All' || donor.status === statusFilter;
+    const matchesLocation = locationFilter === 'All' || donor.location === locationFilter;
+
+    return matchesSearch && matchesGroup && matchesStatus && matchesLocation;
+  });
+
+  // Pagination logic
+  const totalItems = filteredDonors.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredDonors.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
     }
   };
 
-  // Handle password change request
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    setPwdStatus({ loading: true, error: '', success: '' });
+  // Add / Edit submission handlers
+  const handleOpenAddModal = () => {
+    setDonorForm({
+      name: '',
+      group: 'O+',
+      phone: '',
+      email: '',
+      location: '',
+      lastDonation: '',
+      status: 'Active'
+    });
+    setIsAddingDonor(true);
+  };
 
-    if (pwdData.new_password !== pwdData.confirm_password) {
-      setPwdStatus({ loading: false, error: 'New passwords do not match!', success: '' });
+  const handleOpenEditModal = (donor) => {
+    setDonorForm({ ...donor });
+    setEditingDonor(donor);
+  };
+
+  const handleSaveDonor = (e) => {
+    e.preventDefault();
+    if (!donorForm.name || !donorForm.phone || !donorForm.email || !donorForm.location) {
+      alert('Please fill in all required fields.');
       return;
     }
 
-    if (pwdData.new_password.length < 6) {
-      setPwdStatus({ loading: false, error: 'Password must be at least 6 characters.', success: '' });
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          old_password: pwdData.old_password,
-          new_password: pwdData.new_password
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to change password');
-      }
-
-      setPwdStatus({ loading: false, error: '', success: 'Password updated successfully!' });
-      setPwdData({ old_password: '', new_password: '', confirm_password: '' });
-      setTimeout(() => {
-        setShowPasswordModal(false);
-        setPwdStatus({ loading: false, error: '', success: '' });
-      }, 1500);
-
-    } catch (err) {
-      setPwdStatus({ loading: false, error: err.message, success: '' });
+    if (editingDonor) {
+      // Update existing
+      setDonorsList((prev) =>
+        prev.map((d) => (d.id === editingDonor.id ? { ...d, ...donorForm } : d))
+      );
+      setEditingDonor(null);
+    } else {
+      // Create new
+      const nextId = `DON${String(donorsList.length + 1).padStart(3, '0')}`;
+      const newDonor = {
+        id: nextId,
+        ...donorForm,
+        lastDonation: donorForm.lastDonation || 'Never'
+      };
+      setDonorsList((prev) => [newDonor, ...prev]);
+      setIsAddingDonor(false);
     }
   };
 
-  // Filter logic
-  const filteredRequests = requests.filter(req => {
-    const matchesSearch = req.patient.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          req.hospital.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGroup = bloodFilter === 'ALL' || req.group === bloodFilter;
-    return matchesSearch && matchesGroup;
-  });
+  const handleDeleteDonor = () => {
+    setDonorsList((prev) => prev.filter((d) => d.id !== deletingDonorId));
+    setDeletingDonorId(null);
+    // Adjust current page if needed
+    if (currentPage > 1 && currentItems.length === 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
 
   return (
     <div className="dashboard-wrapper">
-      {/* Top Navbar */}
-      <header className="dashboard-navbar">
-        <div className="nav-brand">
-          <div className="nav-logo-icon">
-            <Droplets size={20} color="white" />
+      {/* Sidebar Navigation */}
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <div className="brand-logo-container">
+            <svg width="24" height="28" viewBox="0 0 28 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="brand-logo-svg">
+              <defs>
+                <linearGradient id="sidebar-logo-grad" x1="14" y1="1" x2="14" y2="31" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#FF3358" />
+                  <stop offset="100%" stopColor="#C41230" />
+                </linearGradient>
+              </defs>
+              <path d="M14 1C14 1 2 13 2 21C2 27.075 7.373 31 14 31C20.627 31 26 27.075 26 21C26 13 14 1 14 1Z" fill="url(#sidebar-logo-grad)" />
+              <path d="M8 18C8 14 11 10 13.5 8" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.35" />
+            </svg>
           </div>
-          <span className="nav-brand-text">Rakthasedu Admin</span>
+          <div className="brand-text">
+            <h2>Rakthasedu</h2>
+            <p>Admin Dashboard</p>
+          </div>
         </div>
 
-        <div className="nav-admin-profile">
-          <div className="user-badge">
-            <div className="user-avatar">
-              {activeUser.full_name ? activeUser.full_name.charAt(0) : 'A'}
-            </div>
-            <div className="user-details">
-              <span className="user-name">{activeUser.full_name}</span>
-              <span className="user-role">{activeUser.email}</span>
-            </div>
+        <nav className="sidebar-menu">
+          {menuItems.map((item) => (
+            <button
+              key={item.name}
+              className={`menu-btn ${activeTab === item.name ? 'active' : ''}`}
+              onClick={() => {
+                if (item.name === 'Dashboard' || item.name === 'Donors') {
+                  setActiveTab(item.name);
+                }
+              }}
+            >
+              <span className="menu-icon">{item.icon}</span>
+              <span className="menu-text">{item.name}</span>
+            </button>
+          ))}
+          <button className="menu-btn logout-btn" onClick={onLogout}>
+            <span className="menu-icon"><LogOut size={18} /></span>
+            <span className="menu-text">Log Out</span>
+          </button>
+        </nav>
+
+        {/* Decorative Sidebar Bottom Graphic */}
+        <div className="sidebar-footer-graphic">
+          <div className="pulse-heart-container">
+            <svg viewBox="0 0 100 80" className="heart-pulse-svg">
+              <path d="M50,75 C50,75 85,45 85,25 C85,11.1928813 73.8071187,0 60,0 C52.5273766,0 45.8239019,3.27503732 41.2561917,8.44390558 C41.2561917,8.44390558 35,-5 20,-5 C8,-5 0,3 0,15 C0,30 35,60 50,75 Z" fill="#F43F5E" opacity="0.15" transform="scale(0.85) translate(8, 10)" />
+              <path d="M12,40 C15,45 25,55 50,65 C75,55 85,45 88,40 C92,30 85,25 80,25 C75,25 70,30 50,42 C30,30 25,25 20,25 C15,25 8,30 12,40 Z" fill="#FFF" opacity="0.1" />
+              <path d="M10,40 L30,40 L35,30 L40,55 L45,25 L50,45 L53,38 L58,40 L90,40" stroke="#FDA4AF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </svg>
           </div>
-
-          <button 
-            onClick={() => {
-              setProfileData({
-                full_name: activeUser.full_name || '',
-                email: activeUser.email || '',
-                phone_number: activeUser.phone_number || ''
-              });
-              setProfileStatus({ loading: false, error: '', success: '' });
-              setShowProfileModal(true);
-            }} 
-            className="table-action-btn" 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.85rem' }}
-            title="Edit Admin Details"
-          >
-            <UserCog size={15} />
-            <span>Edit Details</span>
-          </button>
-
-          <button 
-            onClick={() => {
-              setShowPasswordModal(true);
-              setPwdStatus({ loading: false, error: '', success: '' });
-            }} 
-            className="table-action-btn" 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.85rem' }}
-          >
-            <KeyRound size={15} />
-            <span>Password</span>
-          </button>
-
-          <button onClick={onLogout} className="logout-btn" title="Sign Out">
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
+          <p className="footer-title">Every Drop Counts</p>
+          <p className="footer-subtitle">Save a Life</p>
         </div>
-      </header>
+      </aside>
 
-      {/* Main Container */}
-      <main className="dashboard-container">
-        {/* Hero Welcome */}
-        <section className="dashboard-hero">
-          <h1 className="hero-title">Welcome back, {activeUser.full_name} 👋</h1>
-          <p className="hero-subtitle">Intelligent Blood Donor & Emergency Request Management Overview</p>
-        </section>
-
-        {/* Quick Stats Grid */}
-        <section className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-info">
-              <p>Total Donors</p>
-              <div className="stat-number">154</div>
-            </div>
-            <div className="stat-icon-wrapper icon-red">
-              <Users size={24} />
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-info">
-              <p>Active Requests</p>
-              <div className="stat-number">12</div>
-            </div>
-            <div className="stat-icon-wrapper icon-amber">
-              <AlertCircle size={24} />
+      {/* Main Content Area */}
+      <main className="main-content">
+        {/* Header Section */}
+        <header className="main-header">
+          <div className="header-left">
+            <button className="menu-toggle-btn" aria-label="Toggle Menu">
+              <Menu size={22} />
+            </button>
+            <div className="header-greeting">
+              {activeTab === 'Dashboard' ? (
+                <>
+                  <h1>Welcome back, {user?.name || 'Sruthy M S'} 🩸</h1>
+                  <p>Here's what's happening with Rakthasedu today.</p>
+                </>
+              ) : (
+                <>
+                  <h1>Donors</h1>
+                  <p>Manage and view all registered donors.</p>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-info">
-              <p>Units Available</p>
-              <div className="stat-number">45</div>
-            </div>
-            <div className="stat-icon-wrapper icon-blue">
-              <Droplets size={24} />
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-info">
-              <p>Lives Saved</p>
-              <div className="stat-number">89</div>
-            </div>
-            <div className="stat-icon-wrapper icon-green">
-              <Heart size={24} />
-            </div>
-          </div>
-        </section>
-
-        {/* Requests Management Section */}
-        <section className="content-section">
-          <div className="section-header">
-            <div className="section-title">
-              <Droplets size={20} color="#f43f5e" />
-              <span>Blood Requests Management</span>
-            </div>
-
-            <div className="filter-actions">
-              <input 
-                type="text"
-                placeholder="Search patient or hospital..."
-                className="search-input"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-
-              <select 
-                className="search-input"
-                value={bloodFilter}
-                onChange={(e) => setBloodFilter(e.target.value)}
-              >
-                <option value="ALL">All Blood Groups</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-              </select>
-
-              <button className="action-btn-primary" onClick={() => setShowAddModal(true)}>
-                <Plus size={16} />
-                <span>New Request</span>
+          <div className="header-right">
+            {/* Notification Bell */}
+            <div className="notification-wrapper">
+              <button className="icon-btn" aria-label="Notifications">
+                <Bell size={20} />
+                {notificationCount > 0 && (
+                  <span className="notification-badge">{notificationCount}</span>
+                )}
               </button>
             </div>
-          </div>
 
-          {/* Table */}
-          <div className="table-responsive">
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Request ID</th>
-                  <th>Patient Name</th>
-                  <th>Blood Group</th>
-                  <th>Units</th>
-                  <th>Hospital</th>
-                  <th>Urgency</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRequests.length > 0 ? (
-                  filteredRequests.map(req => (
-                    <tr key={req.id}>
-                      <td><code style={{ color: '#94a3b8' }}>{req.id}</code></td>
-                      <td style={{ fontWeight: 600 }}>{req.patient}</td>
-                      <td><span className="blood-tag">{req.group}</span></td>
-                      <td>{req.units} Units</td>
-                      <td>{req.hospital}</td>
-                      <td>
-                        <span className={`urgency-badge ${
-                          req.urgency === 'Critical' ? 'urgency-critical' :
-                          req.urgency === 'Urgent' ? 'urgency-urgent' : 'urgency-normal'
-                        }`}>
-                          {req.urgency}
-                        </span>
-                      </td>
-                      <td>
-                        <span style={{ 
-                          color: req.status === 'Fulfilled' ? '#34d399' : req.status === 'Approved' ? '#60a5fa' : '#fbbf24',
-                          fontWeight: 600
-                        }}>
-                          {req.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          {req.status === 'Pending' && (
-                            <button className="table-action-btn" onClick={() => handleApproveRequest(req.id)}>
-                              Approve
-                            </button>
-                          )}
-                          {req.status !== 'Fulfilled' && (
-                            <button className="table-action-btn" onClick={() => handleFulfillRequest(req.id)}>
-                              Fulfill
-                            </button>
-                          )}
-                          <a href={`tel:${req.phone}`} className="table-action-btn" style={{ textDecoration: 'none' }}>
-                            <PhoneCall size={12} style={{ marginRight: '4px' }} /> Call
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                      No matching blood requests found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
+            {/* Profile Dropdown */}
+            <div className="profile-dropdown">
+              <div className="avatar-circle">
+                <span>{(user?.name || 'S')[0]}</span>
+              </div>
+              <div className="profile-info">
+                <span className="profile-name">{user?.name || 'Sruthy M S'}</span>
+                <span className="profile-role">{user?.role || 'Admin'}</span>
+              </div>
+              <ChevronDown size={16} className="dropdown-arrow" />
+            </div>
 
-        {/* Registered Donors List */}
-        <section className="content-section">
-          <div className="section-header">
-            <div className="section-title">
-              <UserPlus size={20} color="#60a5fa" />
-              <span>Available Donors Directory</span>
+            {/* Date Selector */}
+            <div className="date-picker-pill">
+              <Calendar size={16} className="calendar-icon" />
+              <span>11 August 2025</span>
             </div>
           </div>
+        </header>
 
-          <div className="table-responsive">
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Donor ID</th>
-                  <th>Name</th>
-                  <th>Blood Group</th>
-                  <th>Location</th>
-                  <th>Contact</th>
-                  <th>Availability</th>
-                </tr>
-              </thead>
-              <tbody>
-                {donors.map(d => (
-                  <tr key={d.id}>
-                    <td><code>{d.id}</code></td>
-                    <td style={{ fontWeight: 600 }}>{d.name}</td>
-                    <td><span className="blood-tag">{d.group}</span></td>
-                    <td>{d.location}</td>
-                    <td>{d.phone}</td>
-                    <td>
-                      <span style={{ color: d.status === 'Available' ? '#34d399' : '#94a3b8', fontWeight: 600 }}>
-                        {d.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        {/* Tab-dependent Views */}
+        {activeTab === 'Dashboard' ? (
+          <>
+            {/* Dashboard Summary Stats Grid */}
+            <section className="stats-grid">
+              {stats.map((stat, idx) => (
+                <div key={idx} className="stat-card">
+                  <div className="stat-card-left">
+                    <div className={`stat-icon-wrapper ${stat.colorClass}`}>
+                      {stat.icon}
+                    </div>
+                  </div>
+                  <div className="stat-card-right">
+                    <span className="stat-card-title">{stat.title}</span>
+                    <h3 className="stat-card-value">{stat.value}</h3>
+                    {stat.growth && (
+                      <span className="stat-card-growth growth-positive">{stat.growth}</span>
+                    )}
+                    {stat.status && (
+                      <span className="stat-card-status status-sufficient">{stat.status}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </section>
+
+            {/* Dashboard Visual Grid */}
+            <div className="dashboard-grid">
+              {/* Left Column - Inventory and Upcoming Camps */}
+              <div className="grid-column-left">
+                {/* Blood Inventory Overview */}
+                <div className="content-card inventory-card">
+                  <div className="card-header">
+                    <div className="header-title-group">
+                      <div className="card-icon-indicator indicator-red">
+                        <Droplet size={16} fill="currentColor" />
+                      </div>
+                      <h3>Blood Inventory Overview</h3>
+                    </div>
+                    <div className="period-selector">
+                      <select
+                        value={inventoryPeriod}
+                        onChange={(e) => setInventoryPeriod(e.target.value)}
+                        className="period-dropdown"
+                      >
+                        <option value="This Month">This Month</option>
+                        <option value="Last Month">Last Month</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="card-body chart-body">
+                    <div className="y-axis-label">Units</div>
+                    <div className="chart-container">
+                      <div className="chart-grid-lines">
+                        <div className="grid-line" data-value="100"></div>
+                        <div className="grid-line" data-value="80"></div>
+                        <div className="grid-line" data-value="60"></div>
+                        <div className="grid-line" data-value="40"></div>
+                        <div className="grid-line" data-value="20"></div>
+                        <div className="grid-line" data-value="0"></div>
+                      </div>
+
+                      <div className="chart-bars">
+                        {inventoryData.map((data, index) => (
+                          <div key={index} className="chart-bar-wrapper">
+                            <div className="chart-bar-value-tooltip">{data.value}</div>
+                            <div
+                              className="chart-bar"
+                              style={{ '--bar-height': `${data.value}%` }}
+                            ></div>
+                            <div className="chart-bar-label">{data.group}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="x-axis-label">Blood Groups</div>
+                  </div>
+                </div>
+
+                {/* Upcoming Camp */}
+                <div className="content-card camp-card">
+                  <div className="camp-card-content">
+                    <div className="camp-icon-wrapper">
+                      <Calendar size={20} className="camp-icon" />
+                    </div>
+                    <div className="camp-details">
+                      <span className="camp-badge">Upcoming Camp</span>
+                      <h4>Kanjirappally Blood Donation Camp</h4>
+                      <p>15 Aug 2025 | 9:00 AM – 2:00 PM</p>
+                    </div>
+                    <button className="view-details-btn">View Details</button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Recent Blood Requests */}
+              <div className="grid-column-right">
+                <div className="content-card requests-card">
+                  <div className="card-header">
+                    <div className="header-title-group">
+                      <div className="card-icon-indicator indicator-orange">
+                        <ClipboardList size={16} />
+                      </div>
+                      <h3>Recent Blood Requests</h3>
+                    </div>
+                    <a href="#view-all" className="view-all-link" onClick={(e) => e.preventDefault()}>
+                      View All
+                    </a>
+                  </div>
+
+                  <div className="card-body table-body">
+                    <div className="requests-list">
+                      {recentRequests.map((req, index) => (
+                        <div key={index} className="request-row">
+                          <div className="request-blood-badge">
+                            <span>{req.group}</span>
+                          </div>
+                          <div className="request-patient-info">
+                            <span className="patient-name">{req.name}</span>
+                          </div>
+                          <div className="request-location">
+                            <span className="location-text">{req.location}</span>
+                          </div>
+                          <div className="request-time">
+                            <span className="time-text">{req.time}</span>
+                          </div>
+                          <div className="request-status">
+                            <span className={`status-pill ${req.statusClass}`}>{req.status}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom CTA Banner */}
+            <section className="bottom-cta-banner">
+              <div className="cta-left">
+                <div className="cta-icon-wrapper">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="cta-icon">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="M12 8v8" />
+                    <path d="M8 12h8" />
+                  </svg>
+                </div>
+                <div className="cta-text">
+                  <h3>Be a Hero, Donate Blood</h3>
+                  <p>Your support can save countless lives.</p>
+                </div>
+              </div>
+              <div className="cta-right">
+                <button className="cta-button">
+                  Add New Request
+                </button>
+              </div>
+            </section>
+          </>
+        ) : (
+          <>
+            {/* Donors Page Summary Stats Grid */}
+            <section className="stats-grid">
+              {donorStats.map((stat, idx) => (
+                <div key={idx} className="stat-card">
+                  <div className="stat-card-left">
+                    <div className={`stat-icon-wrapper ${stat.colorClass}`}>
+                      {stat.icon}
+                    </div>
+                  </div>
+                  <div className="stat-card-right">
+                    <span className="stat-card-title">{stat.title}</span>
+                    <h3 className="stat-card-value">{stat.value}</h3>
+                    {stat.growth && (
+                      <span className="stat-card-growth growth-positive">{stat.growth}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </section>
+
+            {/* Search & Filter Toolbar */}
+            <section className="filters-toolbar">
+              <div className="search-box-wrapper">
+                <Search size={18} className="search-icon-input" />
+                <input
+                  type="text"
+                  placeholder="Search donors by name, phone, email or blood group..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="toolbar-search-input"
+                />
+              </div>
+
+              <div className="dropdowns-group">
+                <div className="filter-select-wrapper">
+                  <select
+                    value={groupFilter}
+                    onChange={(e) => {
+                      setGroupFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="toolbar-select"
+                  >
+                    <option value="All">All Blood Groups</option>
+                    {bloodGroups.filter(g => g !== 'All').map(g => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="filter-select-wrapper">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="toolbar-select"
+                  >
+                    <option value="All">All Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+
+                <div className="filter-select-wrapper">
+                  <select
+                    value={locationFilter}
+                    onChange={(e) => {
+                      setLocationFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="toolbar-select"
+                  >
+                    <option value="All">All Locations</option>
+                    {locations.filter(loc => loc !== 'All').map(loc => (
+                      <option key={loc} value={loc}>{loc}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button className="add-donor-btn" onClick={handleOpenAddModal}>
+                  + Add New Donor
+                </button>
+              </div>
+            </section>
+
+            {/* Donor Records Table */}
+            <section className="content-card table-card">
+              <div className="table-responsive-container">
+                <table className="donors-table">
+                  <thead>
+                    <tr>
+                      <th>Donor ID</th>
+                      <th>Name</th>
+                      <th>Blood Group</th>
+                      <th>Phone</th>
+                      <th>Email</th>
+                      <th>Location</th>
+                      <th>Last Donation</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentItems.length > 0 ? (
+                      currentItems.map((donor) => (
+                        <tr key={donor.id}>
+                          <td className="donor-id-cell">{donor.id}</td>
+                          <td className="donor-name-cell">{donor.name}</td>
+                          <td>
+                            <span className="blood-group-badge">{donor.group}</span>
+                          </td>
+                          <td className="donor-phone-cell">{donor.phone}</td>
+                          <td className="donor-email-cell">{donor.email}</td>
+                          <td>{donor.location}</td>
+                          <td>{donor.lastDonation}</td>
+                          <td>
+                            <span className={`status-pill-badge ${donor.status === 'Active' ? 'active-badge' : 'inactive-badge'}`}>
+                              {donor.status}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="actions-cell-wrapper">
+                              <button
+                                className="action-icon-btn view"
+                                onClick={() => setViewingDonor(donor)}
+                                title="View Details"
+                              >
+                                <Eye size={16} />
+                              </button>
+                              <button
+                                className="action-icon-btn edit"
+                                onClick={() => handleOpenEditModal(donor)}
+                                title="Edit Donor"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                className="action-icon-btn delete"
+                                onClick={() => setDeletingDonorId(donor.id)}
+                                title="Delete Donor"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="9" className="no-records-cell">
+                          No donors found matching the filters.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Table Footer / Pagination */}
+              <div className="table-footer">
+                <div className="footer-info-text">
+                  Showing {totalItems > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} donors (filtered from 1,248)
+                </div>
+                <div className="pagination-controls">
+                  <button
+                    className="pagination-btn"
+                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                  >
+                    Previous
+                  </button>
+                  
+                  {Array.from({ length: totalPages }, (_, index) => {
+                    const pageNum = index + 1;
+                    return (
+                      <button
+                        key={pageNum}
+                        className={`pagination-number-btn ${currentPage === pageNum ? 'active-page' : ''}`}
+                        onClick={() => handlePageChange(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    className="pagination-btn"
+                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
       </main>
 
-      {/* Edit Profile Modal */}
-      {showProfileModal && (
-        <div className="modal-overlay" onClick={() => setShowProfileModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      {/* --- Modals for CRUD operations --- */}
+
+      {/* Add / Edit Donor Modal */}
+      {(isAddingDonor || editingDonor) && (
+        <div className="modal-overlay">
+          <div className="modal-content-card">
             <div className="modal-header">
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <UserCog size={18} color="#60a5fa" />
-                <span>Edit Admin Profile Details</span>
-              </h3>
-              <button className="modal-close-btn" onClick={() => setShowProfileModal(false)}>✕</button>
-            </div>
-
-            {profileStatus.error && (
-              <div style={{ background: 'rgba(244, 63, 94, 0.15)', border: '1px solid rgba(244, 63, 94, 0.3)', color: '#fb7185', padding: '0.65rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                {profileStatus.error}
-              </div>
-            )}
-
-            {profileStatus.success && (
-              <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', padding: '0.65rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                {profileStatus.success}
-              </div>
-            )}
-
-            <form onSubmit={handleUpdateProfile}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Full Name</label>
-                <input 
-                  type="text" 
-                  required 
-                  className="search-input" 
-                  style={{ width: '100%' }} 
-                  placeholder="Enter full name"
-                  value={profileData.full_name}
-                  onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Email Address</label>
-                <input 
-                  type="email" 
-                  required 
-                  className="search-input" 
-                  style={{ width: '100%' }} 
-                  placeholder="Enter email address"
-                  value={profileData.email}
-                  onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Phone Number</label>
-                <input 
-                  type="text" 
-                  className="search-input" 
-                  style={{ width: '100%' }} 
-                  placeholder="+91 9876543210"
-                  value={profileData.phone_number}
-                  onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
-                />
-              </div>
-
-              <button 
-                type="submit" 
-                className="action-btn-primary" 
-                style={{ width: '100%', justifyContent: 'center' }}
-                disabled={profileStatus.loading}
+              <h3>{editingDonor ? 'Edit Donor Details' : 'Add New Donor'}</h3>
+              <button
+                className="modal-close-btn"
+                onClick={() => {
+                  setIsAddingDonor(false);
+                  setEditingDonor(null);
+                }}
               >
-                {profileStatus.loading ? 'Saving Profile...' : 'Save Profile Changes'}
+                <X size={20} />
               </button>
+            </div>
+            <form onSubmit={handleSaveDonor} className="modal-form">
+              <div className="form-grid">
+                <div className="form-group-item">
+                  <label htmlFor="modal-name">Full Name <span className="req-star">*</span></label>
+                  <input
+                    type="text"
+                    id="modal-name"
+                    value={donorForm.name}
+                    onChange={(e) => setDonorForm({ ...donorForm, name: e.target.value })}
+                    required
+                    placeholder="Enter full name"
+                  />
+                </div>
+
+                <div className="form-group-item">
+                  <label htmlFor="modal-group">Blood Group <span className="req-star">*</span></label>
+                  <select
+                    id="modal-group"
+                    value={donorForm.group}
+                    onChange={(e) => setDonorForm({ ...donorForm, group: e.target.value })}
+                  >
+                    {bloodGroups.filter(g => g !== 'All').map(g => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group-item">
+                  <label htmlFor="modal-phone">Phone Number <span className="req-star">*</span></label>
+                  <input
+                    type="tel"
+                    id="modal-phone"
+                    value={donorForm.phone}
+                    onChange={(e) => setDonorForm({ ...donorForm, phone: e.target.value })}
+                    required
+                    placeholder="+91 XXXXX XXXXX"
+                  />
+                </div>
+
+                <div className="form-group-item">
+                  <label htmlFor="modal-email">Email Address <span className="req-star">*</span></label>
+                  <input
+                    type="email"
+                    id="modal-email"
+                    value={donorForm.email}
+                    onChange={(e) => setDonorForm({ ...donorForm, email: e.target.value })}
+                    required
+                    placeholder="example@gmail.com"
+                  />
+                </div>
+
+                <div className="form-group-item">
+                  <label htmlFor="modal-location">Location <span className="req-star">*</span></label>
+                  <select
+                    id="modal-location"
+                    value={donorForm.location}
+                    onChange={(e) => setDonorForm({ ...donorForm, location: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Location</option>
+                    {locations.filter(loc => loc !== 'All').map(loc => (
+                      <option key={loc} value={loc}>{loc}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group-item">
+                  <label htmlFor="modal-last-donation">Last Donation Date</label>
+                  <input
+                    type="text"
+                    id="modal-last-donation"
+                    value={donorForm.lastDonation}
+                    onChange={(e) => setDonorForm({ ...donorForm, lastDonation: e.target.value })}
+                    placeholder="e.g. 15 Jun 2025"
+                  />
+                </div>
+
+                <div className="form-group-item">
+                  <label htmlFor="modal-status">Status</label>
+                  <select
+                    id="modal-status"
+                    value={donorForm.status}
+                    onChange={(e) => setDonorForm({ ...donorForm, status: e.target.value })}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="modal-footer-actions">
+                <button
+                  type="button"
+                  className="modal-secondary-btn"
+                  onClick={() => {
+                    setIsAddingDonor(false);
+                    setEditingDonor(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="modal-primary-btn">
+                  Save Changes
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Change Password Modal */}
-      {showPasswordModal && (
-        <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      {/* View Donor Modal */}
+      {viewingDonor && (
+        <div className="modal-overlay">
+          <div className="modal-content-card detail-modal">
             <div className="modal-header">
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <KeyRound size={18} color="#f43f5e" />
-                <span>Change Account Password</span>
-              </h3>
-              <button className="modal-close-btn" onClick={() => setShowPasswordModal(false)}>✕</button>
-            </div>
-
-            {pwdStatus.error && (
-              <div style={{ background: 'rgba(244, 63, 94, 0.15)', border: '1px solid rgba(244, 63, 94, 0.3)', color: '#fb7185', padding: '0.65rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                {pwdStatus.error}
-              </div>
-            )}
-
-            {pwdStatus.success && (
-              <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', padding: '0.65rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                {pwdStatus.success}
-              </div>
-            )}
-
-            <form onSubmit={handleChangePassword}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Current Password</label>
-                <input 
-                  type="password" 
-                  required 
-                  className="search-input" 
-                  style={{ width: '100%' }} 
-                  placeholder="Enter current password"
-                  value={pwdData.old_password}
-                  onChange={(e) => setPwdData({ ...pwdData, old_password: e.target.value })}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>New Password</label>
-                <input 
-                  type="password" 
-                  required 
-                  className="search-input" 
-                  style={{ width: '100%' }} 
-                  placeholder="Enter new password"
-                  value={pwdData.new_password}
-                  onChange={(e) => setPwdData({ ...pwdData, new_password: e.target.value })}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Confirm New Password</label>
-                <input 
-                  type="password" 
-                  required 
-                  className="search-input" 
-                  style={{ width: '100%' }} 
-                  placeholder="Confirm new password"
-                  value={pwdData.confirm_password}
-                  onChange={(e) => setPwdData({ ...pwdData, confirm_password: e.target.value })}
-                />
-              </div>
-
-              <button 
-                type="submit" 
-                className="action-btn-primary" 
-                style={{ width: '100%', justifyContent: 'center' }}
-                disabled={pwdStatus.loading}
-              >
-                {pwdStatus.loading ? 'Updating Password...' : 'Update Password'}
+              <h3>Donor Information File</h3>
+              <button className="modal-close-btn" onClick={() => setViewingDonor(null)}>
+                <X size={20} />
               </button>
-            </form>
+            </div>
+            <div className="modal-details-body">
+              <div className="donor-card-badge-large">
+                <span>{viewingDonor.group}</span>
+              </div>
+              <div className="details-grid">
+                <div className="detail-row">
+                  <span className="detail-lbl">Donor ID</span>
+                  <span className="detail-val font-semibold">{viewingDonor.id}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">Full Name</span>
+                  <span className="detail-val font-semibold">{viewingDonor.name}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">Blood Group</span>
+                  <span className="detail-val font-semibold text-rose-red">{viewingDonor.group}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">Phone Number</span>
+                  <span className="detail-val">{viewingDonor.phone}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">Email Address</span>
+                  <span className="detail-val">{viewingDonor.email}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">Location</span>
+                  <span className="detail-val">{viewingDonor.location}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">Last Donation</span>
+                  <span className="detail-val">{viewingDonor.lastDonation || 'Never'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">Status</span>
+                  <span className={`status-pill-badge ${viewingDonor.status === 'Active' ? 'active-badge' : 'inactive-badge'}`}>
+                    {viewingDonor.status}
+                  </span>
+                </div>
+              </div>
+              <div className="modal-footer-actions justify-center">
+                <button className="modal-primary-btn" onClick={() => setViewingDonor(null)}>
+                  Close File
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Add Request Modal */}
-      {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      {/* Delete Donor Confirmation Modal */}
+      {deletingDonorId && (
+        <div className="modal-overlay">
+          <div className="modal-content-card delete-confirm-modal">
             <div className="modal-header">
-              <h3>Create Emergency Blood Request</h3>
-              <button className="modal-close-btn" onClick={() => setShowAddModal(false)}>✕</button>
-            </div>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.target;
-              const newReq = {
-                id: `REQ-${Math.floor(100 + Math.random() * 900)}`,
-                patient: form.patient.value,
-                group: form.group.value,
-                units: Number(form.units.value),
-                hospital: form.hospital.value,
-                urgency: form.urgency.value,
-                status: 'Pending',
-                phone: form.phone.value || '+91 9999988888'
-              };
-              setRequests([newReq, ...requests]);
-              setShowAddModal(false);
-            }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Patient Name</label>
-                <input required name="patient" className="search-input" style={{ width: '100%' }} placeholder="Enter patient name" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Blood Group</label>
-                  <select name="group" className="search-input" style={{ width: '100%' }}>
-                    <option value="O+">O+</option>
-                    <option value="O-">O-</option>
-                    <option value="A+">A+</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B-">B-</option>
-                    <option value="AB+">AB+</option>
-                    <option value="AB-">AB-</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Units Needed</label>
-                  <input required name="units" type="number" min="1" defaultValue="1" className="search-input" style={{ width: '100%' }} />
-                </div>
-              </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Hospital / Location</label>
-                <input required name="hospital" className="search-input" style={{ width: '100%' }} placeholder="Hospital name" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Urgency Level</label>
-                  <select name="urgency" className="search-input" style={{ width: '100%' }}>
-                    <option value="Critical">Critical</option>
-                    <option value="Urgent">Urgent</option>
-                    <option value="Normal">Normal</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem' }}>Contact Phone</label>
-                  <input required name="phone" className="search-input" style={{ width: '100%' }} placeholder="+91 9876543210" />
-                </div>
-              </div>
-              <button type="submit" className="action-btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                Submit Blood Request
+              <h3>Confirm Deletion</h3>
+              <button className="modal-close-btn" onClick={() => setDeletingDonorId(null)}>
+                <X size={20} />
               </button>
-            </form>
+            </div>
+            <div className="delete-body">
+              <p>Are you sure you want to permanently delete donor record <strong>{deletingDonorId}</strong>?</p>
+              <p className="sub-warning">This action is irreversible and will remove all history associated with this donor.</p>
+              <div className="modal-footer-actions">
+                <button className="modal-secondary-btn" onClick={() => setDeletingDonorId(null)}>
+                  Cancel
+                </button>
+                <button className="modal-delete-btn" onClick={handleDeleteDonor}>
+                  Delete Record
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

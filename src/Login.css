@@ -66,6 +66,7 @@
     transform: scale(0.9);
     opacity: 0.8;
   }
+
   100% {
     transform: scale(1.1);
     opacity: 1;
@@ -96,6 +97,7 @@
   0% {
     transform: translateY(-15px) scale(0.98) rotate(0deg);
   }
+
   100% {
     transform: translateY(15px) scale(1.02) rotate(1deg);
   }
@@ -103,14 +105,19 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .shape-glow-top-left, .shape-glow-bottom-right {
+
+  .shape-glow-top-left,
+  .shape-glow-bottom-right {
     width: 350px;
     height: 350px;
   }
-  .shape-circle-light-1, .shape-circle-light-2 {
+
+  .shape-circle-light-1,
+  .shape-circle-light-2 {
     width: 180px;
     height: 180px;
   }
+
   .blood-flow-waves {
     opacity: 0.6;
   }
@@ -122,14 +129,16 @@
   z-index: 2;
   width: 100%;
   max-width: 400px;
-  background: rgba(255, 255, 255, 0.85); /* semi-transparent white */
+  background: rgba(255, 255, 255, 0.85);
+  /* semi-transparent white */
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.55); /* subtle white border */
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  /* subtle white border */
   border-radius: 12px;
   /* soft shadow + subtle ambient glow around card */
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.03), 
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.03),
     0 1px 3px rgba(0, 0, 0, 0.01),
     0 0 50px rgba(229, 27, 62, 0.04),
     inset 0 1px 1px rgba(255, 255, 255, 0.85);
@@ -139,8 +148,8 @@
 }
 
 .login-card:hover {
-  box-shadow: 
-    0 16px 48px rgba(0, 0, 0, 0.04), 
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.04),
     0 1px 3px rgba(0, 0, 0, 0.01),
     0 0 60px rgba(229, 27, 62, 0.06),
     inset 0 1px 1px rgba(255, 255, 255, 0.95);
@@ -181,7 +190,8 @@
 .brand-name {
   font-family: var(--font-display);
   font-size: 1.35rem;
-  font-weight: 800; /* extra bold premium feel */
+  font-weight: 800;
+  /* extra bold premium feel */
   letter-spacing: -0.03em;
   background: linear-gradient(135deg, #0F172A 0%, #334155 100%);
   -webkit-background-clip: text;
@@ -378,6 +388,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

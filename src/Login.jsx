@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import './Login.css';
 
-export default function Login() {
+export default function Login({ onLoginSuccess }) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -67,11 +67,17 @@ export default function Login() {
       setIsLoading(false);
       setLoginSuccess(true);
       
-      // Auto reset success message after 3 seconds
+      // Navigate to dashboard after showing success banner for a brief moment
       setTimeout(() => {
-        setLoginSuccess(false);
-      }, 3000);
-    }, 1500);
+        if (onLoginSuccess) {
+          onLoginSuccess({
+            name: 'Sruthy M S',
+            role: 'Admin',
+            email: formData.email,
+          });
+        }
+      }, 800);
+    }, 1200);
   };
 
   return (
