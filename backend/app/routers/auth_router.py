@@ -13,7 +13,8 @@ router = APIRouter(
 
 @router.post("/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(models.User.email == user_in.email).first()
+    email_clean = user_in.email.lower().strip()
+    existing_user = db.query(models.User).filter(models.User.email == email_clean).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -22,7 +23,7 @@ def register_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     
     hashed_pwd = auth.get_password_hash(user_in.password)
     db_user = models.User(
-        email=user_in.email,
+        email=email_clean,
         hashed_password=hashed_pwd,
         full_name=user_in.full_name,
         phone_number=user_in.phone_number
@@ -34,7 +35,8 @@ def register_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=schemas.Token)
 def login_user(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == credentials.email).first()
+    email_clean = credentials.email.lower().strip()
+    user = db.query(models.User).filter(models.User.email == email_clean).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -93,14 +95,16 @@ def update_profile(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
-    if user_update.email and user_update.email != current_user.email:
-        existing = db.query(models.User).filter(models.User.email == user_update.email).first()
-        if existing:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email already exists"
-            )
-        current_user.email = user_update.email
+    if user_update.email:
+        email_clean = user_update.email.lower().strip()
+        if email_clean != current_user.email:
+            existing = db.query(models.User).filter(models.User.email == email_clean).first()
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User with this email already exists"
+                )
+            current_user.email = email_clean
 
     if user_update.full_name is not None:
         current_user.full_name = user_update.full_name

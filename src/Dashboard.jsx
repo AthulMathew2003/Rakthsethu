@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu,
   Bell,
@@ -19,7 +20,8 @@ import {
   Edit2,
   Trash2,
   X,
-  Loader2
+  Loader2,
+  Hospital
 } from 'lucide-react';
 import {
   fetchDashboardStats,
@@ -29,6 +31,14 @@ import {
   deleteDonorApi,
   logoutUser
 } from './api.js';
+import HospitalsPage from './Hospitals.jsx';
+import BloodRequestsPage from './BloodRequests.jsx';
+import BloodDonationsPage from './BloodDonations.jsx';
+import BloodInventoryPage from './BloodInventory.jsx';
+import CampusEventsPage from './CampusEvents.jsx';
+import UsersPage from './Users.jsx';
+import ReportsPage from './Reports.jsx';
+import SettingsPage from './Settings.jsx';
 import './Dashboard.css';
 
 // Map iconType strings from API to actual Lucide components
@@ -48,7 +58,417 @@ function getIconComponent(iconType) {
 }
 
 export default function Dashboard({ user, onLogout }) {
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [activeTab, setActiveTab] = useState(() => {
+    if (location.pathname === '/admin/hospitals') return 'Hospitals';
+    if (location.pathname === '/admin/blood-requests') return 'Blood Requests';
+    if (location.pathname === '/admin/blood-donations') return 'Blood Donations';
+    if (location.pathname === '/admin/blood-inventory') return 'Blood Inventory';
+    if (location.pathname === '/admin/campus-events') return 'Campus Events';
+    if (location.pathname === '/admin/users') return 'Users';
+    if (location.pathname === '/admin/reports') return 'Reports';
+    if (location.pathname === '/admin/settings') return 'Settings';
+    return 'Dashboard';
+  });
+
+  useEffect(() => {
+    if (location.pathname === '/admin/hospitals') {
+      setActiveTab('Hospitals');
+    } else if (location.pathname === '/admin/blood-requests') {
+      setActiveTab('Blood Requests');
+    } else if (location.pathname === '/admin/blood-donations') {
+      setActiveTab('Blood Donations');
+    } else if (location.pathname === '/admin/blood-inventory') {
+      setActiveTab('Blood Inventory');
+    } else if (location.pathname === '/admin/campus-events') {
+      setActiveTab('Campus Events');
+    } else if (location.pathname === '/admin/users') {
+      setActiveTab('Users');
+    } else if (location.pathname === '/admin/reports') {
+      setActiveTab('Reports');
+    } else if (location.pathname === '/admin/settings') {
+      setActiveTab('Settings');
+    } else if (location.pathname === '/admin/dashboard' && (activeTab === 'Hospitals' || activeTab === 'Blood Requests' || activeTab === 'Blood Donations' || activeTab === 'Blood Inventory' || activeTab === 'Campus Events' || activeTab === 'Users' || activeTab === 'Reports' || activeTab === 'Settings')) {
+      setActiveTab('Dashboard');
+    }
+  }, [location.pathname]);
+
+  const [usersList, setUsersList] = useState([
+    {
+      id: "USR001",
+      name: "Anu Thomas",
+      email: "anu@example.com",
+      phone: "9845678901",
+      role: "Citizen",
+      district: "Kottayam",
+      panchayat: "Kanjirappally",
+      registeredDate: "2026-08-10",
+      lastActive: "2026-08-21",
+      status: "Active"
+    },
+    {
+      id: "USR002",
+      name: "Faisal Rahman",
+      email: "faisal@example.com",
+      phone: "9445123456",
+      role: "Panchayat Admin",
+      district: "Ernakulam",
+      panchayat: "Cheranallur",
+      registeredDate: "2026-08-16",
+      lastActive: "2026-08-22",
+      status: "Active"
+    },
+    {
+      id: "USR003",
+      name: "Meera Krishnan",
+      email: "meera@example.com",
+      phone: "9895012345",
+      role: "Department Admin",
+      district: "Kottayam",
+      panchayat: "Thellakom",
+      registeredDate: "2026-08-18",
+      lastActive: "2026-08-20",
+      status: "Inactive"
+    },
+    {
+      id: "USR004",
+      name: "Joseph Antony",
+      email: "joseph@example.com",
+      phone: "9747123458",
+      role: "Staff",
+      district: "Kozhikode",
+      panchayat: "Karanthur",
+      registeredDate: "2026-08-05",
+      lastActive: "2026-08-19",
+      status: "Suspended"
+    }
+  ]);
+
+  const [campusEventsList, setCampusEventsList] = useState([
+    {
+      id: "EV001",
+      title: "Blood Donation Camp",
+      type: "Blood Donation",
+      date: "2026-09-05",
+      startTime: "09:00 AM",
+      endTime: "03:00 PM",
+      venue: "College Auditorium",
+      organizer: "Rakthasedu",
+      participants: 120,
+      maxParticipants: 200,
+      description: "Campus blood donation awareness and collection camp.",
+      contactNumber: "9845678902",
+      registrationRequired: true,
+      registrationDeadline: "2026-09-03",
+      imageBanner: "https://images.unsplash.com/photo-1615461066841-6116e61058f4?q=80&w=600&auto=format&fit=crop",
+      status: "Upcoming"
+    },
+    {
+      id: "EV002",
+      title: "Health & Hygiene Camp",
+      type: "Health Camp",
+      date: "2026-09-12",
+      startTime: "10:00 AM",
+      endTime: "04:00 PM",
+      venue: "Seminar Hall",
+      organizer: "NSS & Rakthasedu",
+      participants: 85,
+      maxParticipants: 100,
+      description: "Free medical checkups, health advisory, and awareness programs.",
+      contactNumber: "9744123457",
+      registrationRequired: true,
+      registrationDeadline: "2026-09-10",
+      imageBanner: "",
+      status: "Upcoming"
+    },
+    {
+      id: "EV003",
+      title: "Volunteer Training Activity",
+      type: "Volunteer Activity",
+      date: "2026-08-22",
+      startTime: "02:00 PM",
+      endTime: "05:00 PM",
+      venue: "Conference Room B",
+      organizer: "Rakthasedu HQ",
+      participants: 30,
+      maxParticipants: 50,
+      description: "Orientation program for newly registered campus blood ambassadors.",
+      contactNumber: "9876543211",
+      registrationRequired: false,
+      registrationDeadline: "",
+      imageBanner: "",
+      status: "Ongoing"
+    },
+    {
+      id: "EV004",
+      title: "Awareness & Rally Session",
+      type: "Awareness Program",
+      date: "2026-08-15",
+      startTime: "09:00 AM",
+      endTime: "12:00 PM",
+      venue: "Campus Grounds",
+      organizer: "Red Ribbon Club",
+      participants: 250,
+      maxParticipants: 300,
+      description: "Independence Day blood donation awareness rally and talk.",
+      contactNumber: "9495178902",
+      registrationRequired: false,
+      registrationDeadline: "",
+      imageBanner: "",
+      status: "Completed"
+    }
+  ]);
+
+  const [bloodInventoryList, setBloodInventoryList] = useState([
+    {
+      id: "INV001",
+      bloodGroup: "O+",
+      component: "Whole Blood",
+      availableUnits: 18,
+      reservedUnits: 4,
+      totalUnits: 22,
+      collectionDate: "2026-08-15",
+      expiryDate: "2026-09-20",
+      storageLocation: "Blood Bank A - Rack 03",
+      notes: "Standard whole blood batch, tested and cleared."
+    },
+    {
+      id: "INV002",
+      bloodGroup: "O-",
+      component: "Packed RBC",
+      availableUnits: 3,
+      reservedUnits: 0,
+      totalUnits: 3,
+      collectionDate: "2026-08-10",
+      expiryDate: "2026-09-14",
+      storageLocation: "Blood Bank B - Freezer 01",
+      notes: "Rare blood group, low stock alert triggered."
+    },
+    {
+      id: "INV003",
+      bloodGroup: "A+",
+      component: "Plasma",
+      availableUnits: 25,
+      reservedUnits: 5,
+      totalUnits: 30,
+      collectionDate: "2026-08-01",
+      expiryDate: "2026-09-01",
+      storageLocation: "Blood Bank A - Plasma Freezer",
+      notes: "Expiring soon batch, monitor closely."
+    },
+    {
+      id: "INV004",
+      bloodGroup: "B+",
+      component: "Platelets",
+      availableUnits: 8,
+      reservedUnits: 2,
+      totalUnits: 10,
+      collectionDate: "2026-08-19",
+      expiryDate: "2026-08-24",
+      storageLocation: "Blood Bank B - Incubator 02",
+      notes: "Platelets have a short 5-day lifespan."
+    },
+    {
+      id: "INV005",
+      bloodGroup: "AB-",
+      component: "Cryoprecipitate",
+      availableUnits: 0,
+      reservedUnits: 0,
+      totalUnits: 0,
+      collectionDate: "2026-07-20",
+      expiryDate: "2026-08-20",
+      storageLocation: "Blood Bank A - Rack 04",
+      notes: "Batch expired, marked for safe disposal."
+    }
+  ]);
+
+  const [bloodDonationsList, setBloodDonationsList] = useState([
+    {
+      id: "DN001",
+      donorName: "Arun Kumar",
+      bloodGroup: "O+",
+      phone: "9845678901",
+      email: "arun@example.com",
+      district: "Kottayam",
+      address: "Arun Villa, Kottayam, Kerala",
+      donationDate: "2026-08-20",
+      donationType: "Voluntary",
+      unitsDonated: 1,
+      hospital: "Government Medical College Hospital",
+      status: "Completed",
+      notes: "Regular blood donor, overall health good."
+    },
+    {
+      id: "DN002",
+      donorName: "Saritha Varma",
+      bloodGroup: "A-",
+      phone: "9445123456",
+      email: "saritha@example.com",
+      district: "Ernakulam",
+      address: "Flat 4B, Skyview, Ernakulam, Kerala",
+      donationDate: "2026-08-22",
+      donationType: "Replacement",
+      unitsDonated: 1,
+      hospital: "Aster Medcity",
+      status: "Completed",
+      notes: "Donated for relative's surgery."
+    },
+    {
+      id: "DN003",
+      donorName: "Rahul Bose",
+      bloodGroup: "B+",
+      phone: "9895012345",
+      email: "rahul@example.com",
+      district: "Kozhikode",
+      address: "Bose House, Kozhikode, Kerala",
+      donationDate: "2026-08-28",
+      donationType: "Camp Donation",
+      unitsDonated: 2,
+      hospital: "Kozhikode Town Hall Camp",
+      status: "Scheduled",
+      notes: "Registered for upcoming donation drive."
+    },
+    {
+      id: "DN004",
+      donorName: "Anjali Menon",
+      bloodGroup: "AB+",
+      phone: "9747123458",
+      email: "anjali@example.com",
+      district: "Thiruvananthapuram",
+      address: "Anjali Nivas, TVM, Kerala",
+      donationDate: "2026-08-15",
+      donationType: "Directed Donation",
+      unitsDonated: 1,
+      hospital: "Sree Chitra Tirunal Hospital",
+      status: "Completed",
+      notes: "Directed donation for patient."
+    }
+  ]);
+
+  const [bloodRequestsList, setBloodRequestsList] = useState([
+    {
+      id: "BR001",
+      patientName: "Anu Thomas",
+      bloodGroup: "O+",
+      unitsRequired: 2,
+      hospital: "Government Medical College Hospital",
+      district: "Kottayam",
+      requiredDate: "2026-08-25",
+      contactNumber: "9845678902",
+      emergencyContact: "9744123457",
+      urgency: "Critical",
+      status: "Pending",
+      notes: "Urgently required for heart surgery."
+    },
+    {
+      id: "BR002",
+      patientName: "Faisal Rahman",
+      bloodGroup: "B-",
+      unitsRequired: 3,
+      hospital: "Aster Medcity",
+      district: "Ernakulam",
+      requiredDate: "2026-08-27",
+      contactNumber: "9876543211",
+      emergencyContact: "9895045613",
+      urgency: "Urgent",
+      status: "Approved",
+      notes: "Post-accident trauma, required by tomorrow morning."
+    },
+    {
+      id: "BR003",
+      patientName: "Meera Krishnan",
+      bloodGroup: "A+",
+      unitsRequired: 1,
+      hospital: "Caritas Hospital",
+      district: "Kottayam",
+      requiredDate: "2026-08-30",
+      contactNumber: "9447256780",
+      emergencyContact: "9654398766",
+      urgency: "Normal",
+      status: "Fulfilled",
+      notes: "Scheduled knee replacement surgery."
+    },
+    {
+      id: "BR004",
+      patientName: "Joseph Antony",
+      bloodGroup: "AB-",
+      unitsRequired: 2,
+      hospital: "Government Medical College Calicut",
+      district: "Kozhikode",
+      requiredDate: "2026-08-24",
+      contactNumber: "9495178902",
+      emergencyContact: "9747234568",
+      urgency: "Critical",
+      status: "In Progress",
+      notes: "Patient in ICU, emergency blood required."
+    }
+  ]);
+
+  const [hospitalsList, setHospitalsList] = useState([
+    {
+      id: 1,
+      name: "Government Medical College Hospital",
+      type: "Government",
+      district: "Kottayam",
+      panchayat: "Kumarakom",
+      address: "Kottayam, Kerala",
+      phone: "04812597311",
+      email: "gmc.ktm@kerala.gov.in",
+      emergencyNumber: "108",
+      latitude: 9.5916,
+      longitude: 76.5222,
+      services: ["Emergency", "Cardiology", "Orthopaedics", "Neurology"],
+      status: "Active"
+    },
+    {
+      id: 2,
+      name: "Aster Medcity",
+      type: "Private",
+      district: "Ernakulam",
+      panchayat: "Cheranallur",
+      address: "Kuttisahib Road, Cheranallur, Kochi, Kerala",
+      phone: "04846627000",
+      email: "info@astermedcity.com",
+      emergencyNumber: "04846627500",
+      latitude: 10.0264,
+      longitude: 76.2694,
+      services: ["Emergency", "Cardiology", "Oncology", "Pediatrics"],
+      status: "Active"
+    },
+    {
+      id: 3,
+      name: "Government Medical College Calicut",
+      type: "Government",
+      district: "Kozhikode",
+      panchayat: "Karanthur",
+      address: "Medical College Junction, Kozhikode, Kerala",
+      phone: "04952350216",
+      email: "principalmcc@gmail.com",
+      emergencyNumber: "108",
+      latitude: 11.2728,
+      longitude: 75.8369,
+      services: ["Emergency", "Cardiology", "General Surgery", "Nephrology"],
+      status: "Active"
+    },
+    {
+      id: 4,
+      name: "Caritas Hospital",
+      type: "Private",
+      district: "Kottayam",
+      panchayat: "Thellakom",
+      address: "Thellakom P.O., Kottayam, Kerala",
+      phone: "04812790025",
+      email: "caritas@caritashospital.org",
+      emergencyNumber: "04812790000",
+      latitude: 9.6267,
+      longitude: 76.5278,
+      services: ["Emergency", "Gastroenterology", "Urology", "Cardiology"],
+      status: "Inactive"
+    }
+  ]);
+
   const [inventoryPeriod, setInventoryPeriod] = useState('This Month');
 
   // ─── Dashboard Stats State (from API) ─────────────────────
@@ -102,10 +522,11 @@ export default function Dashboard({ user, onLogout }) {
   const menuItems = [
     { name: 'Dashboard', icon: <ClipboardList size={18} /> },
     { name: 'Donors', icon: <Users size={18} /> },
+    { name: 'Hospitals', icon: <Hospital size={18} /> },
     { name: 'Blood Requests', icon: <ClipboardList size={18} /> },
-    { name: 'Donations', icon: <Droplet size={18} /> },
+    { name: 'Blood Donations', icon: <Droplet size={18} /> },
     { name: 'Blood Inventory', icon: <Package size={18} /> },
-    { name: 'Camps / Events', icon: <Activity size={18} /> },
+    { name: 'Campus Events', icon: <Calendar size={18} /> },
     { name: 'Users', icon: <User size={18} /> },
     { name: 'Reports', icon: <BarChart2 size={18} /> },
     { name: 'Settings', icon: <Settings size={18} /> }
@@ -119,10 +540,99 @@ export default function Dashboard({ user, onLogout }) {
       const data = await fetchDashboardStats(inventoryPeriod);
 
       // Map stats cards with icons
-      setStats(data.stats.map((s) => ({
-        ...s,
-        icon: getIconComponent(s.iconType),
-      })));
+      const fetchedStats = data.stats.map((s) => {
+        if (s.title === "Blood Requests") {
+          return {
+            ...s,
+            value: String(bloodRequestsList.length),
+            growth: "↑ from local mock data",
+            icon: getIconComponent(s.iconType)
+          };
+        }
+        if (s.title === "Units Donated") {
+          return {
+            ...s,
+            value: String(bloodDonationsList.filter(d => d.status === 'Completed').reduce((sum, d) => sum + d.unitsDonated, 0)),
+            growth: "↑ from local mock data",
+            icon: getIconComponent(s.iconType)
+          };
+        }
+        if (s.title === "Blood Inventory") {
+          return {
+            ...s,
+            value: String(bloodInventoryList.reduce((sum, item) => sum + item.availableUnits, 0)),
+            growth: "↑ from local mock data",
+            icon: getIconComponent(s.iconType)
+          };
+        }
+        return {
+          ...s,
+          icon: getIconComponent(s.iconType),
+        };
+      });
+
+      // Inject Total Hospitals card
+      const hospitalCard = {
+        title: "Total Hospitals",
+        value: String(hospitalsList.length),
+        colorClass: "stat-requests",
+        icon: <Hospital size={20} className="stat-icon-svg" />
+      };
+
+      // Inject extra Blood Request stats
+      const pendingCard = {
+        title: "Pending Requests",
+        value: String(bloodRequestsList.filter(r => r.status === 'Pending').length),
+        colorClass: "stat-donors",
+        icon: <ClipboardList size={20} className="stat-icon-svg" />
+      };
+
+      const urgentCard = {
+        title: "Urgent Requests",
+        value: String(bloodRequestsList.filter(r => r.urgency === 'Critical' || r.urgency === 'Urgent').length),
+        colorClass: "stat-units",
+        icon: <Droplet size={20} className="stat-icon-svg" />
+      };
+
+      const fulfilledCard = {
+        title: "Fulfilled Requests",
+        value: String(bloodRequestsList.filter(r => r.status === 'Fulfilled').length),
+        colorClass: "stat-inventory",
+        icon: <Package size={20} className="stat-icon-svg" />
+      };
+
+      // Inject extra Blood Donation stats
+      const totalDonationsCard = {
+        title: "Total Donations",
+        value: String(bloodDonationsList.length),
+        colorClass: "stat-donors",
+        icon: <Droplet size={20} className="stat-icon-svg" />
+      };
+
+      const completedDonationsCard = {
+        title: "Completed Donations",
+        value: String(bloodDonationsList.filter(d => d.status === 'Completed').length),
+        colorClass: "stat-inventory",
+        icon: <Package size={20} className="stat-icon-svg" />
+      };
+
+      const scheduledDonationsCard = {
+        title: "Scheduled Donations",
+        value: String(bloodDonationsList.filter(d => d.status === 'Scheduled').length),
+        colorClass: "stat-requests",
+        icon: <Calendar size={20} className="stat-icon-svg" />
+      };
+
+      setStats([
+        ...fetchedStats,
+        hospitalCard,
+        pendingCard,
+        urgentCard,
+        fulfilledCard,
+        totalDonationsCard,
+        completedDonationsCard,
+        scheduledDonationsCard
+      ]);
 
       setDonorStats(data.donorStats.map((s) => ({
         ...s,
@@ -140,7 +650,7 @@ export default function Dashboard({ user, onLogout }) {
     } finally {
       setDashboardLoading(false);
     }
-  }, [inventoryPeriod]);
+  }, [inventoryPeriod, hospitalsList.length, bloodRequestsList, bloodDonationsList, bloodInventoryList]);
 
   useEffect(() => {
     loadDashboardStats();
@@ -334,8 +844,36 @@ export default function Dashboard({ user, onLogout }) {
               key={item.name}
               className={`menu-btn ${activeTab === item.name ? 'active' : ''}`}
               onClick={() => {
-                if (item.name === 'Dashboard' || item.name === 'Donors') {
-                  setActiveTab(item.name);
+                if (item.name === 'Dashboard') {
+                  setActiveTab('Dashboard');
+                  navigate('/admin/dashboard');
+                } else if (item.name === 'Donors') {
+                  setActiveTab('Donors');
+                  navigate('/admin/dashboard');
+                } else if (item.name === 'Hospitals') {
+                  setActiveTab('Hospitals');
+                  navigate('/admin/hospitals');
+                } else if (item.name === 'Blood Requests') {
+                  setActiveTab('Blood Requests');
+                  navigate('/admin/blood-requests');
+                } else if (item.name === 'Blood Donations') {
+                  setActiveTab('Blood Donations');
+                  navigate('/admin/blood-donations');
+                } else if (item.name === 'Blood Inventory') {
+                  setActiveTab('Blood Inventory');
+                  navigate('/admin/blood-inventory');
+                } else if (item.name === 'Campus Events') {
+                  setActiveTab('Campus Events');
+                  navigate('/admin/campus-events');
+                } else if (item.name === 'Users') {
+                  setActiveTab('Users');
+                  navigate('/admin/users');
+                } else if (item.name === 'Reports') {
+                  setActiveTab('Reports');
+                  navigate('/admin/reports');
+                } else if (item.name === 'Settings') {
+                  setActiveTab('Settings');
+                  navigate('/admin/settings');
                 }
               }}
             >
@@ -376,6 +914,46 @@ export default function Dashboard({ user, onLogout }) {
                 <>
                   <h1>Welcome back, {user?.name || 'Admin'} 🩸</h1>
                   <p>Here's what's happening with Rakthasedu today.</p>
+                </>
+              ) : activeTab === 'Hospitals' ? (
+                <>
+                  <h1>Hospitals</h1>
+                  <p>Manage hospitals and healthcare facilities.</p>
+                </>
+              ) : activeTab === 'Blood Requests' ? (
+                <>
+                  <h1>Blood Requests</h1>
+                  <p>Manage and monitor blood donation requests.</p>
+                </>
+              ) : activeTab === 'Blood Donations' ? (
+                <>
+                  <h1>Blood Donations</h1>
+                  <p>Manage blood donors and donation records.</p>
+                </>
+              ) : activeTab === 'Blood Inventory' ? (
+                <>
+                  <h1>Blood Inventory</h1>
+                  <p>Monitor and manage available blood stock.</p>
+                </>
+              ) : activeTab === 'Campus Events' ? (
+                <>
+                  <h1>Campus Events</h1>
+                  <p>Create and manage campus events and activities.</p>
+                </>
+              ) : activeTab === 'Users' ? (
+                <>
+                  <h1>Users</h1>
+                  <p>Manage registered users and their account information.</p>
+                </>
+              ) : activeTab === 'Reports' ? (
+                <>
+                  <h1>Reports & Analytics</h1>
+                  <p>Monitor platform activity and generate useful insights.</p>
+                </>
+              ) : activeTab === 'Settings' ? (
+                <>
+                  <h1>Settings</h1>
+                  <p>Manage your dashboard preferences and application settings.</p>
                 </>
               ) : (
                 <>
@@ -602,6 +1180,155 @@ export default function Dashboard({ user, onLogout }) {
               </>
             )}
           </>
+        ) : activeTab === 'Hospitals' ? (
+          <HospitalsPage
+            hospitals={hospitalsList}
+            onAddHospital={(newHosp) => {
+              setHospitalsList(prev => [...prev, { ...newHosp, id: prev.length > 0 ? Math.max(...prev.map(h => h.id)) + 1 : 1 }]);
+            }}
+            onEditHospital={(updatedHosp) => {
+              setHospitalsList(prev => prev.map(h => h.id === updatedHosp.id ? updatedHosp : h));
+            }}
+            onDeleteHospital={(id) => {
+              setHospitalsList(prev => prev.filter(h => h.id !== id));
+            }}
+          />
+        ) : activeTab === 'Blood Requests' ? (
+          <BloodRequestsPage
+            requests={bloodRequestsList}
+            onAddRequest={(newReq) => {
+              setBloodRequestsList(prev => [
+                ...prev,
+                {
+                  ...newReq,
+                  id: `BR${String(prev.length > 0 ? Math.max(...prev.map(r => parseInt(r.id.replace('BR', ''), 10))) + 1 : 1).padStart(3, '0')}`
+                }
+              ]);
+            }}
+            onEditRequest={(updatedReq) => {
+              setBloodRequestsList(prev => prev.map(r => r.id === updatedReq.id ? updatedReq : r));
+            }}
+            onDeleteRequest={(id) => {
+              setBloodRequestsList(prev => prev.filter(r => r.id !== id));
+            }}
+            onStatusChange={(id, status) => {
+              setBloodRequestsList(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+            }}
+          />
+        ) : activeTab === 'Blood Donations' ? (
+          <BloodDonationsPage
+            donations={bloodDonationsList}
+            onAddDonation={(newDon) => {
+              setBloodDonationsList(prev => [
+                ...prev,
+                {
+                  ...newDon,
+                  id: `DN${String(prev.length > 0 ? Math.max(...prev.map(d => parseInt(d.id.replace('DN', ''), 10))) + 1 : 1).padStart(3, '0')}`
+                }
+              ]);
+            }}
+            onEditDonation={(updatedDon) => {
+              setBloodDonationsList(prev => prev.map(d => d.id === updatedDon.id ? updatedDon : d));
+            }}
+            onDeleteDonation={(id) => {
+              setBloodDonationsList(prev => prev.filter(d => d.id !== id));
+            }}
+          />
+        ) : activeTab === 'Blood Inventory' ? (
+          <BloodInventoryPage
+            inventory={bloodInventoryList}
+            onAddStock={(newStock) => {
+              setBloodInventoryList(prev => [
+                ...prev,
+                {
+                  ...newStock,
+                  id: `INV${String(prev.length > 0 ? Math.max(...prev.map(i => parseInt(i.id.replace('INV', ''), 10))) + 1 : 1).padStart(3, '0')}`
+                }
+              ]);
+            }}
+            onEditStock={(updatedStock) => {
+              setBloodInventoryList(prev => prev.map(i => i.id === updatedStock.id ? updatedStock : i));
+            }}
+            onDeleteStock={(id) => {
+              setBloodInventoryList(prev => prev.filter(i => i.id !== id));
+            }}
+            onAdjustStock={(id, newAvail, reason) => {
+              setBloodInventoryList(prev => prev.map(i => {
+                if (i.id === id) {
+                  const delta = newAvail - i.availableUnits;
+                  const adjText = `[Adjusted Available Stock: ${newAvail} Units (delta: ${delta > 0 ? '+' : ''}${delta}). Reason: ${reason}]`;
+                  return {
+                    ...i,
+                    availableUnits: newAvail,
+                    totalUnits: newAvail + i.reservedUnits,
+                    notes: i.notes ? `${i.notes}\n${adjText}` : adjText
+                  };
+                }
+                return i;
+              }));
+            }}
+          />
+        ) : activeTab === 'Campus Events' ? (
+          <CampusEventsPage
+            events={campusEventsList}
+            onCreateEvent={(newEvt) => {
+              setCampusEventsList(prev => [
+                ...prev,
+                {
+                  ...newEvt,
+                  id: `EV${String(prev.length > 0 ? Math.max(...prev.map(e => parseInt(e.id.replace('EV', ''), 10))) + 1 : 1).padStart(3, '0')}`
+                }
+              ]);
+            }}
+            onEditEvent={(updatedEvt) => {
+              setCampusEventsList(prev => prev.map(e => e.id === updatedEvt.id ? updatedEvt : e));
+            }}
+            onDeleteEvent={(id) => {
+              setCampusEventsList(prev => prev.filter(e => e.id !== id));
+            }}
+            onStatusChange={(id, status) => {
+              setCampusEventsList(prev => prev.map(e => e.id === id ? { ...e, status } : e));
+            }}
+          />
+        ) : activeTab === 'Users' ? (
+          <UsersPage
+            users={usersList}
+            onAddUser={(newUser) => {
+              setUsersList(prev => [
+                ...prev,
+                {
+                  ...newUser,
+                  id: `USR${String(prev.length > 0 ? Math.max(...prev.map(u => parseInt(u.id.replace('USR', ''), 10))) + 1 : 1).padStart(3, '0')}`
+                }
+              ]);
+            }}
+            onEditUser={(updatedUser) => {
+              setUsersList(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+            }}
+            onDeleteUser={(id) => {
+              setUsersList(prev => prev.filter(u => u.id !== id));
+            }}
+            onStatusChange={(id, status) => {
+              setUsersList(prev => prev.map(u => u.id === id ? { ...u, status } : u));
+            }}
+          />
+        ) : activeTab === 'Reports' ? (
+          <ReportsPage
+            hospitalsCount={hospitalsList.length}
+            bloodRequestsCount={bloodRequestsList.length}
+            bloodDonationsCount={bloodDonationsList.length}
+            bloodInventoryCount={bloodInventoryList.reduce((sum, item) => sum + item.availableUnits, 0)}
+            usersCount={usersList.length}
+            eventsCount={campusEventsList.length}
+          />
+        ) : activeTab === 'Settings' ? (
+          <SettingsPage
+            onProfileNameChange={(newFullName) => {
+              if (user) {
+                user.name = newFullName;
+              }
+            }}
+          />
         ) : (
           <>
             {/* Donors Page Summary Stats Grid */}

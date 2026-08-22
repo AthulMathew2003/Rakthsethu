@@ -87,6 +87,70 @@ function App() {
           }
         />
         <Route
+          path="/admin/hospitals"
+          element={
+            <ProtectedRoute user={user}>
+              <Dashboard user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/blood-requests"
+          element={
+            <ProtectedRoute user={user}>
+              <Dashboard user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/blood-donations"
+          element={
+            <ProtectedRoute user={user}>
+              <Dashboard user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/blood-inventory"
+          element={
+            <ProtectedRoute user={user}>
+              <Dashboard user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/campus-events"
+          element={
+            <ProtectedRoute user={user}>
+              <Dashboard user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute user={user}>
+              <Dashboard user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/reports"
+          element={
+            <ProtectedRoute user={user}>
+              <Dashboard user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute user={user}>
+              <Dashboard user={user} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/"
           element={
             <Navigate to={user && user.role === 'Admin' ? '/admin/dashboard' : '/login'} replace />

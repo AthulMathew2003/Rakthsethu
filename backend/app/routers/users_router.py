@@ -15,12 +15,13 @@ def get_all_users(db: Session = Depends(get_db)):
 
 @router.post("", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 def create_staff_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(models.User).filter(models.User.email == user_in.email).first()
+    email_clean = user_in.email.lower().strip()
+    existing = db.query(models.User).filter(models.User.email == email_clean).first()
     if existing:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
 
     new_user = models.User(
-        email=user_in.email,
+        email=email_clean,
         hashed_password=auth.get_password_hash(user_in.password),
         full_name=user_in.full_name,
         phone_number=user_in.phone_number,
