@@ -161,7 +161,8 @@ export default function BloodDonationsPage({
     if (editingDonation) {
       onEditDonation({
         ...donationData,
-        id: editingDonation.id
+        id: editingDonation.id,
+        dbId: editingDonation.dbId
       });
       setEditingDonation(null);
     } else {

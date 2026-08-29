@@ -186,7 +186,8 @@ export default function BloodInventoryPage({
     if (editingItem) {
       onEditStock({
         ...stockData,
-        id: editingItem.id
+        id: editingItem.id,
+        dbId: editingItem.dbId
       });
       setEditingItem(null);
     } else {

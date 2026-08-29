@@ -10,7 +10,10 @@ from app.routers import (
     requests_router,
     donations_router,
     camps_router,
-    users_router
+    users_router,
+    hospitals_router,
+    settings_router,
+    reports_router
 )
 
 # Initialize database tables automatically in PostgreSQL
@@ -43,6 +46,9 @@ app.include_router(requests_router.router)
 app.include_router(donations_router.router)
 app.include_router(camps_router.router)
 app.include_router(users_router.router)
+app.include_router(hospitals_router.router)
+app.include_router(settings_router.router)
+app.include_router(reports_router.router)
 
 @app.get("/")
 def read_root():

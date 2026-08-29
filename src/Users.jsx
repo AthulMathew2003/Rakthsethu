@@ -158,7 +158,8 @@ export default function UsersPage({
     if (editingUser) {
       onEditUser({
         ...userData,
-        id: editingUser.id
+        id: editingUser.id,
+        dbId: editingUser.dbId
       });
       setEditingUser(null);
     } else {

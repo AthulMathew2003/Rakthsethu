@@ -25,10 +25,19 @@ def get_dashboard_stats(period: str = "This Month", db: Session = Depends(get_db
     total_units_donated = max(donations_sum, donor_donations_sum, 532)
     
     # 4. Total Blood Inventory Units
-    total_inventory = db.query(func.sum(models.BloodInventory.units_available)).scalar() or 0
+    batches = db.query(models.BloodInventoryBatch).all()
+    if batches:
+        total_inventory = sum(b.available_units for b in batches)
+    else:
+        total_inventory = db.query(func.sum(models.BloodInventory.units_available)).scalar() or 0
     
     # Inventory status check
-    inventory_status = "Sufficient" if total_inventory >= 200 else ("Low" if total_inventory >= 80 else "Critical")
+    inventory_status = "Sufficient" if total_inventory >= 100 else ("Low" if total_inventory >= 30 else "Critical")
+
+    # Counts for other tabs
+    total_hospitals = db.query(func.count(models.Hospital.id)).scalar() or 0
+    total_events = db.query(func.count(models.CampEvent.id)).scalar() or 0
+    total_users = db.query(func.count(models.User.id)).scalar() or 0
 
     # Construct Main Stats Cards
     stats: List[schemas.StatCard] = [
@@ -55,7 +64,7 @@ def get_dashboard_stats(period: str = "This Month", db: Session = Depends(get_db
         ),
         schemas.StatCard(
             title="Blood Inventory",
-            value=str(total_inventory),
+            value=f"{total_inventory} U",
             status=inventory_status,
             colorClass="stat-inventory",
             iconType="Package"
@@ -96,14 +105,30 @@ def get_dashboard_stats(period: str = "This Month", db: Session = Depends(get_db
 
     # 5. Inventory Chart Data across all 8 standard blood groups
     standard_groups = ['A+', 'A−', 'B+', 'B−', 'O+', 'O−', 'AB+', 'AB−']
-    inv_records = db.query(models.BloodInventory).all()
-    inv_dict = {item.blood_group: item.units_available for item in inv_records}
+    group_units = {g: 0 for g in standard_groups}
     
-    # Fill defaults if database record uses alternate hyphen
-    inventory_data = []
-    for grp in standard_groups:
-        val = inv_dict.get(grp, inv_dict.get(grp.replace('−', '-'), inv_dict.get(grp.replace('-', '−'), 25)))
-        inventory_data.append(schemas.InventoryChartItem(group=grp, value=val))
+    if batches:
+        for b in batches:
+            g = b.blood_group
+            if g in group_units:
+                group_units[g] += b.available_units
+            elif g.replace('-', '−') in group_units:
+                group_units[g.replace('-', '−')] += b.available_units
+            elif g.replace('−', '-') in group_units:
+                group_units[g.replace('−', '-')] += b.available_units
+    else:
+        inv_records = db.query(models.BloodInventory).all()
+        for item in inv_records:
+            g = item.blood_group
+            if g in group_units:
+                group_units[g] = item.units_available
+            elif g.replace('-', '−') in group_units:
+                group_units[g.replace('-', '−')] = item.units_available
+
+    inventory_data = [
+        schemas.InventoryChartItem(group=grp, value=group_units[grp])
+        for grp in standard_groups
+    ]
 
     # 6. Upcoming Camp from DB
     upcoming_camp_db = db.query(models.CampEvent).filter(
@@ -132,18 +157,19 @@ def get_dashboard_stats(period: str = "This Month", db: Session = Depends(get_db
     recent_requests = []
     for req in requests_db:
         status_class = "status-pending"
-        if req.status.lower() == "in progress":
+        st = req.status.lower()
+        if st in ["in progress", "approved"]:
             status_class = "status-inprogress"
-        elif req.status.lower() == "completed":
+        elif st in ["completed", "fulfilled"]:
             status_class = "status-completed"
-        elif req.status.lower() == "cancelled":
+        elif st in ["cancelled", "rejected"]:
             status_class = "status-cancelled"
 
         recent_requests.append(schemas.RecentRequestItem(
             id=req.id,
             group=req.blood_group,
             name=req.patient_name,
-            location=req.location,
+            location=req.district or req.location,
             time=req.time_ago or "Recent",
             status=req.status,
             statusClass=status_class,
@@ -161,5 +187,8 @@ def get_dashboard_stats(period: str = "This Month", db: Session = Depends(get_db
         activeDonorsCount=active_donors,
         totalInventoryUnits=total_inventory,
         totalRequestsCount=total_requests,
-        totalUnitsDonated=total_units_donated
+        totalUnitsDonated=total_units_donated,
+        hospitalsCount=total_hospitals,
+        eventsCount=total_events,
+        usersCount=total_users
     )

@@ -29,6 +29,34 @@ import {
   createDonor,
   updateDonor,
   deleteDonorApi,
+  fetchHospitals,
+  createHospital,
+  updateHospital,
+  deleteHospital,
+  fetchBloodRequests,
+  createBloodRequest,
+  updateBloodRequest,
+  updateBloodRequestStatus,
+  deleteBloodRequest,
+  fetchDonations,
+  createDonation,
+  updateDonation,
+  deleteDonation,
+  fetchInventoryBatches,
+  createInventoryBatch,
+  updateInventoryBatch,
+  adjustInventoryBatch,
+  deleteInventoryBatch,
+  fetchCampusEvents,
+  createCampusEvent,
+  updateCampusEvent,
+  updateCampusEventStatus,
+  deleteCampusEvent,
+  fetchAllUsers,
+  createUser,
+  updateUser,
+  updateUserStatus,
+  deleteUser,
   logoutUser
 } from './api.js';
 import HospitalsPage from './Hospitals.jsx';
@@ -95,379 +123,13 @@ export default function Dashboard({ user, onLogout }) {
     }
   }, [location.pathname]);
 
-  const [usersList, setUsersList] = useState([
-    {
-      id: "USR001",
-      name: "Anu Thomas",
-      email: "anu@example.com",
-      phone: "9845678901",
-      role: "Citizen",
-      district: "Kottayam",
-      panchayat: "Kanjirappally",
-      registeredDate: "2026-08-10",
-      lastActive: "2026-08-21",
-      status: "Active"
-    },
-    {
-      id: "USR002",
-      name: "Faisal Rahman",
-      email: "faisal@example.com",
-      phone: "9445123456",
-      role: "Panchayat Admin",
-      district: "Ernakulam",
-      panchayat: "Cheranallur",
-      registeredDate: "2026-08-16",
-      lastActive: "2026-08-22",
-      status: "Active"
-    },
-    {
-      id: "USR003",
-      name: "Meera Krishnan",
-      email: "meera@example.com",
-      phone: "9895012345",
-      role: "Department Admin",
-      district: "Kottayam",
-      panchayat: "Thellakom",
-      registeredDate: "2026-08-18",
-      lastActive: "2026-08-20",
-      status: "Inactive"
-    },
-    {
-      id: "USR004",
-      name: "Joseph Antony",
-      email: "joseph@example.com",
-      phone: "9747123458",
-      role: "Staff",
-      district: "Kozhikode",
-      panchayat: "Karanthur",
-      registeredDate: "2026-08-05",
-      lastActive: "2026-08-19",
-      status: "Suspended"
-    }
-  ]);
-
-  const [campusEventsList, setCampusEventsList] = useState([
-    {
-      id: "EV001",
-      title: "Blood Donation Camp",
-      type: "Blood Donation",
-      date: "2026-09-05",
-      startTime: "09:00 AM",
-      endTime: "03:00 PM",
-      venue: "College Auditorium",
-      organizer: "Rakthasedu",
-      participants: 120,
-      maxParticipants: 200,
-      description: "Campus blood donation awareness and collection camp.",
-      contactNumber: "9845678902",
-      registrationRequired: true,
-      registrationDeadline: "2026-09-03",
-      imageBanner: "https://images.unsplash.com/photo-1615461066841-6116e61058f4?q=80&w=600&auto=format&fit=crop",
-      status: "Upcoming"
-    },
-    {
-      id: "EV002",
-      title: "Health & Hygiene Camp",
-      type: "Health Camp",
-      date: "2026-09-12",
-      startTime: "10:00 AM",
-      endTime: "04:00 PM",
-      venue: "Seminar Hall",
-      organizer: "NSS & Rakthasedu",
-      participants: 85,
-      maxParticipants: 100,
-      description: "Free medical checkups, health advisory, and awareness programs.",
-      contactNumber: "9744123457",
-      registrationRequired: true,
-      registrationDeadline: "2026-09-10",
-      imageBanner: "",
-      status: "Upcoming"
-    },
-    {
-      id: "EV003",
-      title: "Volunteer Training Activity",
-      type: "Volunteer Activity",
-      date: "2026-08-22",
-      startTime: "02:00 PM",
-      endTime: "05:00 PM",
-      venue: "Conference Room B",
-      organizer: "Rakthasedu HQ",
-      participants: 30,
-      maxParticipants: 50,
-      description: "Orientation program for newly registered campus blood ambassadors.",
-      contactNumber: "9876543211",
-      registrationRequired: false,
-      registrationDeadline: "",
-      imageBanner: "",
-      status: "Ongoing"
-    },
-    {
-      id: "EV004",
-      title: "Awareness & Rally Session",
-      type: "Awareness Program",
-      date: "2026-08-15",
-      startTime: "09:00 AM",
-      endTime: "12:00 PM",
-      venue: "Campus Grounds",
-      organizer: "Red Ribbon Club",
-      participants: 250,
-      maxParticipants: 300,
-      description: "Independence Day blood donation awareness rally and talk.",
-      contactNumber: "9495178902",
-      registrationRequired: false,
-      registrationDeadline: "",
-      imageBanner: "",
-      status: "Completed"
-    }
-  ]);
-
-  const [bloodInventoryList, setBloodInventoryList] = useState([
-    {
-      id: "INV001",
-      bloodGroup: "O+",
-      component: "Whole Blood",
-      availableUnits: 18,
-      reservedUnits: 4,
-      totalUnits: 22,
-      collectionDate: "2026-08-15",
-      expiryDate: "2026-09-20",
-      storageLocation: "Blood Bank A - Rack 03",
-      notes: "Standard whole blood batch, tested and cleared."
-    },
-    {
-      id: "INV002",
-      bloodGroup: "O-",
-      component: "Packed RBC",
-      availableUnits: 3,
-      reservedUnits: 0,
-      totalUnits: 3,
-      collectionDate: "2026-08-10",
-      expiryDate: "2026-09-14",
-      storageLocation: "Blood Bank B - Freezer 01",
-      notes: "Rare blood group, low stock alert triggered."
-    },
-    {
-      id: "INV003",
-      bloodGroup: "A+",
-      component: "Plasma",
-      availableUnits: 25,
-      reservedUnits: 5,
-      totalUnits: 30,
-      collectionDate: "2026-08-01",
-      expiryDate: "2026-09-01",
-      storageLocation: "Blood Bank A - Plasma Freezer",
-      notes: "Expiring soon batch, monitor closely."
-    },
-    {
-      id: "INV004",
-      bloodGroup: "B+",
-      component: "Platelets",
-      availableUnits: 8,
-      reservedUnits: 2,
-      totalUnits: 10,
-      collectionDate: "2026-08-19",
-      expiryDate: "2026-08-24",
-      storageLocation: "Blood Bank B - Incubator 02",
-      notes: "Platelets have a short 5-day lifespan."
-    },
-    {
-      id: "INV005",
-      bloodGroup: "AB-",
-      component: "Cryoprecipitate",
-      availableUnits: 0,
-      reservedUnits: 0,
-      totalUnits: 0,
-      collectionDate: "2026-07-20",
-      expiryDate: "2026-08-20",
-      storageLocation: "Blood Bank A - Rack 04",
-      notes: "Batch expired, marked for safe disposal."
-    }
-  ]);
-
-  const [bloodDonationsList, setBloodDonationsList] = useState([
-    {
-      id: "DN001",
-      donorName: "Arun Kumar",
-      bloodGroup: "O+",
-      phone: "9845678901",
-      email: "arun@example.com",
-      district: "Kottayam",
-      address: "Arun Villa, Kottayam, Kerala",
-      donationDate: "2026-08-20",
-      donationType: "Voluntary",
-      unitsDonated: 1,
-      hospital: "Government Medical College Hospital",
-      status: "Completed",
-      notes: "Regular blood donor, overall health good."
-    },
-    {
-      id: "DN002",
-      donorName: "Saritha Varma",
-      bloodGroup: "A-",
-      phone: "9445123456",
-      email: "saritha@example.com",
-      district: "Ernakulam",
-      address: "Flat 4B, Skyview, Ernakulam, Kerala",
-      donationDate: "2026-08-22",
-      donationType: "Replacement",
-      unitsDonated: 1,
-      hospital: "Aster Medcity",
-      status: "Completed",
-      notes: "Donated for relative's surgery."
-    },
-    {
-      id: "DN003",
-      donorName: "Rahul Bose",
-      bloodGroup: "B+",
-      phone: "9895012345",
-      email: "rahul@example.com",
-      district: "Kozhikode",
-      address: "Bose House, Kozhikode, Kerala",
-      donationDate: "2026-08-28",
-      donationType: "Camp Donation",
-      unitsDonated: 2,
-      hospital: "Kozhikode Town Hall Camp",
-      status: "Scheduled",
-      notes: "Registered for upcoming donation drive."
-    },
-    {
-      id: "DN004",
-      donorName: "Anjali Menon",
-      bloodGroup: "AB+",
-      phone: "9747123458",
-      email: "anjali@example.com",
-      district: "Thiruvananthapuram",
-      address: "Anjali Nivas, TVM, Kerala",
-      donationDate: "2026-08-15",
-      donationType: "Directed Donation",
-      unitsDonated: 1,
-      hospital: "Sree Chitra Tirunal Hospital",
-      status: "Completed",
-      notes: "Directed donation for patient."
-    }
-  ]);
-
-  const [bloodRequestsList, setBloodRequestsList] = useState([
-    {
-      id: "BR001",
-      patientName: "Anu Thomas",
-      bloodGroup: "O+",
-      unitsRequired: 2,
-      hospital: "Government Medical College Hospital",
-      district: "Kottayam",
-      requiredDate: "2026-08-25",
-      contactNumber: "9845678902",
-      emergencyContact: "9744123457",
-      urgency: "Critical",
-      status: "Pending",
-      notes: "Urgently required for heart surgery."
-    },
-    {
-      id: "BR002",
-      patientName: "Faisal Rahman",
-      bloodGroup: "B-",
-      unitsRequired: 3,
-      hospital: "Aster Medcity",
-      district: "Ernakulam",
-      requiredDate: "2026-08-27",
-      contactNumber: "9876543211",
-      emergencyContact: "9895045613",
-      urgency: "Urgent",
-      status: "Approved",
-      notes: "Post-accident trauma, required by tomorrow morning."
-    },
-    {
-      id: "BR003",
-      patientName: "Meera Krishnan",
-      bloodGroup: "A+",
-      unitsRequired: 1,
-      hospital: "Caritas Hospital",
-      district: "Kottayam",
-      requiredDate: "2026-08-30",
-      contactNumber: "9447256780",
-      emergencyContact: "9654398766",
-      urgency: "Normal",
-      status: "Fulfilled",
-      notes: "Scheduled knee replacement surgery."
-    },
-    {
-      id: "BR004",
-      patientName: "Joseph Antony",
-      bloodGroup: "AB-",
-      unitsRequired: 2,
-      hospital: "Government Medical College Calicut",
-      district: "Kozhikode",
-      requiredDate: "2026-08-24",
-      contactNumber: "9495178902",
-      emergencyContact: "9747234568",
-      urgency: "Critical",
-      status: "In Progress",
-      notes: "Patient in ICU, emergency blood required."
-    }
-  ]);
-
-  const [hospitalsList, setHospitalsList] = useState([
-    {
-      id: 1,
-      name: "Government Medical College Hospital",
-      type: "Government",
-      district: "Kottayam",
-      panchayat: "Kumarakom",
-      address: "Kottayam, Kerala",
-      phone: "04812597311",
-      email: "gmc.ktm@kerala.gov.in",
-      emergencyNumber: "108",
-      latitude: 9.5916,
-      longitude: 76.5222,
-      services: ["Emergency", "Cardiology", "Orthopaedics", "Neurology"],
-      status: "Active"
-    },
-    {
-      id: 2,
-      name: "Aster Medcity",
-      type: "Private",
-      district: "Ernakulam",
-      panchayat: "Cheranallur",
-      address: "Kuttisahib Road, Cheranallur, Kochi, Kerala",
-      phone: "04846627000",
-      email: "info@astermedcity.com",
-      emergencyNumber: "04846627500",
-      latitude: 10.0264,
-      longitude: 76.2694,
-      services: ["Emergency", "Cardiology", "Oncology", "Pediatrics"],
-      status: "Active"
-    },
-    {
-      id: 3,
-      name: "Government Medical College Calicut",
-      type: "Government",
-      district: "Kozhikode",
-      panchayat: "Karanthur",
-      address: "Medical College Junction, Kozhikode, Kerala",
-      phone: "04952350216",
-      email: "principalmcc@gmail.com",
-      emergencyNumber: "108",
-      latitude: 11.2728,
-      longitude: 75.8369,
-      services: ["Emergency", "Cardiology", "General Surgery", "Nephrology"],
-      status: "Active"
-    },
-    {
-      id: 4,
-      name: "Caritas Hospital",
-      type: "Private",
-      district: "Kottayam",
-      panchayat: "Thellakom",
-      address: "Thellakom P.O., Kottayam, Kerala",
-      phone: "04812790025",
-      email: "caritas@caritashospital.org",
-      emergencyNumber: "04812790000",
-      latitude: 9.6267,
-      longitude: 76.5278,
-      services: ["Emergency", "Gastroenterology", "Urology", "Cardiology"],
-      status: "Inactive"
-    }
-  ]);
+  // ─── Real Database Lists ──────────────────────────────────
+  const [usersList, setUsersList] = useState([]);
+  const [campusEventsList, setCampusEventsList] = useState([]);
+  const [bloodInventoryList, setBloodInventoryList] = useState([]);
+  const [bloodDonationsList, setBloodDonationsList] = useState([]);
+  const [bloodRequestsList, setBloodRequestsList] = useState([]);
+  const [hospitalsList, setHospitalsList] = useState([]);
 
   const [inventoryPeriod, setInventoryPeriod] = useState('This Month');
 
@@ -477,7 +139,7 @@ export default function Dashboard({ user, onLogout }) {
   const [inventoryData, setInventoryData] = useState([]);
   const [recentRequests, setRecentRequests] = useState([]);
   const [upcomingCamp, setUpcomingCamp] = useState(null);
-  const [notificationCount, setNotificationCount] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(3);
   const [totalDonorsCount, setTotalDonorsCount] = useState(0);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState(null);
@@ -532,6 +194,162 @@ export default function Dashboard({ user, onLogout }) {
     { name: 'Settings', icon: <Settings size={18} /> }
   ];
 
+  // ─── Module API Loaders ───────────────────────────────────
+  const loadHospitals = useCallback(async () => {
+    try {
+      const data = await fetchHospitals();
+      setHospitalsList(data.map(h => ({
+        id: h.hospital_code || `HOSP${String(h.id).padStart(3, '0')}`,
+        dbId: h.id,
+        name: h.name,
+        type: h.type,
+        district: h.district,
+        panchayat: h.panchayat || '',
+        address: h.address,
+        phone: h.phone || '',
+        email: h.email || '',
+        emergencyNumber: h.emergency_number || '108',
+        latitude: h.latitude,
+        longitude: h.longitude,
+        services: Array.isArray(h.services) ? h.services : (h.services ? h.services.split(',').map(s => s.trim()) : []),
+        status: h.status || 'Active'
+      })));
+    } catch (err) {
+      console.warn('Failed to load hospitals:', err);
+    }
+  }, []);
+
+  const loadBloodRequests = useCallback(async () => {
+    try {
+      const data = await fetchBloodRequests();
+      setBloodRequestsList(data.map(r => ({
+        id: r.request_code || `BR${String(r.id).padStart(3, '0')}`,
+        dbId: r.id,
+        patientName: r.patient_name,
+        bloodGroup: r.blood_group,
+        unitsRequired: r.units_requested,
+        hospital: r.hospital_name,
+        district: r.district || 'Kottayam',
+        location: r.location || r.district || 'Kottayam',
+        contactNumber: r.contact_phone,
+        emergencyContact: r.emergency_contact || '',
+        requiredDate: r.required_date || '',
+        urgency: r.urgency || 'Normal',
+        status: r.status || 'Pending',
+        notes: r.notes || '',
+        timeAgo: r.time_ago || 'Recent'
+      })));
+    } catch (err) {
+      console.warn('Failed to load blood requests:', err);
+    }
+  }, []);
+
+  const loadBloodDonations = useCallback(async () => {
+    try {
+      const data = await fetchDonations();
+      setBloodDonationsList(data.map(d => ({
+        id: d.donation_code || `DN${String(d.id).padStart(3, '0')}`,
+        dbId: d.id,
+        donorName: d.donor_name,
+        bloodGroup: d.blood_group,
+        phone: d.phone || '',
+        email: d.email || '',
+        district: d.district || 'Kottayam',
+        address: d.address || '',
+        donationDate: d.donation_date,
+        donationType: d.donation_type || 'Voluntary',
+        unitsDonated: d.units,
+        hospital: d.hospital || d.venue || 'Blood Bank',
+        venue: d.venue || d.hospital || 'Blood Bank',
+        status: d.status || 'Completed',
+        notes: d.notes || ''
+      })));
+    } catch (err) {
+      console.warn('Failed to load blood donations:', err);
+    }
+  }, []);
+
+  const loadInventoryBatches = useCallback(async () => {
+    try {
+      const data = await fetchInventoryBatches();
+      setBloodInventoryList(data.map(b => ({
+        id: b.batch_code || `INV${String(b.id).padStart(3, '0')}`,
+        dbId: b.id,
+        bloodGroup: b.blood_group,
+        component: b.component,
+        availableUnits: b.available_units,
+        reservedUnits: b.reserved_units || 0,
+        totalUnits: b.available_units + (b.reserved_units || 0),
+        collectionDate: b.collection_date,
+        expiryDate: b.expiry_date,
+        storageLocation: b.storage_location,
+        status: b.status,
+        notes: b.notes || ''
+      })));
+    } catch (err) {
+      console.warn('Failed to load inventory batches:', err);
+    }
+  }, []);
+
+  const loadCampusEvents = useCallback(async () => {
+    try {
+      const data = await fetchCampusEvents();
+      setCampusEventsList(data.map(e => ({
+        id: e.camp_code || `EV${String(e.id).padStart(3, '0')}`,
+        dbId: e.id,
+        title: e.title,
+        type: e.type || 'Blood Donation',
+        date: e.event_date,
+        startTime: e.start_time || '09:00 AM',
+        endTime: e.end_time || '03:00 PM',
+        venue: e.venue || e.location,
+        location: e.location,
+        organizer: e.organizer,
+        participants: e.participants || 0,
+        maxParticipants: e.max_participants || 100,
+        description: e.description || '',
+        contactNumber: e.contact_number || '',
+        registrationRequired: e.registration_required,
+        registrationDeadline: e.registration_deadline || '',
+        imageBanner: e.image_banner || '',
+        status: e.status || 'Upcoming'
+      })));
+    } catch (err) {
+      console.warn('Failed to load campus events:', err);
+    }
+  }, []);
+
+  const loadUsers = useCallback(async () => {
+    try {
+      const data = await fetchAllUsers();
+      setUsersList(data.map(u => ({
+        id: u.user_code || `USR${String(u.id).padStart(3, '0')}`,
+        dbId: u.id,
+        name: u.full_name || u.email,
+        email: u.email,
+        phone: u.phone_number || '',
+        role: u.role || 'Citizen',
+        district: u.district || 'Kottayam',
+        panchayat: u.panchayat || '',
+        registeredDate: u.registered_date || '2026-08-01',
+        lastActive: u.last_active || '2026-08-22',
+        status: u.status || 'Active'
+      })));
+    } catch (err) {
+      console.warn('Failed to load users:', err);
+    }
+  }, []);
+
+  // Initial load of all modules from DB
+  useEffect(() => {
+    loadHospitals();
+    loadBloodRequests();
+    loadBloodDonations();
+    loadInventoryBatches();
+    loadCampusEvents();
+    loadUsers();
+  }, [loadHospitals, loadBloodRequests, loadBloodDonations, loadInventoryBatches, loadCampusEvents, loadUsers]);
+
   // ─── Fetch Dashboard Stats from API ───────────────────────
   const loadDashboardStats = useCallback(async () => {
     setDashboardLoading(true);
@@ -539,47 +357,19 @@ export default function Dashboard({ user, onLogout }) {
     try {
       const data = await fetchDashboardStats(inventoryPeriod);
 
-      // Map stats cards with icons
-      const fetchedStats = data.stats.map((s) => {
-        if (s.title === "Blood Requests") {
-          return {
-            ...s,
-            value: String(bloodRequestsList.length),
-            growth: "↑ from local mock data",
-            icon: getIconComponent(s.iconType)
-          };
-        }
-        if (s.title === "Units Donated") {
-          return {
-            ...s,
-            value: String(bloodDonationsList.filter(d => d.status === 'Completed').reduce((sum, d) => sum + d.unitsDonated, 0)),
-            growth: "↑ from local mock data",
-            icon: getIconComponent(s.iconType)
-          };
-        }
-        if (s.title === "Blood Inventory") {
-          return {
-            ...s,
-            value: String(bloodInventoryList.reduce((sum, item) => sum + item.availableUnits, 0)),
-            growth: "↑ from local mock data",
-            icon: getIconComponent(s.iconType)
-          };
-        }
-        return {
-          ...s,
-          icon: getIconComponent(s.iconType),
-        };
-      });
+      const fetchedStats = data.stats.map((s) => ({
+        ...s,
+        icon: getIconComponent(s.iconType),
+      }));
 
-      // Inject Total Hospitals card
+      // Extra stats cards for overview
       const hospitalCard = {
         title: "Total Hospitals",
-        value: String(hospitalsList.length),
+        value: String(data.hospitalsCount || hospitalsList.length),
         colorClass: "stat-requests",
         icon: <Hospital size={20} className="stat-icon-svg" />
       };
 
-      // Inject extra Blood Request stats
       const pendingCard = {
         title: "Pending Requests",
         value: String(bloodRequestsList.filter(r => r.status === 'Pending').length),
@@ -601,7 +391,6 @@ export default function Dashboard({ user, onLogout }) {
         icon: <Package size={20} className="stat-icon-svg" />
       };
 
-      // Inject extra Blood Donation stats
       const totalDonationsCard = {
         title: "Total Donations",
         value: String(bloodDonationsList.length),
@@ -643,14 +432,14 @@ export default function Dashboard({ user, onLogout }) {
       setRecentRequests(data.recentRequests);
       setUpcomingCamp(data.upcomingCamp);
       setTotalDonorsCount(data.totalDonorsCount);
-      setNotificationCount(3); // Could come from a notifications endpoint
+      setNotificationCount(3);
     } catch (err) {
       console.error('Failed to load dashboard stats:', err);
       setDashboardError(err.message);
     } finally {
       setDashboardLoading(false);
     }
-  }, [inventoryPeriod, hospitalsList.length, bloodRequestsList, bloodDonationsList, bloodInventoryList]);
+  }, [inventoryPeriod, hospitalsList.length, bloodRequestsList, bloodDonationsList]);
 
   useEffect(() => {
     loadDashboardStats();
@@ -1183,133 +972,239 @@ export default function Dashboard({ user, onLogout }) {
         ) : activeTab === 'Hospitals' ? (
           <HospitalsPage
             hospitals={hospitalsList}
-            onAddHospital={(newHosp) => {
-              setHospitalsList(prev => [...prev, { ...newHosp, id: prev.length > 0 ? Math.max(...prev.map(h => h.id)) + 1 : 1 }]);
+            onAddHospital={async (newHosp) => {
+              try {
+                await createHospital(newHosp);
+                await loadHospitals();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to add hospital: ${err.message}`);
+              }
             }}
-            onEditHospital={(updatedHosp) => {
-              setHospitalsList(prev => prev.map(h => h.id === updatedHosp.id ? updatedHosp : h));
+            onEditHospital={async (updatedHosp) => {
+              try {
+                await updateHospital(updatedHosp.dbId || updatedHosp.id, updatedHosp);
+                await loadHospitals();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to update hospital: ${err.message}`);
+              }
             }}
-            onDeleteHospital={(id) => {
-              setHospitalsList(prev => prev.filter(h => h.id !== id));
+            onDeleteHospital={async (id) => {
+              try {
+                const target = hospitalsList.find(h => h.id === id || h.dbId === id);
+                await deleteHospital(target?.dbId || id);
+                await loadHospitals();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to delete hospital: ${err.message}`);
+              }
             }}
           />
         ) : activeTab === 'Blood Requests' ? (
           <BloodRequestsPage
             requests={bloodRequestsList}
-            onAddRequest={(newReq) => {
-              setBloodRequestsList(prev => [
-                ...prev,
-                {
-                  ...newReq,
-                  id: `BR${String(prev.length > 0 ? Math.max(...prev.map(r => parseInt(r.id.replace('BR', ''), 10))) + 1 : 1).padStart(3, '0')}`
-                }
-              ]);
+            onAddRequest={async (newReq) => {
+              try {
+                await createBloodRequest(newReq);
+                await loadBloodRequests();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to create blood request: ${err.message}`);
+              }
             }}
-            onEditRequest={(updatedReq) => {
-              setBloodRequestsList(prev => prev.map(r => r.id === updatedReq.id ? updatedReq : r));
+            onEditRequest={async (updatedReq) => {
+              try {
+                await updateBloodRequest(updatedReq.dbId || updatedReq.id, updatedReq);
+                await loadBloodRequests();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to update blood request: ${err.message}`);
+              }
             }}
-            onDeleteRequest={(id) => {
-              setBloodRequestsList(prev => prev.filter(r => r.id !== id));
+            onDeleteRequest={async (id) => {
+              try {
+                const target = bloodRequestsList.find(r => r.id === id || r.dbId === id);
+                await deleteBloodRequest(target?.dbId || id);
+                await loadBloodRequests();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to delete blood request: ${err.message}`);
+              }
             }}
-            onStatusChange={(id, status) => {
-              setBloodRequestsList(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+            onStatusChange={async (id, status) => {
+              try {
+                const target = bloodRequestsList.find(r => r.id === id || r.dbId === id);
+                await updateBloodRequestStatus(target?.dbId || id, status);
+                await loadBloodRequests();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to update status: ${err.message}`);
+              }
             }}
           />
         ) : activeTab === 'Blood Donations' ? (
           <BloodDonationsPage
             donations={bloodDonationsList}
-            onAddDonation={(newDon) => {
-              setBloodDonationsList(prev => [
-                ...prev,
-                {
-                  ...newDon,
-                  id: `DN${String(prev.length > 0 ? Math.max(...prev.map(d => parseInt(d.id.replace('DN', ''), 10))) + 1 : 1).padStart(3, '0')}`
-                }
-              ]);
+            onAddDonation={async (newDon) => {
+              try {
+                await createDonation(newDon);
+                await loadBloodDonations();
+                await loadInventoryBatches();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to record donation: ${err.message}`);
+              }
             }}
-            onEditDonation={(updatedDon) => {
-              setBloodDonationsList(prev => prev.map(d => d.id === updatedDon.id ? updatedDon : d));
+            onEditDonation={async (updatedDon) => {
+              try {
+                await updateDonation(updatedDon.dbId || updatedDon.id, updatedDon);
+                await loadBloodDonations();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to update donation: ${err.message}`);
+              }
             }}
-            onDeleteDonation={(id) => {
-              setBloodDonationsList(prev => prev.filter(d => d.id !== id));
+            onDeleteDonation={async (id) => {
+              try {
+                const target = bloodDonationsList.find(d => d.id === id || d.dbId === id);
+                await deleteDonation(target?.dbId || id);
+                await loadBloodDonations();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to delete donation: ${err.message}`);
+              }
             }}
           />
         ) : activeTab === 'Blood Inventory' ? (
           <BloodInventoryPage
             inventory={bloodInventoryList}
-            onAddStock={(newStock) => {
-              setBloodInventoryList(prev => [
-                ...prev,
-                {
-                  ...newStock,
-                  id: `INV${String(prev.length > 0 ? Math.max(...prev.map(i => parseInt(i.id.replace('INV', ''), 10))) + 1 : 1).padStart(3, '0')}`
+            onAddStock={async (newStock) => {
+              try {
+                await createInventoryBatch(newStock);
+                await loadInventoryBatches();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to add blood stock: ${err.message}`);
+              }
+            }}
+            onEditStock={async (updatedStock) => {
+              try {
+                await updateInventoryBatch(updatedStock.dbId || updatedStock.id, updatedStock);
+                await loadInventoryBatches();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to update blood stock: ${err.message}`);
+              }
+            }}
+            onDeleteStock={async (id) => {
+              try {
+                const target = bloodInventoryList.find(i => i.id === id || i.dbId === id);
+                await deleteInventoryBatch(target?.dbId || id);
+                await loadInventoryBatches();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to delete blood stock: ${err.message}`);
+              }
+            }}
+            onAdjustStock={async (id, newAvail, reason) => {
+              try {
+                const target = bloodInventoryList.find(i => i.id === id || i.dbId === id);
+                if (target) {
+                  const delta = newAvail - target.availableUnits;
+                  const type = delta >= 0 ? 'add' : 'remove';
+                  const qty = Math.abs(delta);
+                  await adjustInventoryBatch(target.dbId || id, type, qty, reason);
+                  await loadInventoryBatches();
+                  loadDashboardStats();
                 }
-              ]);
-            }}
-            onEditStock={(updatedStock) => {
-              setBloodInventoryList(prev => prev.map(i => i.id === updatedStock.id ? updatedStock : i));
-            }}
-            onDeleteStock={(id) => {
-              setBloodInventoryList(prev => prev.filter(i => i.id !== id));
-            }}
-            onAdjustStock={(id, newAvail, reason) => {
-              setBloodInventoryList(prev => prev.map(i => {
-                if (i.id === id) {
-                  const delta = newAvail - i.availableUnits;
-                  const adjText = `[Adjusted Available Stock: ${newAvail} Units (delta: ${delta > 0 ? '+' : ''}${delta}). Reason: ${reason}]`;
-                  return {
-                    ...i,
-                    availableUnits: newAvail,
-                    totalUnits: newAvail + i.reservedUnits,
-                    notes: i.notes ? `${i.notes}\n${adjText}` : adjText
-                  };
-                }
-                return i;
-              }));
+              } catch (err) {
+                alert(`Failed to adjust stock: ${err.message}`);
+              }
             }}
           />
         ) : activeTab === 'Campus Events' ? (
           <CampusEventsPage
             events={campusEventsList}
-            onCreateEvent={(newEvt) => {
-              setCampusEventsList(prev => [
-                ...prev,
-                {
-                  ...newEvt,
-                  id: `EV${String(prev.length > 0 ? Math.max(...prev.map(e => parseInt(e.id.replace('EV', ''), 10))) + 1 : 1).padStart(3, '0')}`
-                }
-              ]);
+            onCreateEvent={async (newEvt) => {
+              try {
+                await createCampusEvent(newEvt);
+                await loadCampusEvents();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to create event: ${err.message}`);
+              }
             }}
-            onEditEvent={(updatedEvt) => {
-              setCampusEventsList(prev => prev.map(e => e.id === updatedEvt.id ? updatedEvt : e));
+            onEditEvent={async (updatedEvt) => {
+              try {
+                await updateCampusEvent(updatedEvt.dbId || updatedEvt.id, updatedEvt);
+                await loadCampusEvents();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to update event: ${err.message}`);
+              }
             }}
-            onDeleteEvent={(id) => {
-              setCampusEventsList(prev => prev.filter(e => e.id !== id));
+            onDeleteEvent={async (id) => {
+              try {
+                const target = campusEventsList.find(e => e.id === id || e.dbId === id);
+                await deleteCampusEvent(target?.dbId || id);
+                await loadCampusEvents();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to delete event: ${err.message}`);
+              }
             }}
-            onStatusChange={(id, status) => {
-              setCampusEventsList(prev => prev.map(e => e.id === id ? { ...e, status } : e));
+            onStatusChange={async (id, status) => {
+              try {
+                const target = campusEventsList.find(e => e.id === id || e.dbId === id);
+                await updateCampusEventStatus(target?.dbId || id, status);
+                await loadCampusEvents();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to update event status: ${err.message}`);
+              }
             }}
           />
         ) : activeTab === 'Users' ? (
           <UsersPage
             users={usersList}
-            onAddUser={(newUser) => {
-              setUsersList(prev => [
-                ...prev,
-                {
-                  ...newUser,
-                  id: `USR${String(prev.length > 0 ? Math.max(...prev.map(u => parseInt(u.id.replace('USR', ''), 10))) + 1 : 1).padStart(3, '0')}`
-                }
-              ]);
+            onAddUser={async (newUser) => {
+              try {
+                await createUser(newUser);
+                await loadUsers();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to create user: ${err.message}`);
+              }
             }}
-            onEditUser={(updatedUser) => {
-              setUsersList(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+            onEditUser={async (updatedUser) => {
+              try {
+                await updateUser(updatedUser.dbId || updatedUser.id, updatedUser);
+                await loadUsers();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to update user: ${err.message}`);
+              }
             }}
-            onDeleteUser={(id) => {
-              setUsersList(prev => prev.filter(u => u.id !== id));
+            onDeleteUser={async (id) => {
+              try {
+                const target = usersList.find(u => u.id === id || u.dbId === id);
+                await deleteUser(target?.dbId || id);
+                await loadUsers();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to delete user: ${err.message}`);
+              }
             }}
-            onStatusChange={(id, status) => {
-              setUsersList(prev => prev.map(u => u.id === id ? { ...u, status } : u));
+            onStatusChange={async (id, status) => {
+              try {
+                const target = usersList.find(u => u.id === id || u.dbId === id);
+                await updateUserStatus(target?.dbId || id, status);
+                await loadUsers();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Failed to update user status: ${err.message}`);
+              }
             }}
           />
         ) : activeTab === 'Reports' ? (

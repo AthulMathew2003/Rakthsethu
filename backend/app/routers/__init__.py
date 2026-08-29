@@ -8,4 +8,7 @@ from app.routers import (
     donations_router,
     camps_router,
     users_router,
+    hospitals_router,
+    settings_router,
+    reports_router,
 )

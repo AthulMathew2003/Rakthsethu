@@ -167,7 +167,8 @@ export default function CampusEventsPage({
     if (editingEvent) {
       onEditEvent({
         ...eventData,
-        id: editingEvent.id
+        id: editingEvent.id,
+        dbId: editingEvent.dbId
       });
       setEditingEvent(null);
     } else {

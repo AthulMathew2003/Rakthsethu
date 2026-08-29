@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Settings as SettingsIcon,
   User,
@@ -10,8 +10,15 @@ import {
   X,
   Info,
   Camera,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
+import {
+  fetchSettings,
+  saveSettings,
+  updateProfileSettings,
+  changePasswordApi
+} from './api.js';
 
 const TABS = [
   { id: 'general', label: 'General', icon: <Sliders size={18} /> },
@@ -24,8 +31,8 @@ const TABS = [
 
 const DEFAULT_SETTINGS = {
   general: {
-    appName: 'Rakthasedu',
-    orgName: 'Rakthasedu Blood Management System',
+    appName: 'Rakthasethu',
+    orgName: 'Rakthasethu Blood Management System',
     email: 'admin@rakthasethu.org',
     phone: '+91 94951 78902',
     defaultDistrict: 'Kottayam',
@@ -71,6 +78,7 @@ const DEFAULT_SETTINGS = {
 export default function SettingsPage({ onProfileNameChange }) {
   const [activeSubTab, setActiveSubTab] = useState('general');
   const [settingsState, setSettingsState] = useState(() => JSON.parse(JSON.stringify(DEFAULT_SETTINGS)));
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
   // Form password states
   const [passwordForm, setPasswordForm] = useState({
@@ -88,35 +96,81 @@ export default function SettingsPage({ onProfileNameChange }) {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleSaveGeneral = (e) => {
-    e.preventDefault();
-    showToast('Settings saved successfully.');
-  };
+  // Load persistent settings from database on mount
+  useEffect(() => {
+    fetchSettings()
+      .then((data) => {
+        if (data) {
+          setSettingsState(prev => ({
+            ...prev,
+            ...data
+          }));
+          if (data.profile?.fullName && onProfileNameChange) {
+            onProfileNameChange(data.profile.fullName);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not load settings from DB, using defaults:', err);
+      })
+      .finally(() => {
+        setLoadingSettings(false);
+      });
+  }, [onProfileNameChange]);
 
-  const handleSaveProfile = (e) => {
+  const handleSaveGeneral = async (e) => {
     e.preventDefault();
-    showToast('Profile updated successfully.');
-    // Trigger callback to update top-right Admin display name in Dashboard.jsx header
-    if (onProfileNameChange) {
-      onProfileNameChange(settingsState.profile.fullName);
+    try {
+      await saveSettings({ general: settingsState.general });
+      showToast('Settings saved successfully in database.');
+    } catch (err) {
+      showToast(`Error saving settings: ${err.message}`);
     }
   };
 
-  const handleSaveNotifications = () => {
-    showToast('Notification preferences updated.');
-  };
-
-  const handleSaveAppearance = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    showToast('Appearance settings saved.');
+    try {
+      await updateProfileSettings(settingsState.profile);
+      showToast('Profile updated and saved to database.');
+      if (onProfileNameChange) {
+        onProfileNameChange(settingsState.profile.fullName);
+      }
+    } catch (err) {
+      showToast(`Error saving profile: ${err.message}`);
+    }
   };
 
-  const handleSaveSystem = (e) => {
+  const handleSaveNotifications = async () => {
+    try {
+      await saveSettings({ notifications: settingsState.notifications });
+      showToast('Notification preferences updated.');
+    } catch (err) {
+      showToast(`Error saving notifications: ${err.message}`);
+    }
+  };
+
+  const handleSaveAppearance = async (e) => {
     e.preventDefault();
-    showToast('System variables saved successfully.');
+    try {
+      await saveSettings({ appearance: settingsState.appearance });
+      showToast('Appearance settings saved.');
+    } catch (err) {
+      showToast(`Error saving appearance: ${err.message}`);
+    }
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handleSaveSystem = async (e) => {
+    e.preventDefault();
+    try {
+      await saveSettings({ system: settingsState.system });
+      showToast('System variables saved successfully.');
+    } catch (err) {
+      showToast(`Error saving system settings: ${err.message}`);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmNewPassword) {
       alert('Please fill in all password fields.');
@@ -126,16 +180,26 @@ export default function SettingsPage({ onProfileNameChange }) {
       alert('New password and confirm password do not match.');
       return;
     }
-    showToast('Password update will be available after backend integration.');
-    setPasswordForm({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+    try {
+      await changePasswordApi(passwordForm.currentPassword, passwordForm.newPassword);
+      showToast('Password successfully updated.');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+    } catch (err) {
+      showToast(`Failed to update password: ${err.message}`);
+    }
   };
 
-  const handleResetToDefault = () => {
-    setSettingsState(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)));
-    setIsResetWarningOpen(false);
-    showToast('All settings reset to baseline default values.');
-    if (onProfileNameChange) {
-      onProfileNameChange(DEFAULT_SETTINGS.profile.fullName);
+  const handleResetToDefault = async () => {
+    try {
+      await saveSettings(DEFAULT_SETTINGS);
+      setSettingsState(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)));
+      setIsResetWarningOpen(false);
+      showToast('All settings reset to baseline default values.');
+      if (onProfileNameChange) {
+        onProfileNameChange(DEFAULT_SETTINGS.profile.fullName);
+      }
+    } catch (err) {
+      showToast(`Failed to reset settings: ${err.message}`);
     }
   };
 

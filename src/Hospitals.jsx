@@ -137,7 +137,8 @@ export default function HospitalsPage({
     if (editingHospital) {
       onEditHospital({
         ...hospitalData,
-        id: editingHospital.id
+        id: editingHospital.id,
+        dbId: editingHospital.dbId
       });
       setEditingHospital(null);
     } else {

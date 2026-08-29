@@ -159,7 +159,8 @@ export default function BloodRequestsPage({
     if (editingRequest) {
       onEditRequest({
         ...requestData,
-        id: editingRequest.id
+        id: editingRequest.id,
+        dbId: editingRequest.dbId
       });
       setEditingRequest(null);
     } else {

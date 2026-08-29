@@ -4,18 +4,24 @@ import Login from './Login.jsx';
 import Dashboard from './Dashboard.jsx';
 import { getToken, clearToken, fetchCurrentUser } from './api.js';
 
+const isAdminRole = (role) => {
+  if (!role) return false;
+  const r = String(role).toLowerCase();
+  return r.includes('admin') || r.includes('staff');
+};
+
 function ProtectedRoute({ user, children }) {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  if (user.role !== 'Admin') {
+  if (!isAdminRole(user.role)) {
     return <Navigate to="/login" replace />;
   }
   return children;
 }
 
 function LoginWrapper({ user, onLoginSuccess }) {
-  if (user && user.role === 'Admin') {
+  if (user && isAdminRole(user.role)) {
     return <Navigate to="/admin/dashboard" replace />;
   }
   return <Login onLoginSuccess={onLoginSuccess} />;
@@ -153,13 +159,13 @@ function App() {
         <Route
           path="/"
           element={
-            <Navigate to={user && user.role === 'Admin' ? '/admin/dashboard' : '/login'} replace />
+            <Navigate to={user && isAdminRole(user.role) ? '/admin/dashboard' : '/login'} replace />
           }
         />
         <Route
           path="*"
           element={
-            <Navigate to={user && user.role === 'Admin' ? '/admin/dashboard' : '/login'} replace />
+            <Navigate to={user && isAdminRole(user.role) ? '/admin/dashboard' : '/login'} replace />
           }
         />
       </Routes>
