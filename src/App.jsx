@@ -46,10 +46,13 @@ function App() {
         .then((apiUser) => {
           // Update stored user with latest data from backend
           const updatedUser = {
-            name: apiUser.full_name || apiUser.email,
-            role: apiUser.role || 'Admin',
-            email: apiUser.email,
             id: apiUser.id,
+            user_code: apiUser.user_code,
+            name: apiUser.full_name || apiUser.email,
+            role: apiUser.role || 'STAFF',
+            email: apiUser.email,
+            hospital_id: apiUser.hospital_id,
+            district: apiUser.district,
           };
           setUser(updatedUser);
           localStorage.setItem('user', JSON.stringify(updatedUser));

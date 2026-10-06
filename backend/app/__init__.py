@@ -1,1 +1,3 @@
-# Rakthasethu FastAPI Application Package
+"""
+Rakthasethu Backend Application Package
+"""

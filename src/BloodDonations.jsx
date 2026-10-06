@@ -11,40 +11,34 @@ import {
   Phone,
   ShieldAlert,
   MapPin,
-  FileText
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
+import { DISTRICTS, BLOOD_GROUPS, DONATION_STATUSES, DONATION_TYPES } from './types.js';
 
-const DISTRICTS = [
-  'Kottayam',
-  'Ernakulam',
-  'Kozhikode',
-  'Thiruvananthapuram',
-  'Alappuzha',
-  'Idukki',
-  'Kannur',
-  'Kasaragod',
-  'Kollam',
-  'Malappuram',
-  'Palakkad',
-  'Pathanamthitta',
-  'Thrissur',
-  'Wayanad'
-];
+const ALL_STATUSES = ['Scheduled', 'Completed', 'Cancelled', 'Rejected'];
 
-const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-const DONATION_TYPES = ['Voluntary', 'Replacement', 'Camp Donation', 'Directed Donation'];
-const STATUSES = ['Scheduled', 'Completed', 'Cancelled', 'Rejected'];
+// Helper for allowed donation status transitions
+function getAllowedDonationStatuses(currentStatus) {
+  const norm = (currentStatus || 'Scheduled').toLowerCase();
+  if (norm === 'scheduled') {
+    return ['Scheduled', 'Completed', 'Cancelled', 'Rejected'];
+  }
+  // Terminal states cannot transition
+  return [currentStatus];
+}
 
 // Helper to get status class for badge styling
 function getStatusStyles(status) {
-  switch (status) {
-    case 'Scheduled':
+  const norm = (status || '').toLowerCase();
+  switch (norm) {
+    case 'scheduled':
       return { bg: '#EFF6FF', text: '#2563EB', border: '#BFDBFE' }; // blue
-    case 'Completed':
+    case 'completed':
       return { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0' }; // green
-    case 'Cancelled':
+    case 'cancelled':
       return { bg: '#F1F5F9', text: '#475569', border: '#CBD5E1' }; // slate
-    case 'Rejected':
+    case 'rejected':
       return { bg: '#FEF2F2', text: '#DC2626', border: '#FCA5A5' }; // red
     default:
       return { bg: '#F3F4F6', text: '#374151', border: '#E5E7EB' };
@@ -55,7 +49,10 @@ export default function BloodDonationsPage({
   donations,
   onAddDonation,
   onEditDonation,
-  onDeleteDonation
+  onDeleteDonation,
+  onStatusChange,
+  donors = [],
+  hospitals = []
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [bloodGroupFilter, setBloodGroupFilter] = useState('All');
@@ -74,32 +71,36 @@ export default function BloodDonationsPage({
 
   // Form State
   const [donationForm, setDonationForm] = useState({
+    donorId: '',
     donorName: '',
     bloodGroup: 'O+',
     phone: '',
     email: '',
     district: 'Kottayam',
     address: '',
-    donationDate: '',
+    donationDate: new Date().toISOString().split('T')[0],
     donationType: 'Voluntary',
     unitsDonated: 1,
     hospital: '',
+    hospitalId: '',
     status: 'Completed',
     notes: ''
   });
 
   const resetForm = () => {
     setDonationForm({
-      donorName: '',
-      bloodGroup: 'O+',
-      phone: '',
-      email: '',
-      district: 'Kottayam',
+      donorId: donors[0]?.dbId || donors[0]?.id || '',
+      donorName: donors[0]?.name || '',
+      bloodGroup: donors[0]?.group || 'O+',
+      phone: donors[0]?.phone || '',
+      email: donors[0]?.email || '',
+      district: donors[0]?.location || 'Kottayam',
       address: '',
-      donationDate: '',
+      donationDate: new Date().toISOString().split('T')[0],
       donationType: 'Voluntary',
       unitsDonated: 1,
-      hospital: '',
+      hospital: hospitals[0]?.name || 'District Blood Bank',
+      hospitalId: hospitals[0]?.dbId || hospitals[0]?.id || '',
       status: 'Completed',
       notes: ''
     });
@@ -112,6 +113,7 @@ export default function BloodDonationsPage({
 
   const handleOpenEditModal = (don) => {
     setDonationForm({
+      donorId: don.donorId || don.dbId || '',
       donorName: don.donorName,
       bloodGroup: don.bloodGroup,
       phone: don.phone,
@@ -121,7 +123,8 @@ export default function BloodDonationsPage({
       donationDate: don.donationDate,
       donationType: don.donationType || 'Voluntary',
       unitsDonated: don.unitsDonated || 1,
-      hospital: don.hospital || '',
+      hospital: don.hospital || 'District Blood Bank',
+      hospitalId: don.hospitalId || '',
       status: don.status || 'Completed',
       notes: don.notes || ''
     });
@@ -131,30 +134,33 @@ export default function BloodDonationsPage({
   const handleSaveDonationSubmit = (e) => {
     e.preventDefault();
     if (
-      !donationForm.donorName ||
-      !donationForm.bloodGroup ||
-      !donationForm.phone ||
-      !donationForm.district ||
       !donationForm.donationDate ||
-      !donationForm.donationType ||
       !donationForm.unitsDonated
     ) {
       alert('Please fill in all required fields.');
       return;
     }
 
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (donationForm.status === 'Completed' && donationForm.donationDate > todayStr) {
+      alert('Completed donations cannot be recorded with a future date. Please select today or a past date, or set status to Scheduled.');
+      return;
+    }
+
     const donationData = {
+      donor_id: donationForm.donorId ? parseInt(donationForm.donorId, 10) : undefined,
       donorName: donationForm.donorName,
       bloodGroup: donationForm.bloodGroup,
       phone: donationForm.phone,
       email: donationForm.email,
       district: donationForm.district,
       address: donationForm.address,
-      donationDate: donationForm.donationDate,
-      donationType: donationForm.donationType,
-      unitsDonated: parseInt(donationForm.unitsDonated, 10),
+      donation_date: donationForm.donationDate,
+      donation_type: donationForm.donationType,
+      units_donated: parseInt(donationForm.unitsDonated, 10),
+      hospital_id: donationForm.hospitalId ? parseInt(donationForm.hospitalId, 10) : undefined,
       hospital: donationForm.hospital,
-      status: donationForm.status,
+      status: donationForm.status.toUpperCase(),
       notes: donationForm.notes
     };
 
@@ -189,17 +195,18 @@ export default function BloodDonationsPage({
   const filteredDonations = () => {
     return donations.filter((don) => {
       const matchesSearch =
-        don.donorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        don.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        don.bloodGroup.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        don.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        don.phone.includes(searchQuery);
+        (don.donorName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (don.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (don.phone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (don.bloodGroup || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (don.hospital || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (don.district || '').toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesBloodGroup = bloodGroupFilter === 'All' || don.bloodGroup === bloodGroupFilter;
-      const matchesType = donationTypeFilter === 'All' || don.donationType === donationTypeFilter;
-      const matchesStatus = statusFilter === 'All' || don.status === statusFilter;
+      const matchesDonationType = donationTypeFilter === 'All' || don.donationType === donationTypeFilter;
+      const matchesStatus = statusFilter === 'All' || (don.status || '').toLowerCase() === statusFilter.toLowerCase();
 
-      return matchesSearch && matchesBloodGroup && matchesType && matchesStatus;
+      return matchesSearch && matchesBloodGroup && matchesDonationType && matchesStatus;
     });
   };
 
@@ -219,44 +226,13 @@ export default function BloodDonationsPage({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', width: '100%' }}>
-      
-      {/* Blood Group Summary Section */}
-      <section style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--muted-text)', margin: '0' }}>Blood Group Donations Summary</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '16px' }}>
-          {BLOOD_GROUPS.map(group => {
-            const count = donations
-              .filter(d => d.bloodGroup === group && d.status === 'Completed')
-              .reduce((sum, d) => sum + (d.unitsDonated || 1), 0);
-            return (
-              <div key={group} style={{
-                backgroundColor: 'var(--white)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '12px',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                boxShadow: 'var(--card-shadow)'
-              }}>
-                <span style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--dark-text)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary-rose)' }}></span>
-                  {group}
-                </span>
-                <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-red)' }}>{count} U</span>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
       {/* Search & Filter Toolbar */}
       <section className="filters-toolbar">
         <div className="search-box-wrapper">
           <Search size={18} className="search-icon-input" />
           <input
             type="text"
-            placeholder="Search donations by name, ID, group, district, phone..."
+            placeholder="Search donations by donor name, ID, phone, hospital..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -292,7 +268,7 @@ export default function BloodDonationsPage({
               }}
               className="toolbar-select"
             >
-              <option value="All">All Types</option>
+              <option value="All">All Donation Types</option>
               {DONATION_TYPES.map(t => (
                 <option key={t} value={t}>{t}</option>
               ))}
@@ -309,19 +285,19 @@ export default function BloodDonationsPage({
               className="toolbar-select"
             >
               <option value="All">All Statuses</option>
-              {STATUSES.map(s => (
+              {ALL_STATUSES.map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </div>
 
           <button className="add-donor-btn" onClick={handleOpenAddModal}>
-            + Add Donation
+            + Record Donation
           </button>
         </div>
       </section>
 
-      {/* Donations Table */}
+      {/* Blood Donations Table */}
       <section className="content-card table-card">
         <div className="table-responsive-container">
           <table className="donors-table">
@@ -330,11 +306,10 @@ export default function BloodDonationsPage({
                 <th>Donation ID</th>
                 <th>Donor Name</th>
                 <th>Blood Group</th>
-                <th>Phone Number</th>
-                <th>District</th>
-                <th>Donation Date</th>
-                <th>Donation Type</th>
-                <th>Units Donated</th>
+                <th>Units</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Hospital / Facility</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -343,32 +318,59 @@ export default function BloodDonationsPage({
               {paginatedDonations.length > 0 ? (
                 paginatedDonations.map((don) => {
                   const statusColors = getStatusStyles(don.status);
+                  const isTerminal = ['completed', 'cancelled', 'rejected'].includes((don.status || '').toLowerCase());
+                  const allowedTransitions = getAllowedDonationStatuses(don.status);
+
                   return (
                     <tr key={don.id}>
                       <td className="donor-id-cell font-semibold">{don.id}</td>
-                      <td className="donor-name-cell font-semibold">{don.donorName}</td>
+                      <td className="donor-name-cell">{don.donorName || 'Registered Donor'}</td>
                       <td>
                         <span className="blood-group-badge">{don.bloodGroup}</span>
                       </td>
-                      <td className="donor-phone-cell">{don.phone}</td>
-                      <td>{don.district}</td>
+                      <td style={{ textAlign: 'center', fontWeight: '600' }}>{don.unitsDonated || 1}</td>
                       <td>{don.donationDate}</td>
-                      <td>{don.donationType}</td>
-                      <td style={{ textAlign: 'center', fontWeight: '600' }}>{don.unitsDonated} U</td>
+                      <td>{don.donationType || 'Voluntary'}</td>
+                      <td>{don.hospital || 'District Blood Bank'}</td>
                       <td>
-                        <span style={{
-                          backgroundColor: statusColors.bg,
-                          color: statusColors.text,
-                          border: `1px solid ${statusColors.border}`,
-                          padding: '4px 10px',
-                          borderRadius: '20px',
-                          fontSize: '0.8rem',
-                          fontWeight: '600',
-                          display: 'inline-block',
-                          textAlign: 'center'
-                        }}>
-                          {don.status}
-                        </span>
+                        {isTerminal ? (
+                          <span style={{
+                            backgroundColor: statusColors.bg,
+                            color: statusColors.text,
+                            border: `1px solid ${statusColors.border}`,
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            display: 'inline-block',
+                            textAlign: 'center'
+                          }}>
+                            {don.status}
+                          </span>
+                        ) : (
+                          <select
+                            value={don.status}
+                            onChange={(e) => onStatusChange && onStatusChange(don.id, e.target.value)}
+                            style={{
+                              backgroundColor: statusColors.bg,
+                              color: statusColors.text,
+                              border: `1px solid ${statusColors.border}`,
+                              padding: '4px 10px',
+                              borderRadius: '20px',
+                              fontSize: '0.8rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              outline: 'none',
+                              appearance: 'none',
+                              WebkitAppearance: 'none',
+                              textAlign: 'center'
+                            }}
+                          >
+                            {allowedTransitions.map(s => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        )}
                       </td>
                       <td>
                         <div className="actions-cell-wrapper">
@@ -379,20 +381,24 @@ export default function BloodDonationsPage({
                           >
                             <Eye size={16} />
                           </button>
-                          <button
-                            className="action-icon-btn edit"
-                            onClick={() => handleOpenEditModal(don)}
-                            title="Edit Record"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            className="action-icon-btn delete"
-                            onClick={() => setDeletingDonationId(don.id)}
-                            title="Delete Record"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {!isTerminal && (
+                            <button
+                              className="action-icon-btn edit"
+                              onClick={() => handleOpenEditModal(don)}
+                              title="Edit Record"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                          )}
+                          {!isTerminal && (
+                            <button
+                              className="action-icon-btn delete"
+                              onClick={() => setDeletingDonationId(don.id)}
+                              title="Cancel Donation"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -400,7 +406,7 @@ export default function BloodDonationsPage({
                 })
               ) : (
                 <tr>
-                  <td colSpan="10" className="no-records-cell">
+                  <td colSpan="9" className="no-records-cell">
                     No donation records found matching the filters.
                   </td>
                 </tr>
@@ -412,7 +418,7 @@ export default function BloodDonationsPage({
         {/* Table Footer / Pagination */}
         <div className="table-footer">
           <div className="footer-info-text">
-            Showing {totalItems > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} records
+            Showing {totalItems > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} donations
           </div>
           <div className="pagination-controls">
             <button
@@ -447,18 +453,17 @@ export default function BloodDonationsPage({
         </div>
       </section>
 
-      {/* --- Add / Edit Donation Modal --- */}
+      {/* --- Add / Edit Blood Donation Modal --- */}
       {(isAddingDonation || editingDonation) && (
         <div className="modal-overlay">
           <div className="modal-content-card">
             <div className="modal-header">
-              <h3>{editingDonation ? 'Edit Donation Record' : 'Add Blood Donation'}</h3>
+              <h3>{editingDonation ? 'Edit Donation Record' : 'Record Blood Donation'}</h3>
               <button
                 className="modal-close-btn"
                 onClick={() => {
                   setIsAddingDonation(false);
                   setEditingDonation(null);
-                  resetForm();
                 }}
               >
                 <X size={20} />
@@ -466,22 +471,57 @@ export default function BloodDonationsPage({
             </div>
             <form onSubmit={handleSaveDonationSubmit} className="modal-form">
               <div className="form-grid">
+                {donors.length > 0 && !editingDonation && (
+                  <div className="form-group-item">
+                    <label htmlFor="don-donor-select">Select Registered Donor <span className="req-star">*</span></label>
+                    <select
+                      id="don-donor-select"
+                      value={donationForm.donorId}
+                      onChange={(e) => {
+                        const dId = e.target.value;
+                        const donor = donors.find(d => String(d.dbId || d.id) === String(dId));
+                        if (donor) {
+                          setDonationForm({
+                            ...donationForm,
+                            donorId: dId,
+                            donorName: donor.name,
+                            bloodGroup: donor.group,
+                            phone: donor.phone,
+                            email: donor.email,
+                            district: donor.location || donationForm.district
+                          });
+                        } else {
+                          setDonationForm({ ...donationForm, donorId: dId });
+                        }
+                      }}
+                      required
+                    >
+                      <option value="">-- Choose Donor --</option>
+                      {donors.map(d => (
+                        <option key={d.dbId || d.id} value={d.dbId || d.id}>
+                          {d.name} ({d.group}) — {d.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="form-group-item">
-                  <label htmlFor="don-name">Donor Name <span className="req-star">*</span></label>
+                  <label htmlFor="don-donor-name">Donor Name <span className="req-star">*</span></label>
                   <input
                     type="text"
-                    id="don-name"
+                    id="don-donor-name"
                     value={donationForm.donorName}
                     onChange={(e) => setDonationForm({ ...donationForm, donorName: e.target.value })}
                     required
-                    placeholder="Enter donor name"
+                    placeholder="e.g. Rahul Nair"
                   />
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="don-group">Blood Group <span className="req-star">*</span></label>
+                  <label htmlFor="don-blood-group">Blood Group <span className="req-star">*</span></label>
                   <select
-                    id="don-group"
+                    id="don-blood-group"
                     value={donationForm.bloodGroup}
                     onChange={(e) => setDonationForm({ ...donationForm, bloodGroup: e.target.value })}
                     required
@@ -493,40 +533,16 @@ export default function BloodDonationsPage({
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="don-phone">Phone Number <span className="req-star">*</span></label>
+                  <label htmlFor="don-units">Units Donated <span className="req-star">*</span></label>
                   <input
-                    type="tel"
-                    id="don-phone"
-                    value={donationForm.phone}
-                    onChange={(e) => setDonationForm({ ...donationForm, phone: e.target.value })}
+                    type="number"
+                    id="don-units"
+                    min="1"
+                    max="5"
+                    value={donationForm.unitsDonated}
+                    onChange={(e) => setDonationForm({ ...donationForm, unitsDonated: e.target.value })}
                     required
-                    placeholder="Enter phone number"
                   />
-                </div>
-
-                <div className="form-group-item">
-                  <label htmlFor="don-email">Email Address</label>
-                  <input
-                    type="email"
-                    id="don-email"
-                    value={donationForm.email}
-                    onChange={(e) => setDonationForm({ ...donationForm, email: e.target.value })}
-                    placeholder="example@gmail.com"
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label htmlFor="don-district">District <span className="req-star">*</span></label>
-                  <select
-                    id="don-district"
-                    value={donationForm.district}
-                    onChange={(e) => setDonationForm({ ...donationForm, district: e.target.value })}
-                    required
-                  >
-                    {DISTRICTS.map(d => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
                 </div>
 
                 <div className="form-group-item">
@@ -541,12 +557,11 @@ export default function BloodDonationsPage({
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="don-type">Donation Type <span className="req-star">*</span></label>
+                  <label htmlFor="don-type">Donation Type</label>
                   <select
                     id="don-type"
                     value={donationForm.donationType}
                     onChange={(e) => setDonationForm({ ...donationForm, donationType: e.target.value })}
-                    required
                   >
                     {DONATION_TYPES.map(t => (
                       <option key={t} value={t}>{t}</option>
@@ -555,72 +570,35 @@ export default function BloodDonationsPage({
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="don-units">Units Donated <span className="req-star">*</span></label>
-                  <input
-                    type="number"
-                    min="1"
-                    id="don-units"
-                    value={donationForm.unitsDonated}
-                    onChange={(e) => setDonationForm({ ...donationForm, unitsDonated: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label htmlFor="don-hospital">Hospital / Donation Centre</label>
-                  <input
-                    type="text"
-                    id="don-hospital"
-                    value={donationForm.hospital}
-                    onChange={(e) => setDonationForm({ ...donationForm, hospital: e.target.value })}
-                    placeholder="e.g. Kozhikode Medical Bank"
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label htmlFor="don-status">Status <span className="req-star">*</span></label>
+                  <label htmlFor="don-status">Initial Status</label>
                   <select
                     id="don-status"
                     value={donationForm.status}
                     onChange={(e) => setDonationForm({ ...donationForm, status: e.target.value })}
-                    required
                   >
-                    {STATUSES.map(s => (
+                    {ALL_STATUSES.map(s => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
                 </div>
+              </div>
 
-                <div className="form-group-item" style={{ gridColumn: 'span 2' }}>
-                  <label htmlFor="don-address">Full Address</label>
-                  <input
-                    type="text"
-                    id="don-address"
-                    value={donationForm.address}
-                    onChange={(e) => setDonationForm({ ...donationForm, address: e.target.value })}
-                    placeholder="Enter physical address"
-                  />
-                </div>
-
-                <div className="form-group-item" style={{ gridColumn: 'span 2' }}>
-                  <label htmlFor="don-notes">Additional Notes</label>
-                  <textarea
-                    id="don-notes"
-                    value={donationForm.notes}
-                    onChange={(e) => setDonationForm({ ...donationForm, notes: e.target.value })}
-                    placeholder="Any observations, donor health remarks..."
-                    rows="2"
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      fontFamily: 'inherit',
-                      resize: 'vertical',
-                      backgroundColor: 'var(--white)'
-                    }}
-                  />
-                </div>
+              <div className="form-group-item" style={{ marginTop: '16px' }}>
+                <label htmlFor="don-notes">Clinical Notes</label>
+                <textarea
+                  id="don-notes"
+                  rows="2"
+                  value={donationForm.notes}
+                  onChange={(e) => setDonationForm({ ...donationForm, notes: e.target.value })}
+                  placeholder="e.g. Screening passed, Hemoglobin: 14.2 g/dL"
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '0.9rem'
+                  }}
+                ></textarea>
               </div>
 
               <div className="modal-footer-actions">
@@ -630,13 +608,12 @@ export default function BloodDonationsPage({
                   onClick={() => {
                     setIsAddingDonation(false);
                     setEditingDonation(null);
-                    resetForm();
                   }}
                 >
                   Cancel
                 </button>
                 <button type="submit" className="modal-primary-btn">
-                  {editingDonation ? 'Save Changes' : 'Add Donation'}
+                  {editingDonation ? 'Save Changes' : 'Record Donation'}
                 </button>
               </div>
             </form>
@@ -644,95 +621,53 @@ export default function BloodDonationsPage({
         </div>
       )}
 
-      {/* --- View Donation Modal --- */}
+      {/* --- View Donation Record Modal --- */}
       {viewingDonation && (
         <div className="modal-overlay">
           <div className="modal-content-card detail-modal">
             <div className="modal-header">
-              <h3>Donation Receipt Record</h3>
+              <h3>Donation Record</h3>
               <button className="modal-close-btn" onClick={() => setViewingDonation(null)}>
                 <X size={20} />
               </button>
             </div>
             <div className="modal-details-body">
-              <div className="donor-card-badge-large" style={{ backgroundColor: '#ECFDF5', color: '#059669' }}>
-                <FileText size={24} />
+              <div className="donor-card-badge-large">
+                <span>{viewingDonation.bloodGroup}</span>
               </div>
-              <h4 style={{ textAlign: 'center', fontSize: '1.25rem', fontWeight: 700, margin: '8px 0 20px 0', color: 'var(--dark-text)' }}>
-                Donation {viewingDonation.id}
-              </h4>
-              
               <div className="details-grid">
+                <div className="detail-row">
+                  <span className="detail-lbl">Donation Code</span>
+                  <span className="detail-val font-semibold">{viewingDonation.id}</span>
+                </div>
                 <div className="detail-row">
                   <span className="detail-lbl">Donor Name</span>
                   <span className="detail-val font-semibold">{viewingDonation.donorName}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-lbl">Blood Group</span>
-                  <span className="detail-val font-semibold" style={{ color: 'var(--primary-rose)' }}>
-                    {viewingDonation.bloodGroup}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-lbl">Phone Number</span>
-                  <span className="detail-val">{viewingDonation.phone}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-lbl">Email Address</span>
-                  <span className="detail-val">{viewingDonation.email || 'N/A'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-lbl">District</span>
-                  <span className="detail-val">{viewingDonation.district}</span>
+                  <span className="detail-lbl">Units</span>
+                  <span className="detail-val font-semibold text-rose-red">{viewingDonation.unitsDonated || 1} Unit</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-lbl">Donation Date</span>
-                  <span className="detail-val font-semibold" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <Calendar size={14} /> {viewingDonation.donationDate}
-                  </span>
+                  <span className="detail-val">{viewingDonation.donationDate}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-lbl">Donation Type</span>
                   <span className="detail-val">{viewingDonation.donationType}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-lbl">Units Donated</span>
-                  <span className="detail-val font-semibold">{viewingDonation.unitsDonated} Units</span>
-                </div>
-                <div className="detail-row" style={{ gridColumn: 'span 2' }}>
-                  <span className="detail-lbl">Hospital / Centre</span>
-                  <span className="detail-val">{viewingDonation.hospital || 'N/A'}</span>
-                </div>
-                <div className="detail-row" style={{ gridColumn: 'span 2' }}>
-                  <span className="detail-lbl">Address</span>
-                  <span className="detail-val">{viewingDonation.address || 'N/A'}</span>
+                  <span className="detail-lbl">Hospital / Center</span>
+                  <span className="detail-val">{viewingDonation.hospital}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-lbl">Status</span>
-                  <span className="detail-val">
-                    <span style={{
-                      backgroundColor: getStatusStyles(viewingDonation.status).bg,
-                      color: getStatusStyles(viewingDonation.status).text,
-                      padding: '4px 10px',
-                      borderRadius: '20px',
-                      fontSize: '0.8rem',
-                      fontWeight: '600'
-                    }}>
-                      {viewingDonation.status}
-                    </span>
-                  </span>
-                </div>
-                <div className="detail-row" style={{ gridColumn: 'span 2' }}>
-                  <span className="detail-lbl">Notes & Remarks</span>
-                  <span className="detail-val" style={{ whiteSpace: 'pre-wrap', fontStyle: viewingDonation.notes ? 'normal' : 'italic' }}>
-                    {viewingDonation.notes || 'No remarks captured.'}
-                  </span>
+                  <span className="detail-val font-semibold">{viewingDonation.status}</span>
                 </div>
               </div>
-              
               <div className="modal-footer-actions justify-center">
                 <button className="modal-primary-btn" onClick={() => setViewingDonation(null)}>
-                  Close File
+                  Close Record
                 </button>
               </div>
             </div>
@@ -740,28 +675,25 @@ export default function BloodDonationsPage({
         </div>
       )}
 
-      {/* --- Delete Confirmation Modal --- */}
+      {/* --- Delete / Cancel Donation Modal --- */}
       {deletingDonationId && (
         <div className="modal-overlay">
           <div className="modal-content-card delete-confirm-modal">
             <div className="modal-header">
-              <h3>Confirm Deletion</h3>
+              <h3>Confirm Cancellation</h3>
               <button className="modal-close-btn" onClick={() => setDeletingDonationId(null)}>
                 <X size={20} />
               </button>
             </div>
             <div className="delete-body">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--primary-rose)', marginBottom: '14px' }}>
-                <ShieldAlert size={24} />
-                <strong style={{ fontSize: '1.05rem' }}>Warning: Delete Donation Record</strong>
-              </div>
-              <p>Are you sure you want to delete donation record <strong>{deletingDonationId}</strong>? This action cannot be undone.</p>
+              <p>Are you sure you want to cancel donation <strong>{deletingDonationId}</strong>?</p>
+              <p className="sub-warning">This donation will transition to CANCELLED and will no longer affect donor cooldown.</p>
               <div className="modal-footer-actions">
                 <button className="modal-secondary-btn" onClick={() => setDeletingDonationId(null)}>
-                  Cancel
+                  Keep
                 </button>
                 <button className="modal-delete-btn" onClick={handleDeleteDonationConfirm}>
-                  Delete Record
+                  Cancel Donation
                 </button>
               </div>
             </div>

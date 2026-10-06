@@ -41,6 +41,7 @@ import {
   fetchDonations,
   createDonation,
   updateDonation,
+  updateDonationStatus,
   deleteDonation,
   fetchInventoryBatches,
   createInventoryBatch,
@@ -67,6 +68,7 @@ import CampusEventsPage from './CampusEvents.jsx';
 import UsersPage from './Users.jsx';
 import ReportsPage from './Reports.jsx';
 import SettingsPage from './Settings.jsx';
+import DonorImportModal from './DonorImportModal.jsx';
 import './Dashboard.css';
 
 // Map iconType strings from API to actual Lucide components
@@ -165,6 +167,7 @@ export default function Dashboard({ user, onLogout }) {
 
   // Modal States
   const [isAddingDonor, setIsAddingDonor] = useState(false);
+  const [isImportingDonors, setIsImportingDonors] = useState(false);
   const [viewingDonor, setViewingDonor] = useState(null);
   const [editingDonor, setEditingDonor] = useState(null);
   const [deletingDonorId, setDeletingDonorId] = useState(null);
@@ -197,12 +200,13 @@ export default function Dashboard({ user, onLogout }) {
   // ─── Module API Loaders ───────────────────────────────────
   const loadHospitals = useCallback(async () => {
     try {
-      const data = await fetchHospitals();
-      setHospitalsList(data.map(h => ({
+      const data = await fetchHospitals({ pageSize: 100 });
+      const items = data.items || data || [];
+      setHospitalsList(items.map(h => ({
         id: h.hospital_code || `HOSP${String(h.id).padStart(3, '0')}`,
         dbId: h.id,
         name: h.name,
-        type: h.type,
+        type: h.hospital_type || h.type || 'Government',
         district: h.district,
         panchayat: h.panchayat || '',
         address: h.address,
@@ -212,7 +216,7 @@ export default function Dashboard({ user, onLogout }) {
         latitude: h.latitude,
         longitude: h.longitude,
         services: Array.isArray(h.services) ? h.services : (h.services ? h.services.split(',').map(s => s.trim()) : []),
-        status: h.status || 'Active'
+        status: h.is_active ? 'Active' : 'Inactive'
       })));
     } catch (err) {
       console.warn('Failed to load hospitals:', err);
@@ -221,14 +225,16 @@ export default function Dashboard({ user, onLogout }) {
 
   const loadBloodRequests = useCallback(async () => {
     try {
-      const data = await fetchBloodRequests();
-      setBloodRequestsList(data.map(r => ({
+      const data = await fetchBloodRequests({ pageSize: 100 });
+      const items = data.items || data || [];
+      setBloodRequestsList(items.map(r => ({
         id: r.request_code || `BR${String(r.id).padStart(3, '0')}`,
         dbId: r.id,
         patientName: r.patient_name,
         bloodGroup: r.blood_group,
         unitsRequired: r.units_requested,
-        hospital: r.hospital_name,
+        hospital: r.hospital_name || 'Hospital Center',
+        hospitalId: r.hospital_id,
         district: r.district || 'Kottayam',
         location: r.location || r.district || 'Kottayam',
         contactNumber: r.contact_phone,
@@ -237,7 +243,7 @@ export default function Dashboard({ user, onLogout }) {
         urgency: r.urgency || 'Normal',
         status: r.status || 'Pending',
         notes: r.notes || '',
-        timeAgo: r.time_ago || 'Recent'
+        timeAgo: 'Recent'
       })));
     } catch (err) {
       console.warn('Failed to load blood requests:', err);
@@ -246,21 +252,23 @@ export default function Dashboard({ user, onLogout }) {
 
   const loadBloodDonations = useCallback(async () => {
     try {
-      const data = await fetchDonations();
-      setBloodDonationsList(data.map(d => ({
+      const data = await fetchDonations({ pageSize: 100 });
+      const items = data.items || data || [];
+      setBloodDonationsList(items.map(d => ({
         id: d.donation_code || `DN${String(d.id).padStart(3, '0')}`,
         dbId: d.id,
-        donorName: d.donor_name,
-        bloodGroup: d.blood_group,
-        phone: d.phone || '',
-        email: d.email || '',
-        district: d.district || 'Kottayam',
-        address: d.address || '',
+        donorId: d.donor_id,
+        donorName: d.donor_name || 'Registered Donor',
+        bloodGroup: d.donor_blood_group || 'O+',
+        phone: '',
+        email: '',
+        district: 'Kottayam',
+        address: '',
         donationDate: d.donation_date,
         donationType: d.donation_type || 'Voluntary',
-        unitsDonated: d.units,
-        hospital: d.hospital || d.venue || 'Blood Bank',
-        venue: d.venue || d.hospital || 'Blood Bank',
+        unitsDonated: d.units_donated || 1,
+        hospital: 'Hospital Center',
+        venue: 'Hospital Center',
         status: d.status || 'Completed',
         notes: d.notes || ''
       })));
@@ -452,35 +460,30 @@ export default function Dashboard({ user, onLogout }) {
     try {
       const data = await fetchDonors({
         search: searchQuery,
-        group: groupFilter,
-        status: statusFilter,
-        location: locationFilter,
+        bloodGroup: groupFilter,
+        district: locationFilter,
+        isAvailable: statusFilter,
         page: currentPage,
-        limit: itemsPerPage,
+        pageSize: itemsPerPage,
       });
 
       // Map API donor fields to the shape used in the UI
-      const mapped = data.items.map((d) => ({
+      const mapped = (data.items || []).map((d) => ({
         id: d.donor_code,
         dbId: d.id,
-        name: d.name,
+        name: d.full_name || d.name,
         group: d.blood_group,
         phone: d.phone,
-        email: d.email,
-        location: d.location,
-        lastDonation: d.last_donation,
-        status: d.status,
+        email: d.email || '—',
+        location: d.district || d.location,
+        panchayat: d.panchayat || '',
+        lastDonation: d.last_donation_date || 'Never',
+        status: d.is_available ? 'Active' : 'Inactive',
       }));
 
       setDonorsList(mapped);
-      setDonorsTotalCount(data.total);
-      setDonorsTotalPages(data.pages);
-      if (data.locations && data.locations.length > 0) {
-        setLocations(data.locations);
-      }
-      if (data.blood_groups && data.blood_groups.length > 0) {
-        setBloodGroups(data.blood_groups);
-      }
+      setDonorsTotalCount(data.total || mapped.length);
+      setDonorsTotalPages(data.total_pages || Math.ceil((data.total || mapped.length) / itemsPerPage) || 1);
     } catch (err) {
       console.error('Failed to load donors:', err);
       setDonorsError(err.message);
@@ -509,7 +512,7 @@ export default function Dashboard({ user, onLogout }) {
       group: 'O+',
       phone: '',
       email: '',
-      location: '',
+      location: 'Kottayam',
       lastDonation: '',
       status: 'Active'
     });
@@ -521,9 +524,9 @@ export default function Dashboard({ user, onLogout }) {
       name: donor.name,
       group: donor.group,
       phone: donor.phone,
-      email: donor.email,
-      location: donor.location,
-      lastDonation: donor.lastDonation,
+      email: donor.email === '—' ? '' : donor.email,
+      location: donor.location || 'Kottayam',
+      lastDonation: donor.lastDonation === 'Never' ? '' : donor.lastDonation,
       status: donor.status,
     });
     setEditingDonor(donor);
@@ -531,7 +534,7 @@ export default function Dashboard({ user, onLogout }) {
 
   const handleSaveDonor = async (e) => {
     e.preventDefault();
-    if (!donorForm.name || !donorForm.phone || !donorForm.email || !donorForm.location) {
+    if (!donorForm.name || !donorForm.phone || !donorForm.location) {
       alert('Please fill in all required fields.');
       return;
     }
@@ -539,13 +542,12 @@ export default function Dashboard({ user, onLogout }) {
     setSavingDonor(true);
     try {
       const apiPayload = {
-        name: donorForm.name,
+        full_name: donorForm.name,
         blood_group: donorForm.group,
         phone: donorForm.phone,
-        email: donorForm.email,
-        location: donorForm.location,
-        last_donation: donorForm.lastDonation || 'Never',
-        status: donorForm.status || 'Active',
+        email: donorForm.email ? donorForm.email : undefined,
+        district: donorForm.location,
+        is_available: donorForm.status === 'Active',
       };
 
       if (editingDonor) {
@@ -974,7 +976,18 @@ export default function Dashboard({ user, onLogout }) {
             hospitals={hospitalsList}
             onAddHospital={async (newHosp) => {
               try {
-                await createHospital(newHosp);
+                await createHospital({
+                  name: newHosp.name,
+                  hospital_type: newHosp.type || 'Government',
+                  district: newHosp.district,
+                  panchayat: newHosp.panchayat || undefined,
+                  address: newHosp.address,
+                  phone: newHosp.phone || undefined,
+                  email: newHosp.email || undefined,
+                  emergency_number: newHosp.emergencyNumber || undefined,
+                  latitude: newHosp.latitude ? Number(newHosp.latitude) : undefined,
+                  longitude: newHosp.longitude ? Number(newHosp.longitude) : undefined,
+                });
                 await loadHospitals();
                 loadDashboardStats();
               } catch (err) {
@@ -983,7 +996,18 @@ export default function Dashboard({ user, onLogout }) {
             }}
             onEditHospital={async (updatedHosp) => {
               try {
-                await updateHospital(updatedHosp.dbId || updatedHosp.id, updatedHosp);
+                await updateHospital(updatedHosp.dbId || updatedHosp.id, {
+                  name: updatedHosp.name,
+                  hospital_type: updatedHosp.type,
+                  district: updatedHosp.district,
+                  panchayat: updatedHosp.panchayat || undefined,
+                  address: updatedHosp.address,
+                  phone: updatedHosp.phone || undefined,
+                  email: updatedHosp.email || undefined,
+                  emergency_number: updatedHosp.emergencyNumber || undefined,
+                  latitude: updatedHosp.latitude ? Number(updatedHosp.latitude) : undefined,
+                  longitude: updatedHosp.longitude ? Number(updatedHosp.longitude) : undefined,
+                });
                 await loadHospitals();
                 loadDashboardStats();
               } catch (err) {
@@ -1004,9 +1028,23 @@ export default function Dashboard({ user, onLogout }) {
         ) : activeTab === 'Blood Requests' ? (
           <BloodRequestsPage
             requests={bloodRequestsList}
+            hospitals={hospitalsList}
             onAddRequest={async (newReq) => {
               try {
-                await createBloodRequest(newReq);
+                await createBloodRequest({
+                  patient_name: newReq.patientName,
+                  blood_group: newReq.bloodGroup,
+                  units_requested: Number(newReq.unitsRequired) || 1,
+                  hospital_id: newReq.hospitalId ? Number(newReq.hospitalId) : (user?.hospital_id || hospitalsList[0]?.dbId || 1),
+                  district: newReq.district,
+                  location: newReq.location || newReq.district,
+                  contact_phone: newReq.contactNumber,
+                  emergency_contact: newReq.emergencyContact || undefined,
+                  required_date: newReq.requiredDate,
+                  urgency: (newReq.urgency || 'NORMAL').toUpperCase(),
+                  status: (newReq.status || 'PENDING').toUpperCase().replace(' ', '_'),
+                  notes: newReq.notes || undefined,
+                });
                 await loadBloodRequests();
                 loadDashboardStats();
               } catch (err) {
@@ -1015,7 +1053,19 @@ export default function Dashboard({ user, onLogout }) {
             }}
             onEditRequest={async (updatedReq) => {
               try {
-                await updateBloodRequest(updatedReq.dbId || updatedReq.id, updatedReq);
+                await updateBloodRequest(updatedReq.dbId || updatedReq.id, {
+                  patient_name: updatedReq.patientName,
+                  blood_group: updatedReq.bloodGroup,
+                  units_requested: Number(updatedReq.unitsRequired) || 1,
+                  district: updatedReq.district,
+                  location: updatedReq.location || updatedReq.district,
+                  contact_phone: updatedReq.contactNumber,
+                  emergency_contact: updatedReq.emergencyContact || undefined,
+                  required_date: updatedReq.requiredDate,
+                  urgency: updatedReq.urgency ? updatedReq.urgency.toUpperCase() : undefined,
+                  status: updatedReq.status ? updatedReq.status.toUpperCase().replace(' ', '_') : undefined,
+                  notes: updatedReq.notes || undefined,
+                });
                 await loadBloodRequests();
                 loadDashboardStats();
               } catch (err) {
@@ -1029,7 +1079,7 @@ export default function Dashboard({ user, onLogout }) {
                 await loadBloodRequests();
                 loadDashboardStats();
               } catch (err) {
-                alert(`Failed to delete blood request: ${err.message}`);
+                alert(`Failed to cancel blood request: ${err.message}`);
               }
             }}
             onStatusChange={async (id, status) => {
@@ -1039,18 +1089,28 @@ export default function Dashboard({ user, onLogout }) {
                 await loadBloodRequests();
                 loadDashboardStats();
               } catch (err) {
-                alert(`Failed to update status: ${err.message}`);
+                alert(`Status transition rejected: ${err.message}`);
               }
             }}
           />
         ) : activeTab === 'Blood Donations' ? (
           <BloodDonationsPage
             donations={bloodDonationsList}
+            donors={donorsList}
+            hospitals={hospitalsList}
             onAddDonation={async (newDon) => {
               try {
-                await createDonation(newDon);
+                await createDonation({
+                  donor_id: Number(newDon.donor_id),
+                  hospital_id: newDon.hospital_id ? Number(newDon.hospital_id) : (user?.hospital_id || hospitalsList[0]?.dbId || undefined),
+                  donation_date: newDon.donation_date,
+                  donation_type: newDon.donation_type || 'Voluntary',
+                  units_donated: Number(newDon.units_donated) || 1,
+                  status: (newDon.status || 'COMPLETED').toUpperCase(),
+                  notes: newDon.notes || undefined,
+                });
                 await loadBloodDonations();
-                await loadInventoryBatches();
+                await loadDonors();
                 loadDashboardStats();
               } catch (err) {
                 alert(`Failed to record donation: ${err.message}`);
@@ -1058,8 +1118,15 @@ export default function Dashboard({ user, onLogout }) {
             }}
             onEditDonation={async (updatedDon) => {
               try {
-                await updateDonation(updatedDon.dbId || updatedDon.id, updatedDon);
+                await updateDonation(updatedDon.dbId || updatedDon.id, {
+                  donation_date: updatedDon.donation_date,
+                  donation_type: updatedDon.donation_type,
+                  units_donated: Number(updatedDon.units_donated) || 1,
+                  status: updatedDon.status ? updatedDon.status.toUpperCase() : undefined,
+                  notes: updatedDon.notes || undefined,
+                });
                 await loadBloodDonations();
+                await loadDonors();
                 loadDashboardStats();
               } catch (err) {
                 alert(`Failed to update donation: ${err.message}`);
@@ -1072,7 +1139,18 @@ export default function Dashboard({ user, onLogout }) {
                 await loadBloodDonations();
                 loadDashboardStats();
               } catch (err) {
-                alert(`Failed to delete donation: ${err.message}`);
+                alert(`Failed to cancel donation: ${err.message}`);
+              }
+            }}
+            onStatusChange={async (id, status) => {
+              try {
+                const target = bloodDonationsList.find(d => d.id === id || d.dbId === id);
+                await updateDonationStatus(target?.dbId || id, status);
+                await loadBloodDonations();
+                await loadDonors();
+                loadDashboardStats();
+              } catch (err) {
+                alert(`Status transition rejected: ${err.message}`);
               }
             }}
           />
@@ -1310,6 +1388,13 @@ export default function Dashboard({ user, onLogout }) {
                   </select>
                 </div>
 
+                <button
+                  className="add-donor-btn"
+                  style={{ backgroundColor: '#4F46E5', color: '#FFF' }}
+                  onClick={() => setIsImportingDonors(true)}
+                >
+                  + Import Donors (CSV/XLSX)
+                </button>
                 <button className="add-donor-btn" onClick={handleOpenAddModal}>
                   + Add New Donor
                 </button>
@@ -1661,6 +1746,17 @@ export default function Dashboard({ user, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* Donor Bulk Import Modal */}
+      <DonorImportModal
+        isOpen={isImportingDonors}
+        onClose={() => setIsImportingDonors(false)}
+        onImportSuccess={() => {
+          loadDonors();
+          loadDashboardStats();
+        }}
+        userHospitalId={user?.hospital_id}
+      />
     </div>
   );
 }

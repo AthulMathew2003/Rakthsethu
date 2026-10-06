@@ -9,44 +9,42 @@ import {
   Heart,
   Phone,
   ShieldAlert,
-  Calendar
+  Calendar,
+  Users,
+  AlertTriangle
 } from 'lucide-react';
+import MatchingModal from './MatchingModal.jsx';
+import { DISTRICTS, BLOOD_GROUPS, REQUEST_STATUSES, REQUEST_URGENCY } from './types.js';
 
-const DISTRICTS = [
-  'Kottayam',
-  'Ernakulam',
-  'Kozhikode',
-  'Thiruvananthapuram',
-  'Alappuzha',
-  'Idukki',
-  'Kannur',
-  'Kasaragod',
-  'Kollam',
-  'Malappuram',
-  'Palakkad',
-  'Pathanamthitta',
-  'Thrissur',
-  'Wayanad'
-];
-
-const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const URGENCY_LEVELS = ['Normal', 'Urgent', 'Critical'];
-const STATUSES = ['Pending', 'Approved', 'In Progress', 'Fulfilled', 'Rejected', 'Cancelled'];
+const ALL_STATUSES = ['Pending', 'In Progress', 'Fulfilled', 'Rejected', 'Cancelled'];
+
+// Helper to get allowed transitions from current status
+function getAllowedStatuses(currentStatus) {
+  const norm = (currentStatus || 'Pending').toLowerCase().replace('_', ' ');
+  if (norm === 'pending') {
+    return ['Pending', 'In Progress', 'Cancelled', 'Rejected'];
+  }
+  if (norm === 'in progress') {
+    return ['In Progress', 'Fulfilled', 'Cancelled', 'Rejected'];
+  }
+  // Terminal states cannot transition
+  return [currentStatus];
+}
 
 // Helper to get status class for inline styling / badge coloring
 function getStatusStyles(status) {
-  switch (status) {
-    case 'Pending':
+  const norm = (status || '').toLowerCase().replace('_', ' ');
+  switch (norm) {
+    case 'pending':
       return { bg: '#FEF3C7', text: '#D97706', border: '#FCD34D' }; // amber
-    case 'Approved':
-      return { bg: '#EFF6FF', text: '#2563EB', border: '#BFDBFE' }; // blue
-    case 'In Progress':
+    case 'in progress':
       return { bg: '#F3E8FF', text: '#9333EA', border: '#E9D5FF' }; // purple
-    case 'Fulfilled':
+    case 'fulfilled':
       return { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0' }; // emerald
-    case 'Rejected':
+    case 'rejected':
       return { bg: '#FEF2F2', text: '#DC2626', border: '#FCA5A5' }; // red
-    case 'Cancelled':
+    case 'cancelled':
       return { bg: '#F1F5F9', text: '#475569', border: '#CBD5E1' }; // slate
     default:
       return { bg: '#F3F4F6', text: '#374151', border: '#E5E7EB' };
@@ -58,7 +56,8 @@ export default function BloodRequestsPage({
   onAddRequest,
   onEditRequest,
   onDeleteRequest,
-  onStatusChange
+  onStatusChange,
+  hospitals = []
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [bloodGroupFilter, setBloodGroupFilter] = useState('All');
@@ -74,6 +73,7 @@ export default function BloodRequestsPage({
   const [viewingRequest, setViewingRequest] = useState(null);
   const [editingRequest, setEditingRequest] = useState(null);
   const [deletingRequestId, setDeletingRequestId] = useState(null);
+  const [matchingRequest, setMatchingRequest] = useState(null);
 
   // Form State
   const [requestForm, setRequestForm] = useState({
@@ -81,6 +81,7 @@ export default function BloodRequestsPage({
     bloodGroup: 'O+',
     unitsRequired: 1,
     hospital: '',
+    hospitalId: '',
     district: 'Kottayam',
     requiredDate: '',
     contactNumber: '',
@@ -95,7 +96,8 @@ export default function BloodRequestsPage({
       patientName: '',
       bloodGroup: 'O+',
       unitsRequired: 1,
-      hospital: '',
+      hospital: hospitals[0]?.name || '',
+      hospitalId: hospitals[0]?.dbId || hospitals[0]?.id || '',
       district: 'Kottayam',
       requiredDate: '',
       contactNumber: '',
@@ -117,6 +119,7 @@ export default function BloodRequestsPage({
       bloodGroup: req.bloodGroup,
       unitsRequired: req.unitsRequired,
       hospital: req.hospital,
+      hospitalId: req.hospitalId || '',
       district: req.district,
       requiredDate: req.requiredDate,
       contactNumber: req.contactNumber || '',
@@ -134,7 +137,6 @@ export default function BloodRequestsPage({
       !requestForm.patientName ||
       !requestForm.bloodGroup ||
       !requestForm.unitsRequired ||
-      !requestForm.hospital ||
       !requestForm.district ||
       !requestForm.requiredDate
     ) {
@@ -147,6 +149,7 @@ export default function BloodRequestsPage({
       bloodGroup: requestForm.bloodGroup,
       unitsRequired: parseInt(requestForm.unitsRequired, 10),
       hospital: requestForm.hospital,
+      hospitalId: requestForm.hospitalId,
       district: requestForm.district,
       requiredDate: requestForm.requiredDate,
       contactNumber: requestForm.contactNumber,
@@ -187,15 +190,15 @@ export default function BloodRequestsPage({
   const filteredRequests = () => {
     return requests.filter((req) => {
       const matchesSearch =
-        req.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        req.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        req.hospital.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        req.bloodGroup.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        req.district.toLowerCase().includes(searchQuery.toLowerCase());
+        (req.patientName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (req.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (req.hospital || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (req.bloodGroup || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (req.district || '').toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesBloodGroup = bloodGroupFilter === 'All' || req.bloodGroup === bloodGroupFilter;
-      const matchesUrgency = urgencyFilter === 'All' || req.urgency === urgencyFilter;
-      const matchesStatus = statusFilter === 'All' || req.status === statusFilter;
+      const matchesUrgency = urgencyFilter === 'All' || (req.urgency || '').toLowerCase() === urgencyFilter.toLowerCase();
+      const matchesStatus = statusFilter === 'All' || (req.status || '').toLowerCase().replace('_', ' ') === statusFilter.toLowerCase().replace('_', ' ');
 
       return matchesSearch && matchesBloodGroup && matchesUrgency && matchesStatus;
     });
@@ -276,7 +279,7 @@ export default function BloodRequestsPage({
               className="toolbar-select"
             >
               <option value="All">All Statuses</option>
-              {STATUSES.map(s => (
+              {ALL_STATUSES.map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
@@ -310,6 +313,9 @@ export default function BloodRequestsPage({
               {paginatedRequests.length > 0 ? (
                 paginatedRequests.map((req) => {
                   const statusColors = getStatusStyles(req.status);
+                  const allowedTransitions = getAllowedStatuses(req.status);
+                  const isTerminal = ['fulfilled', 'cancelled', 'rejected'].includes((req.status || '').toLowerCase().replace('_', ' '));
+
                   return (
                     <tr key={req.id}>
                       <td className="donor-id-cell font-semibold">{req.id}</td>
@@ -318,11 +324,11 @@ export default function BloodRequestsPage({
                         <span className="blood-group-badge">{req.bloodGroup}</span>
                       </td>
                       <td style={{ textAlign: 'center', fontWeight: '600' }}>{req.unitsRequired}</td>
-                      <td>{req.hospital}</td>
+                      <td>{req.hospital || 'Hospital'}</td>
                       <td>{req.district}</td>
                       <td>{req.requiredDate}</td>
                       <td>
-                        {req.urgency === 'Critical' ? (
+                        {req.urgency === 'Critical' || req.urgency === 'CRITICAL' ? (
                           <span style={{ color: '#e11d48', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{
                               display: 'inline-block',
@@ -334,18 +340,15 @@ export default function BloodRequestsPage({
                             }}></span>
                             Critical
                           </span>
-                        ) : req.urgency === 'Urgent' ? (
+                        ) : req.urgency === 'Urgent' || req.urgency === 'URGENT' ? (
                           <span style={{ color: '#ea580c', fontWeight: '600' }}>Urgent</span>
                         ) : (
                           <span style={{ color: '#64748b' }}>Normal</span>
                         )}
                       </td>
                       <td>
-                        {/* Interactive Status Dropdown styled as a badge */}
-                        <select
-                          value={req.status}
-                          onChange={(e) => onStatusChange(req.id, e.target.value)}
-                          style={{
+                        {isTerminal ? (
+                          <span style={{
                             backgroundColor: statusColors.bg,
                             color: statusColors.text,
                             border: `1px solid ${statusColors.border}`,
@@ -353,20 +356,49 @@ export default function BloodRequestsPage({
                             borderRadius: '20px',
                             fontSize: '0.8rem',
                             fontWeight: '600',
-                            cursor: 'pointer',
-                            outline: 'none',
-                            appearance: 'none',
-                            WebkitAppearance: 'none',
+                            display: 'inline-block',
                             textAlign: 'center'
-                          }}
-                        >
-                          {STATUSES.map(s => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
+                          }}>
+                            {req.status}
+                          </span>
+                        ) : (
+                          <select
+                            value={req.status}
+                            onChange={(e) => onStatusChange(req.id, e.target.value)}
+                            style={{
+                              backgroundColor: statusColors.bg,
+                              color: statusColors.text,
+                              border: `1px solid ${statusColors.border}`,
+                              padding: '4px 10px',
+                              borderRadius: '20px',
+                              fontSize: '0.8rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              outline: 'none',
+                              appearance: 'none',
+                              WebkitAppearance: 'none',
+                              textAlign: 'center'
+                            }}
+                          >
+                            {allowedTransitions.map(s => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        )}
                       </td>
                       <td>
                         <div className="actions-cell-wrapper">
+                          {/* Find Matches Action */}
+                          {!isTerminal && (
+                            <button
+                              className="action-icon-btn"
+                              style={{ color: '#E11D48', backgroundColor: '#FFE4E6' }}
+                              onClick={() => setMatchingRequest(req)}
+                              title="Find Eligible Donors"
+                            >
+                              <Users size={16} />
+                            </button>
+                          )}
                           <button
                             className="action-icon-btn view"
                             onClick={() => setViewingRequest(req)}
@@ -374,20 +406,24 @@ export default function BloodRequestsPage({
                           >
                             <Eye size={16} />
                           </button>
-                          <button
-                            className="action-icon-btn edit"
-                            onClick={() => handleOpenEditModal(req)}
-                            title="Edit Request"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            className="action-icon-btn delete"
-                            onClick={() => setDeletingRequestId(req.id)}
-                            title="Delete Request"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {!isTerminal && (
+                            <button
+                              className="action-icon-btn edit"
+                              onClick={() => handleOpenEditModal(req)}
+                              title="Edit Request"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                          )}
+                          {!isTerminal && (
+                            <button
+                              className="action-icon-btn delete"
+                              onClick={() => setDeletingRequestId(req.id)}
+                              title="Cancel Request"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -442,6 +478,15 @@ export default function BloodRequestsPage({
         </div>
       </section>
 
+      {/* --- Matching Results Modal --- */}
+      {matchingRequest && (
+        <MatchingModal
+          isOpen={!!matchingRequest}
+          onClose={() => setMatchingRequest(null)}
+          request={matchingRequest}
+        />
+      )}
+
       {/* --- Add / Edit Blood Request Modal --- */}
       {(isAddingRequest || editingRequest) && (
         <div className="modal-overlay">
@@ -453,7 +498,6 @@ export default function BloodRequestsPage({
                 onClick={() => {
                   setIsAddingRequest(false);
                   setEditingRequest(null);
-                  resetForm();
                 }}
               >
                 <X size={20} />
@@ -462,21 +506,21 @@ export default function BloodRequestsPage({
             <form onSubmit={handleSaveRequestSubmit} className="modal-form">
               <div className="form-grid">
                 <div className="form-group-item">
-                  <label htmlFor="req-patient">Patient Name <span className="req-star">*</span></label>
+                  <label htmlFor="req-patient-name">Patient Name / Ref <span className="req-star">*</span></label>
                   <input
                     type="text"
-                    id="req-patient"
+                    id="req-patient-name"
                     value={requestForm.patientName}
                     onChange={(e) => setRequestForm({ ...requestForm, patientName: e.target.value })}
                     required
-                    placeholder="Enter patient name"
+                    placeholder="e.g. John Doe / ICU Bed 4"
                   />
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="req-group">Blood Group <span className="req-star">*</span></label>
+                  <label htmlFor="req-blood-group">Blood Group Needed <span className="req-star">*</span></label>
                   <select
-                    id="req-group"
+                    id="req-blood-group"
                     value={requestForm.bloodGroup}
                     onChange={(e) => setRequestForm({ ...requestForm, bloodGroup: e.target.value })}
                     required
@@ -491,8 +535,9 @@ export default function BloodRequestsPage({
                   <label htmlFor="req-units">Units Required <span className="req-star">*</span></label>
                   <input
                     type="number"
-                    min="1"
                     id="req-units"
+                    min="1"
+                    max="50"
                     value={requestForm.unitsRequired}
                     onChange={(e) => setRequestForm({ ...requestForm, unitsRequired: e.target.value })}
                     required
@@ -500,19 +545,7 @@ export default function BloodRequestsPage({
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="req-hospital">Hospital Name <span className="req-star">*</span></label>
-                  <input
-                    type="text"
-                    id="req-hospital"
-                    value={requestForm.hospital}
-                    onChange={(e) => setRequestForm({ ...requestForm, hospital: e.target.value })}
-                    required
-                    placeholder="e.g. Government Medical College"
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label htmlFor="req-district">District <span className="req-star">*</span></label>
+                  <label htmlFor="req-district">Target District <span className="req-star">*</span></label>
                   <select
                     id="req-district"
                     value={requestForm.district}
@@ -526,10 +559,10 @@ export default function BloodRequestsPage({
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="req-date">Required Date <span className="req-star">*</span></label>
+                  <label htmlFor="req-required-date">Fulfillment Target Date <span className="req-star">*</span></label>
                   <input
                     type="date"
-                    id="req-date"
+                    id="req-required-date"
                     value={requestForm.requiredDate}
                     onChange={(e) => setRequestForm({ ...requestForm, requiredDate: e.target.value })}
                     required
@@ -537,34 +570,23 @@ export default function BloodRequestsPage({
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="req-phone">Contact Number</label>
+                  <label htmlFor="req-contact">Contact Phone <span className="req-star">*</span></label>
                   <input
                     type="tel"
-                    id="req-phone"
+                    id="req-contact"
                     value={requestForm.contactNumber}
                     onChange={(e) => setRequestForm({ ...requestForm, contactNumber: e.target.value })}
-                    placeholder="Enter phone number"
+                    required
+                    placeholder="+91 XXXXX XXXXX"
                   />
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="req-emergency">Emergency Contact</label>
-                  <input
-                    type="tel"
-                    id="req-emergency"
-                    value={requestForm.emergencyContact}
-                    onChange={(e) => setRequestForm({ ...requestForm, emergencyContact: e.target.value })}
-                    placeholder="Emergency number"
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label htmlFor="req-urgency">Urgency Level <span className="req-star">*</span></label>
+                  <label htmlFor="req-urgency">Clinical Urgency</label>
                   <select
                     id="req-urgency"
                     value={requestForm.urgency}
                     onChange={(e) => setRequestForm({ ...requestForm, urgency: e.target.value })}
-                    required
                   >
                     {URGENCY_LEVELS.map(u => (
                       <option key={u} value={u}>{u}</option>
@@ -573,37 +595,35 @@ export default function BloodRequestsPage({
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="req-status">Status</label>
+                  <label htmlFor="req-status">Workflow Status</label>
                   <select
                     id="req-status"
                     value={requestForm.status}
                     onChange={(e) => setRequestForm({ ...requestForm, status: e.target.value })}
                   >
-                    {STATUSES.map(s => (
+                    {ALL_STATUSES.map(s => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
                 </div>
+              </div>
 
-                <div className="form-group-item" style={{ gridColumn: 'span 2' }}>
-                  <label htmlFor="req-notes">Additional Notes</label>
-                  <textarea
-                    id="req-notes"
-                    value={requestForm.notes}
-                    onChange={(e) => setRequestForm({ ...requestForm, notes: e.target.value })}
-                    placeholder="Explain patient's clinical state or urgent requirements..."
-                    rows="2"
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      fontFamily: 'inherit',
-                      resize: 'vertical',
-                      backgroundColor: 'var(--white)'
-                    }}
-                  />
-                </div>
+              <div className="form-group-item" style={{ marginTop: '16px' }}>
+                <label htmlFor="req-notes">Clinical Notes / Special Requirements</label>
+                <textarea
+                  id="req-notes"
+                  rows="3"
+                  value={requestForm.notes}
+                  onChange={(e) => setRequestForm({ ...requestForm, notes: e.target.value })}
+                  placeholder="e.g. Platelet pheresis preferred, crossmatch required immediately"
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '0.9rem'
+                  }}
+                ></textarea>
               </div>
 
               <div className="modal-footer-actions">
@@ -613,13 +633,12 @@ export default function BloodRequestsPage({
                   onClick={() => {
                     setIsAddingRequest(false);
                     setEditingRequest(null);
-                    resetForm();
                   }}
                 >
                   Cancel
                 </button>
                 <button type="submit" className="modal-primary-btn">
-                  {editingRequest ? 'Save Changes' : 'Create Request'}
+                  {editingRequest ? 'Save Changes' : 'Submit Blood Request'}
                 </button>
               </div>
             </form>
@@ -627,99 +646,72 @@ export default function BloodRequestsPage({
         </div>
       )}
 
-      {/* --- View Request Details Modal --- */}
+      {/* --- View Blood Request Details Modal --- */}
       {viewingRequest && (
         <div className="modal-overlay">
           <div className="modal-content-card detail-modal">
             <div className="modal-header">
-              <h3>Blood Request Profile</h3>
+              <h3>Blood Request Record</h3>
               <button className="modal-close-btn" onClick={() => setViewingRequest(null)}>
                 <X size={20} />
               </button>
             </div>
             <div className="modal-details-body">
-              <div className="donor-card-badge-large" style={{ backgroundColor: '#FFF5F5', color: 'var(--primary-rose)' }}>
-                <Droplet size={24} fill="currentColor" />
+              <div className="donor-card-badge-large">
+                <span>{viewingRequest.bloodGroup}</span>
               </div>
-              <h4 style={{ textAlign: 'center', fontSize: '1.25rem', fontWeight: 700, margin: '8px 0 20px 0', color: 'var(--dark-text)' }}>
-                Request {viewingRequest.id}
-              </h4>
-              
               <div className="details-grid">
                 <div className="detail-row">
-                  <span className="detail-lbl">Patient Name</span>
+                  <span className="detail-lbl">Request Code</span>
+                  <span className="detail-val font-semibold">{viewingRequest.id}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">Patient / Ref</span>
                   <span className="detail-val font-semibold">{viewingRequest.patientName}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-lbl">Blood Group</span>
-                  <span className="detail-val font-semibold" style={{ color: 'var(--primary-rose)' }}>
-                    {viewingRequest.bloodGroup}
-                  </span>
+                  <span className="detail-lbl">Units Requested</span>
+                  <span className="detail-val font-semibold text-rose-red">{viewingRequest.unitsRequired} Units</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-lbl">Units Required</span>
-                  <span className="detail-val font-semibold">{viewingRequest.unitsRequired} Units</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-lbl">Required Date</span>
-                  <span className="detail-val font-semibold" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <Calendar size={14} /> {viewingRequest.requiredDate}
-                  </span>
-                </div>
-                <div className="detail-row" style={{ gridColumn: 'span 2' }}>
-                  <span className="detail-lbl">Hospital / Venue</span>
-                  <span className="detail-val">{viewingRequest.hospital}</span>
+                  <span className="detail-lbl">Hospital</span>
+                  <span className="detail-val">{viewingRequest.hospital || 'Hospital'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-lbl">District</span>
                   <span className="detail-val">{viewingRequest.district}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-lbl">Urgency Level</span>
-                  <span className="detail-val font-semibold">
-                    {viewingRequest.urgency === 'Critical' ? (
-                      <span style={{ color: '#e11d48' }}>🔴 Critical</span>
-                    ) : viewingRequest.urgency === 'Urgent' ? (
-                      <span style={{ color: '#ea580c' }}>🟠 Urgent</span>
-                    ) : (
-                      'Normal'
-                    )}
-                  </span>
+                  <span className="detail-lbl">Target Date</span>
+                  <span className="detail-val">{viewingRequest.requiredDate}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-lbl">Contact Number</span>
-                  <span className="detail-val">{viewingRequest.contactNumber || 'N/A'}</span>
+                  <span className="detail-lbl">Contact Phone</span>
+                  <span className="detail-val">{viewingRequest.contactNumber}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-lbl">Emergency Contact</span>
-                  <span className="detail-val">{viewingRequest.emergencyContact || 'N/A'}</span>
+                  <span className="detail-lbl">Clinical Urgency</span>
+                  <span className="detail-val">{viewingRequest.urgency}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-lbl">Status</span>
-                  <span className="detail-val">
-                    <span style={{
-                      backgroundColor: getStatusStyles(viewingRequest.status).bg,
-                      color: getStatusStyles(viewingRequest.status).text,
-                      padding: '4px 10px',
-                      borderRadius: '20px',
-                      fontSize: '0.8rem',
-                      fontWeight: '600'
-                    }}>
-                      {viewingRequest.status}
-                    </span>
-                  </span>
-                </div>
-                <div className="detail-row" style={{ gridColumn: 'span 2' }}>
-                  <span className="detail-lbl">Additional Notes</span>
-                  <span className="detail-val" style={{ whiteSpace: 'pre-wrap', fontStyle: viewingRequest.notes ? 'normal' : 'italic' }}>
-                    {viewingRequest.notes || 'No additional notes provided.'}
-                  </span>
+                  <span className="detail-val font-semibold">{viewingRequest.status}</span>
                 </div>
               </div>
-              
-              <div className="modal-footer-actions justify-center">
-                <button className="modal-primary-btn" onClick={() => setViewingRequest(null)}>
-                  Close File
+              <div className="modal-footer-actions justify-center" style={{ gap: '12px' }}>
+                <button
+                  className="modal-primary-btn"
+                  onClick={() => {
+                    const req = viewingRequest;
+                    setViewingRequest(null);
+                    setMatchingRequest(req);
+                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <Users size={16} /> Find Eligible Donors
+                </button>
+                <button className="modal-secondary-btn" onClick={() => setViewingRequest(null)}>
+                  Close
                 </button>
               </div>
             </div>
@@ -727,28 +719,25 @@ export default function BloodRequestsPage({
         </div>
       )}
 
-      {/* --- Delete Confirmation Modal --- */}
+      {/* --- Delete / Cancel Blood Request Confirmation Modal --- */}
       {deletingRequestId && (
         <div className="modal-overlay">
           <div className="modal-content-card delete-confirm-modal">
             <div className="modal-header">
-              <h3>Confirm Deletion</h3>
+              <h3>Confirm Request Cancellation</h3>
               <button className="modal-close-btn" onClick={() => setDeletingRequestId(null)}>
                 <X size={20} />
               </button>
             </div>
             <div className="delete-body">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--primary-rose)', marginBottom: '14px' }}>
-                <ShieldAlert size={24} />
-                <strong style={{ fontSize: '1.05rem' }}>Warning: Delete Request</strong>
-              </div>
-              <p>Are you sure you want to delete blood request <strong>{deletingRequestId}</strong>? This action cannot be undone.</p>
+              <p>Are you sure you want to cancel request <strong>{deletingRequestId}</strong>?</p>
+              <p className="sub-warning">This request will transition to CANCELLED and can no longer be matched or fulfilled.</p>
               <div className="modal-footer-actions">
                 <button className="modal-secondary-btn" onClick={() => setDeletingRequestId(null)}>
-                  Cancel
+                  Keep Active
                 </button>
                 <button className="modal-delete-btn" onClick={handleDeleteRequestConfirm}>
-                  Delete Request
+                  Cancel Request
                 </button>
               </div>
             </div>
