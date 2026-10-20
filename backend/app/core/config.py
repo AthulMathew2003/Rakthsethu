@@ -16,6 +16,17 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5433/rakthasethu"
     DATABASE_ECHO: bool = False
 
+    @field_validator("DATABASE_URL", mode="before")
+    def assemble_database_url(cls, v: str) -> str:
+        if isinstance(v, str):
+            # Render PostgreSQL URLs typically start with postgres:// or postgresql://
+            # SQLAlchemy async engine requires postgresql+asyncpg://
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif v.startswith("postgresql://") and not v.startswith("postgresql+"):
+                return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
     # JWT & Auth
     JWT_SECRET_KEY: str = "dev-secret-key-rakthasethu"
     JWT_ALGORITHM: str = "HS256"
