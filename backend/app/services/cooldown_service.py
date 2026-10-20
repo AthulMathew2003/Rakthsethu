@@ -15,7 +15,12 @@ class CooldownEligibility:
 
 
 def get_required_cooldown_days(donation_type: str = "Whole Blood") -> int:
-    """Returns the mandatory cooldown period in days based on donation type."""
+    """
+    Returns the configured project policy cooldown period in days based on donation type.
+    Note: These cooldown intervals (Whole Blood: 90d, Platelets: 14d, Plasma: 28d) reflect
+    configurable Rakthasethu project operational policies (derived from Drugs & Cosmetics Rules)
+    rather than immutable medical absolutes.
+    """
     type_normalized = (donation_type or "Whole Blood").strip().lower()
     if "platelet" in type_normalized:
         return settings.PLATELET_COOLDOWN_DAYS
@@ -32,7 +37,7 @@ def calculate_cooldown_eligibility(
     reference_date: Optional[date] = None,
 ) -> CooldownEligibility:
     """
-    Calculates cooldown status based on a donor's most recent completed donation date.
+    Calculates cooldown eligibility against the configured project cooldown policy.
     - If never donated (last_donation_date is None): 100% eligible, days_remaining = 0.
     - If last_donation_date + cooldown <= reference_date: eligible.
     - Otherwise: ineligible until eligible_from date.

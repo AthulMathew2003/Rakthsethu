@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
+from geoalchemy2 import Geography
 from sqlalchemy import Boolean, Float, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin
@@ -26,7 +27,15 @@ class Hospital(Base, TimestampMixin):
     emergency_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    location: Mapped[Optional[Any]] = mapped_column(
+        Geography(geometry_type="POINT", srid=4326, spatial_index=False),
+        nullable=True,
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
+
+    @property
+    def has_location(self) -> bool:
+        return self.location is not None
 
     # Relationships
     users: Mapped[List["User"]] = relationship("User", back_populates="hospital")
@@ -38,4 +47,5 @@ class Hospital(Base, TimestampMixin):
     __table_args__ = (
         Index("idx_hospitals_district", "district"),
         Index("idx_hospitals_is_active", "is_active"),
+        Index("idx_hospitals_location_gist", "location", postgresql_using="gist"),
     )

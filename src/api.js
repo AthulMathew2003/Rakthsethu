@@ -213,6 +213,23 @@ export async function deleteDonorApi(id) {
   });
 }
 
+export async function updateDonorLocation(id, { latitude, longitude, consent_confirmed = true }) {
+  return request(`/donors/${id}/location`, {
+    method: 'PUT',
+    body: {
+      latitude: Number(latitude),
+      longitude: Number(longitude),
+      consent_confirmed: Boolean(consent_confirmed),
+    },
+  });
+}
+
+export async function removeDonorLocation(id) {
+  return request(`/donors/${id}/location`, {
+    method: 'DELETE',
+  });
+}
+
 // ─── 3. Donor Bulk Import Endpoints ─────────────────────────
 export async function previewDonorImport(file, hospitalId = null) {
   const formData = new FormData();
@@ -309,24 +326,49 @@ export async function fetchRequestMatches(requestId, limit = 20) {
 // ─── 5. Standalone Donor Matching Endpoint ──────────────────
 export async function matchDonorsDirect({
   bloodGroup,
-  district,
+  district = null,
   panchayat = null,
+  latitude = null,
+  longitude = null,
+  hospitalId = null,
+  radiusKm = 25.0,
+  includeFallback = true,
   requiredUnits = 1,
   requiredDate = null,
   donationType = 'Whole Blood',
   limit = 20,
 }) {
+  const body = {
+    blood_group: bloodGroup,
+    required_units: Number(requiredUnits) || 1,
+    required_date: requiredDate || null,
+    donation_type: donationType,
+    include_fallback: Boolean(includeFallback),
+    limit: Number(limit) || 20,
+  };
+
+  if (district && district.trim()) {
+    body.district = district.trim();
+  }
+  if (panchayat && panchayat.trim()) {
+    body.panchayat = panchayat.trim();
+  }
+  if (latitude !== null && latitude !== undefined && String(latitude).trim() !== '') {
+    body.latitude = Number(latitude);
+  }
+  if (longitude !== null && longitude !== undefined && String(longitude).trim() !== '') {
+    body.longitude = Number(longitude);
+  }
+  if (hospitalId) {
+    body.hospital_id = Number(hospitalId);
+  }
+  if (radiusKm !== null && radiusKm !== undefined && String(radiusKm).trim() !== '') {
+    body.radius_km = Number(radiusKm);
+  }
+
   return request('/matching/donors', {
     method: 'POST',
-    body: {
-      blood_group: bloodGroup,
-      district,
-      panchayat,
-      required_units: Number(requiredUnits) || 1,
-      required_date: requiredDate || null,
-      donation_type: donationType,
-      limit: Number(limit) || 20,
-    },
+    body,
   });
 }
 

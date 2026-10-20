@@ -21,7 +21,8 @@ import {
   Trash2,
   X,
   Loader2,
-  Hospital
+  Hospital,
+  MapPin
 } from 'lucide-react';
 import {
   fetchDashboardStats,
@@ -29,6 +30,8 @@ import {
   createDonor,
   updateDonor,
   deleteDonorApi,
+  updateDonorLocation,
+  removeDonorLocation,
   fetchHospitals,
   createHospital,
   updateHospital,
@@ -69,6 +72,7 @@ import UsersPage from './Users.jsx';
 import ReportsPage from './Reports.jsx';
 import SettingsPage from './Settings.jsx';
 import DonorImportModal from './DonorImportModal.jsx';
+import MatchingModal from './MatchingModal.jsx';
 import './Dashboard.css';
 
 // Map iconType strings from API to actual Lucide components
@@ -172,6 +176,22 @@ export default function Dashboard({ user, onLogout }) {
   const [editingDonor, setEditingDonor] = useState(null);
   const [deletingDonorId, setDeletingDonorId] = useState(null);
   const [savingDonor, setSavingDonor] = useState(false);
+
+  // Location & Consent Management State
+  const [locationDonor, setLocationDonor] = useState(null);
+  const [revokingLocationDonor, setRevokingLocationDonor] = useState(null);
+  const [locationForm, setLocationForm] = useState({
+    latitude: '',
+    longitude: '',
+    consentConfirmed: false,
+  });
+  const [locationSaving, setLocationSaving] = useState(false);
+  const [locationError, setLocationError] = useState(null);
+  const [locationValidationErrors, setLocationValidationErrors] = useState({});
+
+  // Direct Proximity Matching State
+  const [isMatchingModalOpen, setIsMatchingModalOpen] = useState(false);
+  const [standaloneMatchingReq, setStandaloneMatchingReq] = useState(null);
 
   // Form State for Add/Edit
   const [donorForm, setDonorForm] = useState({
@@ -479,6 +499,10 @@ export default function Dashboard({ user, onLogout }) {
         panchayat: d.panchayat || '',
         lastDonation: d.last_donation_date || 'Never',
         status: d.is_available ? 'Active' : 'Inactive',
+        hasLocation: Boolean(d.has_location),
+        locationConsent: Boolean(d.location_consent),
+        locationConsentRecordedAt: d.location_consent_recorded_at || null,
+        hospitalId: d.hospital_id || null,
       }));
 
       setDonorsList(mapped);
@@ -591,6 +615,91 @@ export default function Dashboard({ user, onLogout }) {
       console.error('Failed to delete donor:', err);
       alert(`Error deleting donor: ${err.message}`);
       setDeletingDonorId(null);
+    }
+  };
+
+  // ─── Donor Location & Consent Management Handlers ─────────
+  const handleOpenLocationModal = (donor) => {
+    setLocationDonor(donor);
+    setLocationError(null);
+    setLocationValidationErrors({});
+    setLocationForm({
+      latitude: '',
+      longitude: '',
+      consentConfirmed: false,
+    });
+  };
+
+  const handleSaveLocation = async (e) => {
+    e.preventDefault();
+    if (!locationDonor) return;
+
+    setLocationError(null);
+    const errors = {};
+
+    const lat = parseFloat(locationForm.latitude);
+    const lon = parseFloat(locationForm.longitude);
+
+    if (locationForm.latitude === '' || isNaN(lat) || !isFinite(lat)) {
+      errors.latitude = 'Valid latitude between -90 and 90 is required.';
+    } else if (lat < -90 || lat > 90) {
+      errors.latitude = 'Latitude must be between -90 and 90 degrees.';
+    }
+
+    if (locationForm.longitude === '' || isNaN(lon) || !isFinite(lon)) {
+      errors.longitude = 'Valid longitude between -180 and 180 is required.';
+    } else if (lon < -180 || lon > 180) {
+      errors.longitude = 'Longitude must be between -180 and 180 degrees.';
+    }
+
+    if (!locationForm.consentConfirmed) {
+      errors.consent = 'Staff attestation of explicit offline donor consent is mandatory.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setLocationValidationErrors(errors);
+      return;
+    }
+
+    setLocationSaving(true);
+    try {
+      await updateDonorLocation(locationDonor.dbId, {
+        latitude: lat,
+        longitude: lon,
+        consent_confirmed: true,
+      });
+
+      // Close modal and refresh list
+      setLocationDonor(null);
+      await loadDonors();
+      if (viewingDonor && viewingDonor.dbId === locationDonor.dbId) {
+        setViewingDonor(null);
+      }
+    } catch (err) {
+      console.error('Failed to update donor location:', err);
+      setLocationError(err.message || 'Failed to update donor location.');
+    } finally {
+      setLocationSaving(false);
+    }
+  };
+
+  const handleRevokeLocation = async () => {
+    if (!revokingLocationDonor) return;
+    try {
+      await removeDonorLocation(revokingLocationDonor.dbId);
+      const revokedId = revokingLocationDonor.dbId;
+      setRevokingLocationDonor(null);
+      if (locationDonor && locationDonor.dbId === revokedId) {
+        setLocationDonor(null);
+      }
+      if (viewingDonor && viewingDonor.dbId === revokedId) {
+        setViewingDonor(null);
+      }
+      await loadDonors();
+    } catch (err) {
+      console.error('Failed to revoke donor location:', err);
+      alert(`Failed to revoke location: ${err.message}`);
+      setRevokingLocationDonor(null);
     }
   };
 
@@ -1390,6 +1499,21 @@ export default function Dashboard({ user, onLogout }) {
 
                 <button
                   className="add-donor-btn"
+                  style={{ backgroundColor: '#059669', color: '#FFF' }}
+                  onClick={() => {
+                    setStandaloneMatchingReq({
+                      bloodGroup: groupFilter !== 'All' ? groupFilter : 'O+',
+                      district: locationFilter !== 'All' ? locationFilter : 'Kottayam',
+                      unitsRequired: 1,
+                      hospitalId: user?.hospital_id,
+                    });
+                    setIsMatchingModalOpen(true);
+                  }}
+                >
+                  🔍 Proximity Donor Search
+                </button>
+                <button
+                  className="add-donor-btn"
                   style={{ backgroundColor: '#4F46E5', color: '#FFF' }}
                   onClick={() => setIsImportingDonors(true)}
                 >
@@ -1429,6 +1553,7 @@ export default function Dashboard({ user, onLogout }) {
                           <th>Phone</th>
                           <th>Email</th>
                           <th>Location</th>
+                          <th>GPS Status</th>
                           <th>Last Donation</th>
                           <th>Status</th>
                           <th>Actions</th>
@@ -1446,6 +1571,21 @@ export default function Dashboard({ user, onLogout }) {
                               <td className="donor-phone-cell">{donor.phone}</td>
                               <td className="donor-email-cell">{donor.email}</td>
                               <td>{donor.location}</td>
+                              <td>
+                                {donor.hasLocation && donor.locationConsent ? (
+                                  <span className="status-pill-badge active-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem' }} title="GPS Location Registered with Valid Consent">
+                                    📍 GPS Active
+                                  </span>
+                                ) : donor.hasLocation && !donor.locationConsent ? (
+                                  <span className="status-pill-badge" style={{ backgroundColor: '#FEF3C7', color: '#92400E', display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem' }} title="Coordinates Stored but Consent Revoked/Pending">
+                                    ⚠️ Consent Revoked
+                                  </span>
+                                ) : (
+                                  <span className="status-pill-badge inactive-badge" style={{ fontSize: '0.75rem' }} title="No GPS Coordinates Registered">
+                                    No GPS
+                                  </span>
+                                )}
+                              </td>
                               <td>{donor.lastDonation}</td>
                               <td>
                                 <span className={`status-pill-badge ${donor.status === 'Active' ? 'active-badge' : 'inactive-badge'}`}>
@@ -1454,6 +1594,14 @@ export default function Dashboard({ user, onLogout }) {
                               </td>
                               <td>
                                 <div className="actions-cell-wrapper">
+                                  <button
+                                    className="action-icon-btn"
+                                    style={{ color: '#2563EB', backgroundColor: '#EFF6FF' }}
+                                    onClick={() => handleOpenLocationModal(donor)}
+                                    title="Manage GPS Location & Consent"
+                                  >
+                                    <MapPin size={16} />
+                                  </button>
                                   <button
                                     className="action-icon-btn view"
                                     onClick={() => setViewingDonor(donor)}
@@ -1481,7 +1629,7 @@ export default function Dashboard({ user, onLogout }) {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="9" className="no-records-cell">
+                            <td colSpan="10" className="no-records-cell">
                               No donors found matching the filters.
                             </td>
                           </tr>
@@ -1710,8 +1858,54 @@ export default function Dashboard({ user, onLogout }) {
                     {viewingDonor.status}
                   </span>
                 </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">GPS Location</span>
+                  <span className="detail-val">
+                    {viewingDonor.hasLocation ? (
+                      <span style={{ color: '#059669', fontWeight: 600 }}>📍 Stored in PostGIS</span>
+                    ) : (
+                      <span style={{ color: '#64748B' }}>Not Provided</span>
+                    )}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">Location Consent</span>
+                  <span className="detail-val">
+                    {viewingDonor.locationConsent ? (
+                      <span style={{ color: '#059669', fontWeight: 600 }}>✅ Recorded & Active</span>
+                    ) : (
+                      <span style={{ color: '#D97706', fontWeight: 600 }}>⚠️ Not Recorded / Revoked</span>
+                    )}
+                  </span>
+                </div>
+                {viewingDonor.locationConsentRecordedAt && (
+                  <div className="detail-row">
+                    <span className="detail-lbl">Consent Recorded At</span>
+                    <span className="detail-val">
+                      {new Date(viewingDonor.locationConsentRecordedAt).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="modal-footer-actions justify-center">
+              <div className="modal-footer-actions justify-center" style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: '#EFF6FF',
+                    color: '#2563EB',
+                    border: '1px solid #BFDBFE',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    handleOpenLocationModal(viewingDonor);
+                  }}
+                >
+                  Manage GPS Location & Consent
+                </button>
                 <button className="modal-primary-btn" onClick={() => setViewingDonor(null)}>
                   Close File
                 </button>
@@ -1719,6 +1913,253 @@ export default function Dashboard({ user, onLogout }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Manage Location & Consent Modal */}
+      {locationDonor && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content-card" style={{ maxWidth: '580px', width: '90%' }}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
+                  backgroundColor: '#EFF6FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#2563EB'
+                }}>
+                  <MapPin size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0F172A' }}>
+                    Manage GPS Location & Consent
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748B' }}>
+                    Donor: <strong>{locationDonor.name}</strong> ({locationDonor.id})
+                  </p>
+                </div>
+              </div>
+              <button className="modal-close-btn" onClick={() => setLocationDonor(null)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLocation} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Current Status Display */}
+              <div style={{
+                padding: '12px 14px',
+                backgroundColor: locationDonor.hasLocation ? '#ECFDF5' : '#F8FAFC',
+                borderRadius: '8px',
+                border: locationDonor.hasLocation ? '1px solid #A7F3D0' : '1px solid #E2E8F0',
+                fontSize: '0.85rem'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <span style={{ color: '#64748B' }}>Stored Location:</span>
+                  <strong style={{ color: locationDonor.hasLocation ? '#059669' : '#64748B' }}>
+                    {locationDonor.hasLocation ? 'Coordinates Registered' : 'Not Provided'}
+                  </strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <span style={{ color: '#64748B' }}>Location Consent:</span>
+                  <strong style={{ color: locationDonor.locationConsent ? '#059669' : '#D97706' }}>
+                    {locationDonor.locationConsent ? 'Recorded & Active' : 'Not Recorded / Revoked'}
+                  </strong>
+                </div>
+                {locationDonor.locationConsentRecordedAt && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#64748B' }}>Recorded At:</span>
+                    <span style={{ color: '#334155' }}>
+                      {new Date(locationDonor.locationConsentRecordedAt).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {locationError && (
+                <div style={{
+                  padding: '10px 14px',
+                  backgroundColor: '#FEF2F2',
+                  border: '1px solid #FCA5A5',
+                  borderRadius: '6px',
+                  color: '#DC2626',
+                  fontSize: '0.85rem'
+                }}>
+                  {locationError}
+                </div>
+              )}
+
+              {/* Coordinate Inputs */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                    Latitude (-90 to 90) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    placeholder="e.g. 9.5916"
+                    value={locationForm.latitude}
+                    onChange={(e) => setLocationForm({ ...locationForm, latitude: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: locationValidationErrors.latitude ? '1px solid #EF4444' : '1px solid #CBD5E1',
+                      fontSize: '0.85rem'
+                    }}
+                    required
+                  />
+                  {locationValidationErrors.latitude && (
+                    <span style={{ color: '#EF4444', fontSize: '0.75rem', marginTop: '2px', display: 'block' }}>
+                      {locationValidationErrors.latitude}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                    Longitude (-180 to 180) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    placeholder="e.g. 76.5222"
+                    value={locationForm.longitude}
+                    onChange={(e) => setLocationForm({ ...locationForm, longitude: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: locationValidationErrors.longitude ? '1px solid #EF4444' : '1px solid #CBD5E1',
+                      fontSize: '0.85rem'
+                    }}
+                    required
+                  />
+                  {locationValidationErrors.longitude && (
+                    <span style={{ color: '#EF4444', fontSize: '0.75rem', marginTop: '2px', display: 'block' }}>
+                      {locationValidationErrors.longitude}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Auditable Consent Confirmation Checkbox */}
+              <div style={{
+                padding: '12px',
+                backgroundColor: '#FFFBEB',
+                border: locationValidationErrors.consent ? '1px solid #EF4444' : '1px solid #FDE68A',
+                borderRadius: '8px',
+                fontSize: '0.82rem'
+              }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', color: '#92400E' }}>
+                  <input
+                    type="checkbox"
+                    checked={locationForm.consentConfirmed}
+                    onChange={(e) => setLocationForm({ ...locationForm, consentConfirmed: e.target.checked })}
+                    style={{ width: '16px', height: '16px', marginTop: '2px', accentColor: '#D97706' }}
+                  />
+                  <span>
+                    <strong>Staff Attestation of Donor Consent:</strong> I confirm that this donor has been informed and has explicitly consented offline to the recording of their GPS location for emergency blood proximity matching.
+                  </span>
+                </label>
+                {locationValidationErrors.consent && (
+                  <span style={{ color: '#EF4444', fontSize: '0.75rem', marginTop: '4px', display: 'block', fontWeight: 600 }}>
+                    {locationValidationErrors.consent}
+                  </span>
+                )}
+              </div>
+
+              {/* Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                {locationDonor.hasLocation ? (
+                  <button
+                    type="button"
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '6px',
+                      border: '1px solid #FCA5A5',
+                      backgroundColor: '#FEF2F2',
+                      color: '#DC2626',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setRevokingLocationDonor(locationDonor)}
+                  >
+                    Revoke Consent & Remove Location
+                  </button>
+                ) : <div />}
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className="modal-secondary-btn"
+                    onClick={() => setLocationDonor(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="modal-primary-btn"
+                    disabled={locationSaving}
+                  >
+                    {locationSaving ? 'Saving...' : 'Save Location & Consent'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Revoke Consent Confirmation Modal */}
+      {revokingLocationDonor && (
+        <div className="modal-overlay" style={{ zIndex: 1200 }}>
+          <div className="modal-content-card delete-confirm-modal">
+            <div className="modal-header">
+              <h3>Revoke Consent & Remove Location</h3>
+              <button className="modal-close-btn" onClick={() => setRevokingLocationDonor(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="delete-body">
+              <p>
+                Are you sure you want to revoke location consent and remove GPS coordinates for donor <strong>{revokingLocationDonor.name}</strong> ({revokingLocationDonor.id})?
+              </p>
+              <p className="sub-warning" style={{ color: '#B45309', backgroundColor: '#FFFBEB', padding: '10px', borderRadius: '6px', border: '1px solid #FDE68A' }}>
+                ⚠️ <strong>Note:</strong> This action deletes the stored GPS coordinates from the database and revokes location consent. The donor will NOT be deleted, but will be excluded from future proximity-based matching.
+              </p>
+              <div className="modal-footer-actions">
+                <button className="modal-secondary-btn" onClick={() => setRevokingLocationDonor(null)}>
+                  Cancel
+                </button>
+                <button
+                  className="modal-delete-btn"
+                  style={{ backgroundColor: '#DC2626' }}
+                  onClick={handleRevokeLocation}
+                >
+                  Revoke Consent & Remove Location
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Standalone Proximity Matching Modal */}
+      {isMatchingModalOpen && (
+        <MatchingModal
+          isOpen={isMatchingModalOpen}
+          onClose={() => {
+            setIsMatchingModalOpen(false);
+            setStandaloneMatchingReq(null);
+          }}
+          request={standaloneMatchingReq}
+          userHospitalId={user?.hospital_id}
+        />
       )}
 
       {/* Delete Donor Confirmation Modal */}

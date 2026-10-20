@@ -1,5 +1,7 @@
-from typing import TYPE_CHECKING, List, Optional
-from sqlalchemy import Boolean, ForeignKey, Index, String, Text
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, List, Optional
+from geoalchemy2 import Geography
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin
@@ -37,8 +39,20 @@ class Donor(Base, TimestampMixin):
     district: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     panchayat: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    location: Mapped[Optional[Any]] = mapped_column(
+        Geography(geometry_type="POINT", srid=4326, spatial_index=False),
+        nullable=True,
+    )
+    location_consent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    location_consent_recorded_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
     is_available: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
+
+    @property
+    def has_location(self) -> bool:
+        return self.location is not None
 
     # Relationships
     hospital: Mapped[Optional["Hospital"]] = relationship("Hospital", back_populates="donors")
@@ -53,4 +67,5 @@ class Donor(Base, TimestampMixin):
         Index("idx_donors_district", "district"),
         Index("idx_donors_active_available", "is_active", "is_available"),
         Index("idx_donors_matching_composite", "blood_group", "district", "is_active", "is_available"),
+        Index("idx_donors_location_gist", "location", postgresql_using="gist"),
     )

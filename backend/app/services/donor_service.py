@@ -1,7 +1,9 @@
+from datetime import datetime, timezone
 import math
 import re
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+from geoalchemy2.elements import WKTElement
 from app.core.exceptions import (
     DuplicateResourceException,
     ResourceNotFoundException,
@@ -44,6 +46,14 @@ class DonorService:
         else:
             donor_code = await self.donor_repo.generate_next_donor_code()
 
+        location_geom = None
+        consent_val = False
+        consent_time = None
+        if data.latitude is not None and data.longitude is not None:
+            location_geom = WKTElement(f"POINT({data.longitude} {data.latitude})", srid=4326)
+            consent_val = True
+            consent_time = datetime.now(timezone.utc)
+
         new_donor = Donor(
             donor_code=donor_code,
             hospital_id=data.hospital_id,
@@ -55,6 +65,9 @@ class DonorService:
             district=data.district.strip(),
             panchayat=data.panchayat.strip() if data.panchayat else None,
             address=data.address.strip() if data.address else None,
+            location=location_geom,
+            location_consent=consent_val,
+            location_consent_recorded_at=consent_time,
             is_active=True,
             is_available=data.is_available,
         )
@@ -96,12 +109,86 @@ class DonorService:
             if not hospital:
                 raise ResourceNotFoundException("Hospital", update_dict["hospital_id"])
 
+        # Handle spatial location update/clearing
+        if update_dict.get("remove_location"):
+            donor.location = None
+            donor.location_consent = False
+            donor.location_consent_recorded_at = None
+            del update_dict["remove_location"]
+            if "latitude" in update_dict:
+                del update_dict["latitude"]
+            if "longitude" in update_dict:
+                del update_dict["longitude"]
+            if "location_consent" in update_dict:
+                del update_dict["location_consent"]
+        elif (
+            "latitude" in update_dict
+            and "longitude" in update_dict
+            and update_dict["latitude"] is not None
+            and update_dict["longitude"] is not None
+        ):
+            donor.location = WKTElement(
+                f"POINT({update_dict['longitude']} {update_dict['latitude']})",
+                srid=4326,
+            )
+            donor.location_consent = True
+            donor.location_consent_recorded_at = datetime.now(timezone.utc)
+            del update_dict["latitude"]
+            del update_dict["longitude"]
+            if "remove_location" in update_dict:
+                del update_dict["remove_location"]
+            if "location_consent" in update_dict:
+                del update_dict["location_consent"]
+        else:
+            if "remove_location" in update_dict:
+                del update_dict["remove_location"]
+            if "latitude" in update_dict:
+                del update_dict["latitude"]
+            if "longitude" in update_dict:
+                del update_dict["longitude"]
+            if "location_consent" in update_dict:
+                del update_dict["location_consent"]
+
         for key, value in update_dict.items():
             if value is not None and isinstance(value, str):
                 setattr(donor, key, value.strip())
             else:
                 setattr(donor, key, value)
 
+        await self.session.commit()
+        await self.session.refresh(donor)
+
+        latest_donation = await self.donor_repo.get_latest_donation_date(donor.id)
+        donor_resp = DonorResponse.model_validate(donor)
+        donor_resp.last_donation_date = latest_donation
+        return donor_resp
+
+    async def update_donor_location(
+        self, donor_id: int, latitude: float, longitude: float
+    ) -> DonorResponse:
+        donor = await self.donor_repo.get_by_id(donor_id)
+        if not donor:
+            raise ResourceNotFoundException("Donor", donor_id)
+
+        donor.location = WKTElement(f"POINT({longitude} {latitude})", srid=4326)
+        donor.location_consent = True
+        donor.location_consent_recorded_at = datetime.now(timezone.utc)
+        await self.session.commit()
+        await self.session.refresh(donor)
+
+        latest_donation = await self.donor_repo.get_latest_donation_date(donor.id)
+        donor_resp = DonorResponse.model_validate(donor)
+        donor_resp.last_donation_date = latest_donation
+        return donor_resp
+
+    async def remove_donor_location(self, donor_id: int) -> DonorResponse:
+        donor = await self.donor_repo.get_by_id(donor_id)
+        if not donor:
+            raise ResourceNotFoundException("Donor", donor_id)
+
+        donor.location = None
+        donor.location_consent = False
+        donor.location_consent_recorded_at = None
         await self.session.commit()
         await self.session.refresh(donor)
 

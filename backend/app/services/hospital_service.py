@@ -1,6 +1,7 @@
 import math
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+from geoalchemy2.elements import WKTElement
 from app.core.exceptions import DuplicateResourceException, ResourceNotFoundException
 from app.models.hospital import Hospital
 from app.repositories.hospital_repository import HospitalRepository
@@ -22,6 +23,10 @@ class HospitalService:
         else:
             hospital_code = await self.hospital_repo.generate_next_hospital_code()
 
+        location_geom = None
+        if data.latitude is not None and data.longitude is not None:
+            location_geom = WKTElement(f"POINT({data.longitude} {data.latitude})", srid=4326)
+
         new_hospital = Hospital(
             hospital_code=hospital_code,
             name=data.name.strip(),
@@ -34,6 +39,7 @@ class HospitalService:
             emergency_number=data.emergency_number.strip() if data.emergency_number else None,
             latitude=data.latitude,
             longitude=data.longitude,
+            location=location_geom,
             is_active=True,
         )
 
@@ -60,6 +66,12 @@ class HospitalService:
                 setattr(hospital, key, value.strip())
             else:
                 setattr(hospital, key, value)
+
+        # Synchronize spatial point if coordinates changed
+        if hospital.latitude is not None and hospital.longitude is not None:
+            hospital.location = WKTElement(f"POINT({hospital.longitude} {hospital.latitude})", srid=4326)
+        else:
+            hospital.location = None
 
         await self.session.commit()
         await self.session.refresh(hospital)

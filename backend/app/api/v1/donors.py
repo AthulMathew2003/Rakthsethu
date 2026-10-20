@@ -7,9 +7,11 @@ from app.core.response import ApiResponse, success_response
 from app.models.enums import BloodGroup, UserRole
 from app.models.user import User
 from app.schemas.common import PaginatedData
+from app.core.exceptions import HospitalAccessDeniedException
 from app.schemas.donor import (
     DonorCreate,
     DonorListQuery,
+    DonorLocationUpdate,
     DonorResponse,
     DonorUpdate,
 )
@@ -32,6 +34,8 @@ async def create_donor(
     # Auto-assign hospital_id for hospital staff if omitted
     if current_user.role != UserRole.SUPER_ADMIN and data.hospital_id is None:
         data.hospital_id = current_user.hospital_id
+    elif current_user.role != UserRole.SUPER_ADMIN and data.hospital_id != current_user.hospital_id:
+        raise HospitalAccessDeniedException("Hospital staff cannot register donors for another hospital.")
 
     service = DonorService(session)
     donor = await service.create_donor(data)
@@ -95,5 +99,59 @@ async def update_donor(
     session: AsyncSession = Depends(get_db),
 ):
     service = DonorService(session)
+    if current_user.role != UserRole.SUPER_ADMIN:
+        existing = await service.get_donor_by_id(id)
+        if existing.hospital_id is None or existing.hospital_id != current_user.hospital_id:
+            raise HospitalAccessDeniedException(
+                f"Access denied. User belongs to hospital {current_user.hospital_id}, cannot manage donor with hospital {existing.hospital_id}."
+            )
+        if data.hospital_id is not None and data.hospital_id != current_user.hospital_id:
+            raise HospitalAccessDeniedException("Hospital staff cannot transfer donors to another hospital.")
+
     donor = await service.update_donor(id, data)
     return success_response(data=donor, message="Donor updated successfully.")
+
+
+@router.put(
+    "/{id}/location",
+    response_model=ApiResponse[DonorResponse],
+    summary="Set or update donor GPS coordinates",
+)
+async def update_donor_location(
+    id: int,
+    data: DonorLocationUpdate,
+    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN, UserRole.STAFF)),
+    session: AsyncSession = Depends(get_db),
+):
+    service = DonorService(session)
+    if current_user.role != UserRole.SUPER_ADMIN:
+        existing = await service.get_donor_by_id(id)
+        if existing.hospital_id is None or existing.hospital_id != current_user.hospital_id:
+            raise HospitalAccessDeniedException(
+                f"Access denied. User belongs to hospital {current_user.hospital_id}, cannot manage donor with hospital {existing.hospital_id}."
+            )
+
+    donor = await service.update_donor_location(id, data.latitude, data.longitude)
+    return success_response(data=donor, message="Donor location updated successfully.")
+
+
+@router.delete(
+    "/{id}/location",
+    response_model=ApiResponse[DonorResponse],
+    summary="Remove donor GPS coordinates",
+)
+async def remove_donor_location(
+    id: int,
+    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN, UserRole.STAFF)),
+    session: AsyncSession = Depends(get_db),
+):
+    service = DonorService(session)
+    if current_user.role != UserRole.SUPER_ADMIN:
+        existing = await service.get_donor_by_id(id)
+        if existing.hospital_id is None or existing.hospital_id != current_user.hospital_id:
+            raise HospitalAccessDeniedException(
+                f"Access denied. User belongs to hospital {current_user.hospital_id}, cannot manage donor with hospital {existing.hospital_id}."
+            )
+
+    donor = await service.remove_donor_location(id)
+    return success_response(data=donor, message="Donor location removed successfully.")

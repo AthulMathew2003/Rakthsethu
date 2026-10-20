@@ -198,6 +198,7 @@ class BloodRequestService:
             blood_group=req.blood_group,
             district=req.district,
             panchayat=req.location,
+            hospital_id=req.hospital_id,
             required_units=req.units_requested,
             required_date=req.required_date,
             limit=limit,

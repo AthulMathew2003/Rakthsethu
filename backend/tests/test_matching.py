@@ -252,6 +252,8 @@ async def test_matching_engine_db_filtering_and_ranking(
         "district": "Kottayam",
         "panchayat": "Pala",
         "required_units": 2,
+        "hospital_id": test_hospital.id,
+        "limit": 100,
     }
     response = await client.post(
         "/api/v1/matching/donors",

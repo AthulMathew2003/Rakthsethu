@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     DEFAULT_MATCH_LIMIT: int = 20
     MAX_MATCH_LIMIT: int = 100
 
+    # Proximity / Spatial Matching (in kilometers)
+    DEFAULT_PROXIMITY_RADIUS_KM: float = 25.0
+    MAX_PROXIMITY_RADIUS_KM: float = 100.0
+
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),
         env_file_encoding="utf-8",
