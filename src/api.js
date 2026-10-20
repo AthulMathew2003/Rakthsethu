@@ -4,7 +4,15 @@
  * Automatically unwraps standard ApiResponse envelope and provides unified error handling.
  */
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1').replace(/\/+$/, '');
+export function resolveApiBase(rawUrl = (typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_API_BASE_URL : undefined)) {
+  if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.trim()) {
+    return 'http://127.0.0.1:8000/api/v1';
+  }
+  const clean = rawUrl.trim().replace(/\/+$/, '');
+  return clean.endsWith('/api/v1') ? clean : `${clean}/api/v1`;
+}
+
+const API_BASE = resolveApiBase();
 
 // ─── Custom API Error Class ──────────────────────────────────
 export class ApiError extends Error {

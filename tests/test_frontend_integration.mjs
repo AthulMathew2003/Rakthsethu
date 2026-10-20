@@ -7,6 +7,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { resolveApiBase } from '../src/api.js';
 
 // Canonical constants matching backend configuration
 const CANONICAL_MAX_RADIUS_KM = 100.0;
@@ -281,5 +282,51 @@ describe('Phase 7E: Matching Presentation & Privacy Invariants Tests', () => {
     assert.equal('location' in sampleItem, false);
     assert.equal('wkt' in sampleItem, false);
     assert.equal('wkb' in sampleItem, false);
+  });
+});
+
+describe('API Base URL Normalization Tests', () => {
+  it('preserves backend URL already including /api/v1', () => {
+    assert.equal(
+      resolveApiBase('https://rakthasethu-backend.onrender.com/api/v1'),
+      'https://rakthasethu-backend.onrender.com/api/v1'
+    );
+  });
+
+  it('appends /api/v1 to backend URL provided without /api/v1', () => {
+    assert.equal(
+      resolveApiBase('https://rakthasethu-backend.onrender.com'),
+      'https://rakthasethu-backend.onrender.com/api/v1'
+    );
+  });
+
+  it('strips trailing slashes without duplicating /api/v1 prefix', () => {
+    // Single and multiple trailing slashes on root host
+    assert.equal(
+      resolveApiBase('https://rakthasethu-backend.onrender.com/'),
+      'https://rakthasethu-backend.onrender.com/api/v1'
+    );
+    assert.equal(
+      resolveApiBase('https://rakthasethu-backend.onrender.com///'),
+      'https://rakthasethu-backend.onrender.com/api/v1'
+    );
+    // Single and multiple trailing slashes with /api/v1
+    assert.equal(
+      resolveApiBase('https://rakthasethu-backend.onrender.com/api/v1/'),
+      'https://rakthasethu-backend.onrender.com/api/v1'
+    );
+    assert.equal(
+      resolveApiBase('https://rakthasethu-backend.onrender.com/api/v1///'),
+      'https://rakthasethu-backend.onrender.com/api/v1'
+    );
+  });
+
+  it('falls back to local development URL when environment variable is missing or empty', () => {
+    const LOCAL_FALLBACK = 'http://127.0.0.1:8000/api/v1';
+    assert.equal(resolveApiBase(undefined), LOCAL_FALLBACK);
+    assert.equal(resolveApiBase(null), LOCAL_FALLBACK);
+    assert.equal(resolveApiBase(''), LOCAL_FALLBACK);
+    assert.equal(resolveApiBase('   '), LOCAL_FALLBACK);
+    assert.equal(resolveApiBase(), LOCAL_FALLBACK);
   });
 });
