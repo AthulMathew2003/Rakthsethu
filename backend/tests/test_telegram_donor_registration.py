@@ -834,3 +834,308 @@ async def test_cmd_revokelocation():
         )
         await handler.handle_message(msg)
         assert "GPS location consent has been successfully revoked" in mock_client.sent_messages[-1]["text"]
+
+
+# ─── 9. Dynamic Menu & Registration State Protection Tests ───────────────────
+
+@pytest.mark.asyncio
+async def test_unregistered_user_sees_register_as_donor():
+    """Unregistered users must see 'Register as Donor' in the /start menu."""
+    mock_session = create_mock_session(None)
+    mock_client = MockTelegramClient()
+    handler = TelegramHandler(session=mock_session, client=mock_client)
+
+    msg = TelegramMessage(
+        message_id=101,
+        chat=TelegramChat(id=100, type="private"),
+        from_user=TelegramUser(id=301, first_name="NewUser"),
+        date=123456,
+        text="/start",
+    )
+    with patch.object(handler.service, "get_donor_by_telegram_user_id", new=AsyncMock(return_value=None)):
+        with patch.object(handler.service, "get_pending_donor_review_case", new=AsyncMock(return_value=None)):
+            await handler.handle_message(msg)
+
+    assert len(mock_client.sent_messages) == 1
+    sent = mock_client.sent_messages[0]
+    kb = sent["reply_markup"]["inline_keyboard"]
+    callbacks = [btn["callback_data"] for row in kb for btn in row]
+    texts = [btn["text"] for row in kb for btn in row]
+
+    assert "menu:register_donor" in callbacks
+    assert any("Register as Donor" in t for t in texts)
+    assert "menu:view_donor_profile" not in callbacks
+
+
+@pytest.mark.asyncio
+async def test_registered_user_sees_view_my_donor_profile_instead():
+    """Registered users must see 'View My Donor Profile' and NOT 'Register as Donor'."""
+    mock_session = create_mock_session(None)
+    mock_client = MockTelegramClient()
+    handler = TelegramHandler(session=mock_session, client=mock_client)
+
+    fake_donor = MagicMock()
+    fake_donor.full_name = "Kavitha Nair"
+    fake_donor.donor_code = "DNR-0099"
+    fake_donor.blood_group = MagicMock(value="B+")
+    fake_donor.district = "Kottayam"
+    fake_donor.phone = "+919876543210"
+    fake_donor.is_available = True
+    fake_donor.location_consent = True
+    fake_donor.location = "POINT(76.5 9.5)"
+
+    msg = TelegramMessage(
+        message_id=102,
+        chat=TelegramChat(id=100, type="private"),
+        from_user=TelegramUser(id=302, first_name="Kavitha"),
+        date=123456,
+        text="/start",
+    )
+    with patch.object(handler.service, "get_donor_by_telegram_user_id", new=AsyncMock(return_value=fake_donor)):
+        await handler.handle_message(msg)
+
+    assert len(mock_client.sent_messages) == 1
+    sent = mock_client.sent_messages[0]
+    assert "Welcome back to RakthaSethu, Kavitha Nair!" in sent["text"]
+
+    kb = sent["reply_markup"]["inline_keyboard"]
+    callbacks = [btn["callback_data"] for row in kb for btn in row]
+    texts = [btn["text"] for row in kb for btn in row]
+
+    assert "menu:view_donor_profile" in callbacks
+    assert "menu:update_donor_details" in callbacks
+    assert any("View My Donor Profile" in t for t in texts)
+    assert any("Update My Details" in t for t in texts)
+    assert "menu:register_donor" not in callbacks
+    assert not any("Register as Donor" in t for t in texts)
+
+
+@pytest.mark.asyncio
+async def test_registered_user_cannot_start_registration_using_old_callback():
+    """If a registered user taps an old 'menu:register_donor' callback, reject gracefully."""
+    mock_session = create_mock_session(None)
+    mock_client = MockTelegramClient()
+    handler = TelegramHandler(session=mock_session, client=mock_client)
+
+    fake_donor = MagicMock()
+    fake_donor.full_name = "Kavitha Nair"
+    fake_donor.donor_code = "DNR-0099"
+    fake_donor.blood_group = MagicMock(value="B+")
+
+    cb = TelegramCallbackQuery(
+        id="cb_old_reg",
+        from_user=TelegramUser(id=302, first_name="Kavitha"),
+        message=TelegramMessage(
+            message_id=103,
+            chat=TelegramChat(id=100, type="private"),
+            from_user=TelegramUser(id=302, first_name="Kavitha"),
+            date=123456,
+        ),
+        data="menu:register_donor",
+    )
+    with patch.object(handler.service, "get_donor_by_telegram_user_id", new=AsyncMock(return_value=fake_donor)):
+        with patch.object(handler.service, "update_conversation") as mock_update_conv:
+            await handler.handle_callback_query(cb)
+            # Must NOT transition conversation into REG_CONSENT
+            mock_update_conv.assert_not_called()
+
+    assert len(mock_client.sent_messages) == 1
+    sent = mock_client.sent_messages[0]
+    assert "Already Registered as Donor" in sent["text"]
+    assert "DNR-0099" in sent["text"]
+
+    kb = sent["reply_markup"]["inline_keyboard"]
+    callbacks = [btn["callback_data"] for row in kb for btn in row]
+    assert "menu:register_donor" not in callbacks
+    assert "menu:view_donor_profile" in callbacks
+
+
+@pytest.mark.asyncio
+async def test_repeated_start_calls_do_not_create_additional_records():
+    """Multiple /start calls must not create new database records."""
+    mock_session = create_mock_session(None)
+    mock_client = MockTelegramClient()
+    handler = TelegramHandler(session=mock_session, client=mock_client)
+
+    fake_donor = MagicMock()
+    fake_donor.full_name = "Kavitha Nair"
+    fake_donor.donor_code = "DNR-0099"
+    fake_donor.blood_group = MagicMock(value="B+")
+
+    with patch.object(handler.service, "get_donor_by_telegram_user_id", new=AsyncMock(return_value=fake_donor)):
+        for i in range(5):
+            msg = TelegramMessage(
+                message_id=110 + i,
+                chat=TelegramChat(id=100, type="private"),
+                from_user=TelegramUser(id=302, first_name="Kavitha"),
+                date=123456,
+                text="/start",
+            )
+            await handler.handle_message(msg)
+
+    # 5 responses sent, but session.add was never called for a donor
+    assert len(mock_client.sent_messages) == 5
+    mock_session.add.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_in_progress_registration_resumes_correctly():
+    """An incomplete registration session offers continue or cancel on /start."""
+    conv = TelegramConversation(
+        telegram_user_id=303,
+        chat_id=100,
+        current_step="REG_DISTRICT",
+        state_data={"full_name": "Suresh Kumar", "blood_group": "O+", "age": 28},
+    )
+    mock_session = create_mock_session(conv)
+    mock_client = MockTelegramClient()
+    handler = TelegramHandler(session=mock_session, client=mock_client)
+
+    msg = TelegramMessage(
+        message_id=120,
+        chat=TelegramChat(id=100, type="private"),
+        from_user=TelegramUser(id=303, first_name="Suresh"),
+        date=123456,
+        text="/start",
+    )
+    await handler.handle_message(msg)
+
+    assert len(mock_client.sent_messages) == 1
+    sent = mock_client.sent_messages[0]
+    assert "Incomplete Donor Registration in Progress" in sent["text"]
+
+    kb = sent["reply_markup"]["inline_keyboard"]
+    callbacks = [btn["callback_data"] for row in kb for btn in row]
+    assert "reg:resume" in callbacks
+    assert "reg:cancel" in callbacks
+
+    # Triggering reg:resume resumes the active step
+    cb_resume = TelegramCallbackQuery(
+        id="cb_res",
+        from_user=TelegramUser(id=303, first_name="Suresh"),
+        message=TelegramMessage(
+            message_id=121,
+            chat=TelegramChat(id=100, type="private"),
+            from_user=TelegramUser(id=303, first_name="Suresh"),
+            date=123456,
+        ),
+        data="reg:resume",
+    )
+    with patch.object(handler.service, "get_conversation", new=AsyncMock(return_value=conv)):
+        await handler.handle_callback_query(cb_resume)
+
+    # District keyboard was sent to user to continue where left off
+    assert len(mock_client.sent_messages) == 2
+    assert "Home District" in mock_client.sent_messages[1]["text"]
+
+
+@pytest.mark.asyncio
+async def test_duplicate_review_case_does_not_create_another_donor():
+    """A user with a pending administrative review case cannot register again."""
+    mock_session = create_mock_session(None)
+    mock_client = MockTelegramClient()
+    handler = TelegramHandler(session=mock_session, client=mock_client)
+
+    mock_case = MagicMock()
+    mock_case.id = 42
+    mock_case.status = "PENDING"
+    mock_case.phone = "+919876543210"
+
+    with patch.object(handler.service, "get_donor_by_telegram_user_id", new=AsyncMock(return_value=None)):
+        with patch.object(handler.service, "get_pending_donor_review_case", new=AsyncMock(return_value=mock_case)):
+            # 1. /start command
+            msg = TelegramMessage(
+                message_id=130,
+                chat=TelegramChat(id=100, type="private"),
+                from_user=TelegramUser(id=304, first_name="ReviewUser"),
+                date=123456,
+                text="/start",
+            )
+            await handler.handle_message(msg)
+
+            sent = mock_client.sent_messages[-1]
+            assert "Pending Administrative Review" in sent["text"]
+            assert "CASE-42" in sent["text"]
+            kb = sent["reply_markup"]["inline_keyboard"]
+            callbacks = [btn["callback_data"] for row in kb for btn in row]
+            assert "menu:register_donor" not in callbacks
+
+            # 2. Attempting manual registration command
+            msg_reg = TelegramMessage(
+                message_id=131,
+                chat=TelegramChat(id=100, type="private"),
+                from_user=TelegramUser(id=304, first_name="ReviewUser"),
+                date=123456,
+                text="/registerdonor",
+            )
+            await handler.handle_message(msg_reg)
+            sent_reg = mock_client.sent_messages[-1]
+            assert "Registration Already Under Review" in sent_reg["text"] or "Registration Under Review" in sent_reg["text"]
+            assert "CASE-42" in sent_reg["text"]
+
+
+@pytest.mark.asyncio
+async def test_existing_menus_and_request_blood_still_work():
+    """Verifies that Request Blood, Status, Help, Profile, and Availability updates work end to end."""
+    mock_session = create_mock_session(None)
+    mock_client = MockTelegramClient()
+    handler = TelegramHandler(session=mock_session, client=mock_client)
+
+    fake_donor = MagicMock()
+    fake_donor.full_name = "Rajesh Menon"
+    fake_donor.donor_code = "DNR-0088"
+    fake_donor.blood_group = MagicMock(value="A+")
+    fake_donor.district = "Ernakulam"
+    fake_donor.phone = "+919876543210"
+    fake_donor.is_available = True
+    fake_donor.location_consent = True
+    fake_donor.location = "POINT(76.2 9.9)"
+
+    with patch.object(handler.service, "get_donor_by_telegram_user_id", new=AsyncMock(return_value=fake_donor)):
+        # 1. View donor profile callback
+        cb_profile = TelegramCallbackQuery(
+            id="cb_prof",
+            from_user=TelegramUser(id=305, first_name="Rajesh"),
+            message=TelegramMessage(
+                message_id=140,
+                chat=TelegramChat(id=100, type="private"),
+                from_user=TelegramUser(id=305, first_name="Rajesh"),
+                date=123456,
+            ),
+            data="menu:view_donor_profile",
+        )
+        await handler.handle_callback_query(cb_profile)
+        assert any("Your Voluntary Donor Profile" in m["text"] for m in mock_client.sent_messages)
+        assert any("DNR-0088" in m["text"] for m in mock_client.sent_messages)
+
+        # 2. Toggle availability callback
+        with patch.object(handler.service, "toggle_donor_availability", new=AsyncMock(return_value=(True, "Your availability has been updated to: <b>Temporarily Unavailable</b>.", False))):
+            cb_toggle = TelegramCallbackQuery(
+                id="cb_tog",
+                from_user=TelegramUser(id=305, first_name="Rajesh"),
+                message=TelegramMessage(
+                    message_id=141,
+                    chat=TelegramChat(id=100, type="private"),
+                    from_user=TelegramUser(id=305, first_name="Rajesh"),
+                    date=123456,
+                ),
+                data="donor_up:toggle_avail",
+            )
+            await handler.handle_callback_query(cb_toggle)
+            assert any("Temporarily Unavailable" in m["text"] for m in mock_client.sent_messages)
+
+        # 3. Request Blood works as expected
+        cb_blood = TelegramCallbackQuery(
+            id="cb_bld",
+            from_user=TelegramUser(id=305, first_name="Rajesh"),
+            message=TelegramMessage(
+                message_id=142,
+                chat=TelegramChat(id=100, type="private"),
+                from_user=TelegramUser(id=305, first_name="Rajesh"),
+                date=123456,
+            ),
+            data="menu:requestblood",
+        )
+        await handler.handle_callback_query(cb_blood)
+        assert any("New Blood Request — Step 1 of 8" in m["text"] for m in mock_client.sent_messages)
+

@@ -114,6 +114,12 @@ class TelegramHandler:
         elif text.startswith("/registerdonor") or text.startswith("/register") or text == "📝 Register as Donor":
             await self.start_donor_registration(chat_id, user_id)
             return
+        elif text.startswith("/myprofile") or text.startswith("/profile") or text == "👤 View My Donor Profile":
+            await self.show_donor_profile(chat_id, user_id)
+            return
+        elif text.startswith("/updatedetails") or text == "✏️ Update My Details":
+            await self.show_donor_update_menu(chat_id, user_id)
+            return
         elif text.startswith("/revokelocation"):
             await self.cmd_revokelocation(chat_id, user_id)
             return
@@ -138,12 +144,13 @@ class TelegramHandler:
                 await self.handle_conversation_step(conv, text, chat_id, user_id)
         else:
             # Unrecognized free text message
+            is_donor = bool(await self.service.get_donor_by_telegram_user_id(user_id))
             await self.client.send_message(
                 chat_id=chat_id,
                 text=(
                     "👋 Welcome to <b>RakthaSethu</b>. Please use the menu below or type /help for available options."
                 ),
-                reply_markup=self.build_main_menu_keyboard(),
+                reply_markup=self.build_main_menu_keyboard(is_donor=is_donor),
             )
 
     # ─── Commands ─────────────────────────────────────────────────────────
@@ -171,6 +178,57 @@ class TelegramHandler:
             await self.client.send_message(chat_id=chat_id, text=resume_text, reply_markup=kb)
             return
 
+        # 1. Check if user is already a registered donor in PostgreSQL
+        donor = await self.service.get_donor_by_telegram_user_id(user_id)
+        if donor:
+            await self.service.reset_conversation(user_id)
+            welcome_text = (
+                f"🩸 <b>Welcome back to RakthaSethu, {donor.full_name}!</b>\n\n"
+                f"Thank you for being a verified voluntary donor (<code>{donor.donor_code}</code>, {donor.blood_group.value}). "
+                "Your registration is active in our network to help emergency patients in Kerala.\n\n"
+                "<b>Quick Actions:</b>\n"
+                "• 🩸 <b>/requestblood</b> — Submit an urgent clinical blood request\n"
+                "• 👤 <b>View Profile</b> — Check your donor status and details\n"
+                "• ✏️ <b>Update Details</b> — Manage availability or location consent\n"
+                "• 🔍 <b>/status [CODE]</b> — Check blood request status\n"
+                "• ℹ️ <b>/help</b> — Bot guide & donor privacy policies\n"
+                "• 🏥 <b>/link [TOKEN]</b> — Link hospital staff account"
+            )
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=welcome_text,
+                reply_markup=self.build_main_menu_keyboard(is_donor=True),
+            )
+            return
+
+        # 2. Check if user registration is pending administrative review
+        review_case = await self.service.get_pending_donor_review_case(user_id)
+        if review_case:
+            await self.service.reset_conversation(user_id)
+            review_text = (
+                "🩸 <b>Welcome to RakthaSethu Blood Donation Network</b>\n\n"
+                "ℹ️ <b>Registration Status: Pending Administrative Review</b>\n\n"
+                f"Your voluntary donor registration (Case ID: <code>CASE-{review_case.id}</code>) is currently being reviewed "
+                "by hospital staff due to existing record verification.\n\n"
+                "• <b>Status:</b> Under Review\n"
+                "• <b>Reason:</b> Conflicting donor details for this phone number.\n\n"
+                "Our team will complete the verification shortly. While under review, a duplicate registration cannot be submitted.\n"
+                "You can still submit clinical blood requests or check request status below:"
+            )
+            review_kb = {
+                "inline_keyboard": [
+                    [{"text": "🩸 Request Blood", "callback_data": "menu:requestblood"}],
+                    [{"text": "🔍 Check Request Status", "callback_data": "menu:status"}],
+                    [
+                        {"text": "🏥 Staff Link", "callback_data": "menu:link"},
+                        {"text": "ℹ️ Help", "callback_data": "menu:help"},
+                    ],
+                ]
+            }
+            await self.client.send_message(chat_id=chat_id, text=review_text, reply_markup=review_kb)
+            return
+
+        # 3. Standard main menu for unregistered users
         await self.service.reset_conversation(user_id)
         welcome_text = (
             "🩸 <b>Welcome to RakthaSethu Blood Donation Network</b>\n\n"
@@ -186,7 +244,7 @@ class TelegramHandler:
         await self.client.send_message(
             chat_id=chat_id,
             text=welcome_text,
-            reply_markup=self.build_main_menu_keyboard(),
+            reply_markup=self.build_main_menu_keyboard(is_donor=False),
         )
 
     async def cmd_help(self, chat_id: int) -> None:
@@ -208,10 +266,11 @@ class TelegramHandler:
 
     async def cmd_cancel(self, chat_id: int, user_id: int) -> None:
         await self.service.reset_conversation(user_id)
+        is_donor = bool(await self.service.get_donor_by_telegram_user_id(user_id))
         await self.client.send_message(
             chat_id=chat_id,
             text="❌ Current conversation cancelled. No information was submitted.\nUse the menu below whenever you wish to proceed.",
-            reply_markup=self.build_main_menu_keyboard(),
+            reply_markup=self.build_main_menu_keyboard(is_donor=is_donor),
         )
 
 
@@ -315,9 +374,48 @@ class TelegramHandler:
 
     async def start_donor_registration(self, chat_id: int, user_id: int) -> None:
         """
-        Step 1: Explains information being collected and purpose,
-        and obtains explicit consent before proceeding.
+        Initiates voluntary donor registration, with database-backed checks
+        protecting against duplicate registrations.
         """
+        # Guard 1: Already registered donor
+        donor = await self.service.get_donor_by_telegram_user_id(user_id)
+        if donor:
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=(
+                    f"✅ <b>Already Registered as Donor:</b>\n\n"
+                    f"You are already registered in the RakthaSethu network as <b>{donor.full_name}</b> "
+                    f"(Donor Code: <code>{donor.donor_code}</code>, {donor.blood_group.value}).\n\n"
+                    "You do not need to register again. You can view or update your details using the options below."
+                ),
+                reply_markup=self.build_main_menu_keyboard(is_donor=True),
+            )
+            return
+
+        # Guard 2: Registration pending admin review
+        review_case = await self.service.get_pending_donor_review_case(user_id)
+        if review_case:
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=(
+                    f"ℹ️ <b>Registration Under Review:</b>\n\n"
+                    f"Your voluntary donor registration is currently pending administrative review (Case ID: <code>CASE-{review_case.id}</code>).\n\n"
+                    "To safeguard registry accuracy, a duplicate registration cannot be created while this review is pending."
+                ),
+                reply_markup={
+                    "inline_keyboard": [
+                        [{"text": "🩸 Request Blood", "callback_data": "menu:requestblood"}],
+                        [{"text": "🔍 Check Request Status", "callback_data": "menu:status"}],
+                        [
+                            {"text": "🏥 Staff Link", "callback_data": "menu:link"},
+                            {"text": "ℹ️ Help", "callback_data": "menu:help"},
+                        ],
+                    ]
+                },
+            )
+            return
+
+        # Step 1: Consent
         await self.service.update_conversation(
             telegram_user_id=user_id,
             chat_id=chat_id,
@@ -332,7 +430,7 @@ class TelegramHandler:
             "• <b>Age or Date of Birth:</b> To ensure compliance with voluntary blood donation eligibility (18–65 years).\n"
             "• <b>District:</b> To match urgent requests in your home area.\n"
             "• <b>Mobile Phone Number:</b> Verified via Telegram contact sharing for urgent clinical coordination.\n"
-            "• <b>GPS Location (Optional):</b> For proximity-based emergency matching. (Exact coordinates are never disclosed).\n\n"
+            "• <b>GPS Location (Mandatory):</b> For proximity-based emergency matching. (Exact coordinates are never disclosed).\n\n"
             "🔒 <i>All information is protected under RakthaSethu healthcare privacy guidelines. You can cancel or revoke location consent at any time.</i>\n\n"
             "Do you consent to providing these details to join the voluntary donor registry?"
         )
@@ -343,6 +441,72 @@ class TelegramHandler:
             ]
         }
         await self.client.send_message(chat_id=chat_id, text=consent_text, reply_markup=kb)
+
+    async def show_donor_profile(self, chat_id: int, user_id: int) -> None:
+        """Displays voluntary donor profile details to the registered user."""
+        donor = await self.service.get_donor_by_telegram_user_id(user_id)
+        if not donor:
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="ℹ️ No registered voluntary donor profile was found for this Telegram account.\nYou can register anytime from the main menu.",
+                reply_markup=self.build_main_menu_keyboard(is_donor=False),
+            )
+            return
+
+        avail_badge = "🟢 Available for Matching" if donor.is_available else "🟡 Temporarily Unavailable"
+        loc_badge = "📍 GPS Proximity Enabled" if (donor.location_consent and donor.location is not None) else "📍 District Matching Only"
+        masked_phone = self._mask_phone(donor.phone)
+        panchayat_str = f"\n• <b>Panchayat / Local Body:</b> {donor.panchayat}" if getattr(donor, "panchayat", None) else ""
+
+        profile_text = (
+            "👤 <b>Your Voluntary Donor Profile</b>\n\n"
+            f"• <b>Donor Code:</b> <code>{donor.donor_code}</code>\n"
+            f"• <b>Full Name:</b> {donor.full_name}\n"
+            f"• <b>Blood Group:</b> <b>{donor.blood_group.value}</b>\n"
+            f"• <b>Home District:</b> {donor.district}{panchayat_str}\n"
+            f"• <b>Verified Mobile:</b> <code>{masked_phone}</code>\n"
+            f"• <b>Matching Status:</b> {avail_badge}\n"
+            f"• <b>Location Mode:</b> {loc_badge}\n\n"
+            "<i>To update your availability, district, or location consent, choose an action below:</i>"
+        )
+        kb = {
+            "inline_keyboard": [
+                [{"text": "✏️ Update My Details", "callback_data": "menu:update_donor_details"}],
+                [{"text": "🩸 Request Blood", "callback_data": "menu:requestblood"}],
+                [{"text": "🏠 Main Menu", "callback_data": "menu:home"}],
+            ]
+        }
+        await self.client.send_message(chat_id=chat_id, text=profile_text, reply_markup=kb)
+
+    async def show_donor_update_menu(self, chat_id: int, user_id: int) -> None:
+        """Shows menu allowing registered voluntary donors to safely manage settings."""
+        donor = await self.service.get_donor_by_telegram_user_id(user_id)
+        if not donor:
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="ℹ️ No registered donor profile found to update.",
+                reply_markup=self.build_main_menu_keyboard(is_donor=False),
+            )
+            return
+
+        toggle_btn = "🔴 Mark as Temporarily Unavailable" if donor.is_available else "🟢 Mark as Available for Matching"
+        curr_status = "Available for emergency matching" if donor.is_available else "Temporarily Unavailable"
+
+        kb = {
+            "inline_keyboard": [
+                [{"text": toggle_btn, "callback_data": "donor_up:toggle_avail"}],
+                [{"text": "📍 Update Home District", "callback_data": "donor_up:change_district"}],
+                [{"text": "🚫 Revoke GPS Location Consent", "callback_data": "donor_up:revoke_gps"}],
+                [{"text": "🔙 Back to Profile", "callback_data": "menu:view_donor_profile"}],
+            ]
+        }
+        text = (
+            "✏️ <b>Update Voluntary Donor Details</b>\n\n"
+            f"• <b>Current Status:</b> {curr_status}\n"
+            f"• <b>Current District:</b> {donor.district}\n\n"
+            "Choose a setting to update safely:"
+        )
+        await self.client.send_message(chat_id=chat_id, text=text, reply_markup=kb)
 
     async def cmd_revokelocation(self, chat_id: int, user_id: int) -> None:
         """Allows voluntary donors to revoke GPS location consent at any time."""
@@ -356,7 +520,8 @@ class TelegramHandler:
             )
         else:
             text = f"ℹ️ {message}"
-        await self.client.send_message(chat_id=chat_id, text=text, reply_markup=self.build_main_menu_keyboard())
+        is_donor = bool(await self.service.get_donor_by_telegram_user_id(user_id))
+        await self.client.send_message(chat_id=chat_id, text=text, reply_markup=self.build_main_menu_keyboard(is_donor=is_donor))
 
     # ─── Blood Request Guided Conversation ────────────────────────────────
 
@@ -489,6 +654,15 @@ class TelegramHandler:
         elif data_str == "menu:register_donor":
             await self.start_donor_registration(chat_id, user_id)
             return
+        elif data_str == "menu:view_donor_profile":
+            await self.show_donor_profile(chat_id, user_id)
+            return
+        elif data_str == "menu:update_donor_details":
+            await self.show_donor_update_menu(chat_id, user_id)
+            return
+        elif data_str == "menu:home":
+            await self.cmd_start(chat_id, user_id)
+            return
         elif data_str == "menu:status":
             await self.client.send_message(
                 chat_id=chat_id,
@@ -500,6 +674,42 @@ class TelegramHandler:
             return
         elif data_str == "menu:link":
             await self.cmd_link(chat_id, user_id, None, None)
+            return
+
+        # 4a. Registered Donor Profile Management Actions
+        if data_str == "donor_up:toggle_avail":
+            success, msg, new_avail = await self.service.toggle_donor_availability(user_id)
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=msg,
+                reply_markup=self.build_main_menu_keyboard(is_donor=True),
+            )
+            return
+        elif data_str == "donor_up:revoke_gps":
+            await self.cmd_revokelocation(chat_id, user_id)
+            return
+        elif data_str == "donor_up:change_district":
+            rows = []
+            for i in range(0, len(KERALA_DISTRICTS), 2):
+                row = [{"text": KERALA_DISTRICTS[i], "callback_data": f"donor_dist:{KERALA_DISTRICTS[i]}"}]
+                if i + 1 < len(KERALA_DISTRICTS):
+                    row.append({"text": KERALA_DISTRICTS[i + 1], "callback_data": f"donor_dist:{KERALA_DISTRICTS[i + 1]}"})
+                rows.append(row)
+            rows.append([{"text": "🔙 Back", "callback_data": "menu:update_donor_details"}])
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="📍 Please select your updated <b>Home District</b> in Kerala:",
+                reply_markup={"inline_keyboard": rows},
+            )
+            return
+        elif data_str.startswith("donor_dist:"):
+            dist_val = data_str.split(":")[1]
+            success, msg = await self.service.update_donor_district(user_id, dist_val)
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=msg,
+                reply_markup=self.build_main_menu_keyboard(is_donor=True),
+            )
             return
 
         # 4b. Donor Registration Actions (Consent, Resumption, Confirmation, Edit, Cancel)
@@ -1215,7 +1425,20 @@ class TelegramHandler:
 
     # ─── Keyboard Builders ────────────────────────────────────────────────
 
-    def build_main_menu_keyboard(self) -> Dict[str, Any]:
+    def build_main_menu_keyboard(self, is_donor: bool = False) -> Dict[str, Any]:
+        if is_donor:
+            return {
+                "inline_keyboard": [
+                    [{"text": "🩸 Request Blood", "callback_data": "menu:requestblood"}],
+                    [{"text": "👤 View My Donor Profile", "callback_data": "menu:view_donor_profile"}],
+                    [{"text": "✏️ Update My Details", "callback_data": "menu:update_donor_details"}],
+                    [{"text": "🔍 Check Request Status", "callback_data": "menu:status"}],
+                    [
+                        {"text": "🏥 Staff Link", "callback_data": "menu:link"},
+                        {"text": "ℹ️ Help", "callback_data": "menu:help"},
+                    ],
+                ]
+            }
         return {
             "inline_keyboard": [
                 [{"text": "🩸 Request Blood", "callback_data": "menu:requestblood"}],
@@ -1521,6 +1744,14 @@ class TelegramHandler:
                     f"• <b>Status:</b> Active & Available\n\n"
                     "Your voluntary donor profile is now linked to this Telegram account."
                 )
+            elif status == "ALREADY_REGISTERED":
+                donor = result
+                reply_text = (
+                    "✅ <b>Already Registered as Donor:</b>\n\n"
+                    f"You are already registered in the RakthaSethu network as <b>{donor.full_name}</b> "
+                    f"(Donor Code: <code>{donor.donor_code}</code>, {donor.blood_group.value}).\n\n"
+                    "You do not need to register again."
+                )
             elif status == "REVIEW_CASE":
                 case = result
                 case_id = getattr(case, "id", None) or (case.get("case_id") if isinstance(case, dict) else "PENDING")
@@ -1536,11 +1767,12 @@ class TelegramHandler:
             else:
                 reply_text = "✅ Registration processed successfully."
 
+            is_donor = status in ("CREATED", "UPDATED", "ALREADY_REGISTERED")
             await self.service.reset_conversation(user_id)
             await self.client.send_message(
                 chat_id=chat_id,
                 text=reply_text,
-                reply_markup=self.build_main_menu_keyboard(),
+                reply_markup=self.build_main_menu_keyboard(is_donor=is_donor),
             )
         except Exception as exc:
             logger.exception("Error during donor registration submission: %s", exc)

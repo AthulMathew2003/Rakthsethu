@@ -466,6 +466,25 @@ class TelegramService:
             logger.warning("Could not persist TelegramDonorReviewCase: %s", exc)
             return None
 
+    async def get_pending_donor_review_case(
+        self, telegram_user_id: int
+    ) -> Optional[TelegramDonorReviewCase]:
+        """Finds any pending administrative review case for this Telegram user ID."""
+        try:
+            stmt = (
+                select(TelegramDonorReviewCase)
+                .where(
+                    TelegramDonorReviewCase.telegram_user_id == telegram_user_id,
+                    TelegramDonorReviewCase.status == "PENDING",
+                )
+                .order_by(TelegramDonorReviewCase.id.desc())
+            )
+            res = await self.session.execute(stmt)
+            return res.scalar_one_or_none()
+        except Exception as exc:
+            logger.debug("Could not query TelegramDonorReviewCase table: %s", exc)
+            return None
+
     async def save_registered_donor(
         self,
         telegram_user_id: int,
@@ -476,10 +495,16 @@ class TelegramService:
         """
         Safely saves or links a donor record.
         Returns:
+            ("ALREADY_REGISTERED", existing_donor)
             ("CREATED", donor)
             ("UPDATED", existing_donor)
             ("REVIEW_CASE", review_case_or_data)
         """
+        # Guard against duplicate registration if already linked
+        already_linked = await self.get_donor_by_telegram_user_id(telegram_user_id)
+        if already_linked:
+            return "ALREADY_REGISTERED", already_linked
+
         donor_repo = DonorRepository(self.session)
         raw_phone = data.get("phone", "")
         normalized_phone = normalize_phone_number(raw_phone)
@@ -591,4 +616,35 @@ class TelegramService:
         donor.location_consent_recorded_at = None
         await self.session.commit()
         return True, "Your GPS location consent has been successfully revoked. You will now be matched based on your district only.", donor.donor_code
+
+    async def toggle_donor_availability(
+        self, telegram_user_id: int
+    ) -> Tuple[bool, str, Optional[bool]]:
+        """
+        Safely toggles availability status (is_available) for the registered voluntary donor.
+        """
+        donor = await self.get_donor_by_telegram_user_id(telegram_user_id)
+        if not donor:
+            return False, "No active voluntary donor registration was found for this Telegram account.", None
+
+        new_status = not donor.is_available
+        donor.is_available = new_status
+        await self.session.commit()
+        status_word = "Available for emergency matching" if new_status else "Temporarily Unavailable"
+        return True, f"Your availability has been updated to: <b>{status_word}</b>.", new_status
+
+    async def update_donor_district(
+        self, telegram_user_id: int, new_district: str
+    ) -> Tuple[bool, str]:
+        """
+        Safely updates the home district for the registered voluntary donor.
+        """
+        donor = await self.get_donor_by_telegram_user_id(telegram_user_id)
+        if not donor:
+            return False, "No active voluntary donor registration was found for this Telegram account."
+
+        donor.district = new_district.strip()
+        await self.session.commit()
+        return True, f"Your home district has been updated to <b>{donor.district}</b>."
+
 
