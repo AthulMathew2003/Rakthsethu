@@ -1,0 +1,392 @@
+{
+  "timestamp": "2026-10-21T10:03:20.435819+00:00",
+  "database": "rakthasethu_db",
+  "alembic_revision": "e891c94b1a20",
+  "tables": {
+    "alembic_version": [
+      {
+        "version_num": "e891c94b1a20"
+      }
+    ],
+    "hospitals": [
+      {
+        "id": 1,
+        "hospital_code": "HOSP0001",
+        "name": "Caritas",
+        "hospital_type": "Government",
+        "district": "Kottayam",
+        "panchayat": "kottayam",
+        "address": "zddsd",
+        "phone": "9131847815",
+        "email": "athulmathew2027@mca.ajce.in",
+        "emergency_number": "108",
+        "latitude": null,
+        "longitude": null,
+        "is_active": true,
+        "created_at": "2026-10-21T05:05:50.409094+00:00",
+        "updated_at": "2026-10-21T05:05:50.409098+00:00",
+        "location": null
+      }
+    ],
+    "users": [
+      {
+        "id": 1,
+        "user_code": "USR0001",
+        "hospital_id": null,
+        "email": "admin@rakthasethu.org",
+        "hashed_password": "$argon2id$v=19$m=65536,t=3,p=4$yHkPwRgDwHivtXaO8R7DWA$yMU/wU1QbeLDiRCI0mv3BS+JqQQoaCBa8N2l3M0c24s",
+        "full_name": "RakthaSethu Superadmin",
+        "phone_number": "9131847816",
+        "role": "SUPER_ADMIN",
+        "district": "Kottayam",
+        "panchayat": "Kottayam",
+        "is_active": true,
+        "last_login_at": "2026-10-21T07:38:17.219073+00:00",
+        "created_at": "2026-10-20T17:32:28.697980+00:00",
+        "updated_at": "2026-10-21T07:38:17.220634+00:00"
+      }
+    ],
+    "donors": [],
+    "blood_requests": [
+      {
+        "id": 1,
+        "request_code": "BR00001",
+        "hospital_id": 1,
+        "patient_name": "Athul",
+        "blood_group": "O+",
+        "units_requested": 1,
+        "district": "Kottayam",
+        "location": "Kottayam",
+        "contact_phone": "9131847815",
+        "emergency_contact": null,
+        "required_date": "2026-10-22",
+        "urgency": "NORMAL",
+        "status": "PENDING",
+        "notes": null,
+        "created_at": "2026-10-21T05:06:07.754908+00:00",
+        "updated_at": "2026-10-21T05:06:07.754913+00:00"
+      },
+      {
+        "id": 4,
+        "request_code": "BR00003",
+        "hospital_id": 1,
+        "patient_name": "Sherly",
+        "blood_group": "B+",
+        "units_requested": 2,
+        "district": "Kottayam",
+        "location": "Kottayam",
+        "contact_phone": "9806380019",
+        "emergency_contact": null,
+        "required_date": "2026-10-21",
+        "urgency": "URGENT",
+        "status": "PENDING",
+        "notes": null,
+        "created_at": "2026-10-21T07:39:41.022971+00:00",
+        "updated_at": "2026-10-21T07:39:41.022976+00:00"
+      },
+      {
+        "id": 2,
+        "request_code": "BR00002",
+        "hospital_id": 1,
+        "patient_name": "Athul mathew",
+        "blood_group": "O+",
+        "units_requested": 1,
+        "district": "Kottayam",
+        "location": "Kottayam",
+        "contact_phone": "9131847815",
+        "emergency_contact": null,
+        "required_date": "2026-10-21",
+        "urgency": "NORMAL",
+        "status": "PENDING",
+        "notes": null,
+        "created_at": "2026-10-21T05:28:56.898212+00:00",
+        "updated_at": "2026-10-21T07:40:06.958324+00:00"
+      }
+    ],
+    "donations": [],
+    "telegram_updates": [
+      {
+        "id": 45,
+        "update_id": 88880001,
+        "chat_id": null,
+        "user_id": null,
+        "update_type": "unknown",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:32:47.425882+00:00",
+        "completed_at": "2026-10-21T07:32:47.432476+00:00"
+      },
+      {
+        "id": 46,
+        "update_id": 514249970,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:38:31.302860+00:00",
+        "completed_at": "2026-10-21T07:38:32.900530+00:00"
+      },
+      {
+        "id": 47,
+        "update_id": 514249971,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "message",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:38:41.984099+00:00",
+        "completed_at": "2026-10-21T07:38:42.934854+00:00"
+      },
+      {
+        "id": 48,
+        "update_id": 514249972,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:38:55.694194+00:00",
+        "completed_at": "2026-10-21T07:38:57.332623+00:00"
+      },
+      {
+        "id": 49,
+        "update_id": 514249973,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "message",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:39:04.747671+00:00",
+        "completed_at": "2026-10-21T07:39:05.653703+00:00"
+      },
+      {
+        "id": 50,
+        "update_id": 514249974,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:39:07.229105+00:00",
+        "completed_at": "2026-10-21T07:39:08.898603+00:00"
+      },
+      {
+        "id": 51,
+        "update_id": 514249975,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:39:11.889582+00:00",
+        "completed_at": "2026-10-21T07:39:13.720514+00:00"
+      },
+      {
+        "id": 52,
+        "update_id": 514249976,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:39:17.360404+00:00",
+        "completed_at": "2026-10-21T07:39:19.002978+00:00"
+      },
+      {
+        "id": 53,
+        "update_id": 514249977,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:39:20.289223+00:00",
+        "completed_at": "2026-10-21T07:39:21.996849+00:00"
+      },
+      {
+        "id": 54,
+        "update_id": 514249978,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:39:25.598163+00:00",
+        "completed_at": "2026-10-21T07:39:27.210337+00:00"
+      },
+      {
+        "id": 55,
+        "update_id": 514249979,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "message",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:39:33.702290+00:00",
+        "completed_at": "2026-10-21T07:39:34.602817+00:00"
+      },
+      {
+        "id": 56,
+        "update_id": 514249980,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:39:36.213061+00:00",
+        "completed_at": "2026-10-21T07:39:37.890758+00:00"
+      },
+      {
+        "id": 57,
+        "update_id": 514249981,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:39:40.199471+00:00",
+        "completed_at": "2026-10-21T07:39:42.221897+00:00"
+      },
+      {
+        "id": 58,
+        "update_id": 514249982,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:40:08.176126+00:00",
+        "completed_at": "2026-10-21T07:40:09.907345+00:00"
+      },
+      {
+        "id": 59,
+        "update_id": 514249983,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "message",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:40:24.216399+00:00",
+        "completed_at": "2026-10-21T07:40:25.091728+00:00"
+      },
+      {
+        "id": 60,
+        "update_id": 514249984,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "message",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:40:42.100569+00:00",
+        "completed_at": "2026-10-21T07:40:42.970508+00:00"
+      },
+      {
+        "id": 61,
+        "update_id": 514249985,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:40:45.382008+00:00",
+        "completed_at": "2026-10-21T07:40:47.082409+00:00"
+      },
+      {
+        "id": 62,
+        "update_id": 514249986,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:41:00.824533+00:00",
+        "completed_at": "2026-10-21T07:41:02.529637+00:00"
+      },
+      {
+        "id": 63,
+        "update_id": 514249987,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "message",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:41:18.758923+00:00",
+        "completed_at": "2026-10-21T07:41:19.717770+00:00"
+      },
+      {
+        "id": 64,
+        "update_id": 514249988,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:41:21.317017+00:00",
+        "completed_at": "2026-10-21T07:41:23.231004+00:00"
+      },
+      {
+        "id": 65,
+        "update_id": 514249989,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "callback_query",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T07:43:51.875771+00:00",
+        "completed_at": "2026-10-21T07:43:53.579503+00:00"
+      },
+      {
+        "id": 66,
+        "update_id": 514249990,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "message",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T10:02:53.563517+00:00",
+        "completed_at": "2026-10-21T10:02:54.736120+00:00"
+      },
+      {
+        "id": 67,
+        "update_id": 514249991,
+        "chat_id": 804844599,
+        "user_id": 804844599,
+        "update_type": "message",
+        "status": "COMPLETED",
+        "error_message": null,
+        "created_at": "2026-10-21T10:03:05.918739+00:00",
+        "completed_at": "2026-10-21T10:03:06.743695+00:00"
+      }
+    ],
+    "telegram_conversations": [
+      {
+        "telegram_user_id": 804844599,
+        "chat_id": 804844599,
+        "current_step": "IDLE",
+        "state_data": "{}",
+        "updated_at": "2026-10-21T07:39:41.130730+00:00"
+      }
+    ],
+    "telegram_link_tokens": [],
+    "telegram_linked_staff": [],
+    "telegram_blood_requests": [
+      {
+        "id": 1,
+        "blood_request_id": 2,
+        "telegram_user_id": 804844599,
+        "telegram_chat_id": 804844599,
+        "telegram_username": null,
+        "created_at": "2026-10-21T05:28:57.073773+00:00"
+      },
+      {
+        "id": 3,
+        "blood_request_id": 4,
+        "telegram_user_id": 804844599,
+        "telegram_chat_id": 804844599,
+        "telegram_username": null,
+        "created_at": "2026-10-21T07:39:41.030840+00:00"
+      }
+    ]
+  }
+}

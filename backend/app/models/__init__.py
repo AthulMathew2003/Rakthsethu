@@ -19,6 +19,8 @@ from app.models.telegram import (
     TelegramLinkToken,
     TelegramLinkedStaff,
     TelegramUpdateAudit,
+    TelegramDonor,
+    TelegramDonorReviewCase,
 )
 
 __all__ = [
@@ -41,4 +43,6 @@ __all__ = [
     "TelegramLinkToken",
     "TelegramLinkedStaff",
     "TelegramConversation",
+    "TelegramDonor",
+    "TelegramDonorReviewCase",
 ]

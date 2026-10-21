@@ -9,16 +9,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.blood_request import BloodRequest
-from app.models.enums import UserRole
+from app.models.donor import Donor
+from app.models.enums import BloodGroup, UserRole
 from app.models.hospital import Hospital
 from app.models.telegram import (
     TelegramBloodRequest,
     TelegramConversation,
+    TelegramDonor,
+    TelegramDonorReviewCase,
     TelegramLinkToken,
     TelegramLinkedStaff,
     TelegramUpdateAudit,
 )
 from app.models.user import User
+from app.repositories.donor_repository import DonorRepository
+from app.core.phone_utils import normalize_phone_number
+from geoalchemy2.elements import WKTElement
 
 logger = logging.getLogger("rakthasethu.telegram.service")
 
@@ -360,3 +366,229 @@ class TelegramService:
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+
+    # ─── 5. Voluntary Donor Registration & State Transitions ─────────────
+
+    async def lock_and_transition_registration(
+        self, telegram_user_id: int
+    ) -> Tuple[bool, Optional[Dict[str, Any]]]:
+        """
+        Atomically inspects and locks conversation in REG_CONFIRM step.
+        If confirmed, transitions to REG_SUBMITTING to prevent duplicate registrations.
+        """
+        stmt = (
+            select(TelegramConversation)
+            .where(TelegramConversation.telegram_user_id == telegram_user_id)
+            .with_for_update()
+        )
+        result = await self.session.execute(stmt)
+        conv = result.scalar_one_or_none()
+        if not conv or conv.current_step != "REG_CONFIRM":
+            return False, None
+
+        state_data = dict(conv.state_data or {})
+        conv.current_step = "REG_SUBMITTING"
+        await self.session.commit()
+        return True, state_data
+
+    async def get_donor_by_telegram_user_id(self, telegram_user_id: int) -> Optional[Donor]:
+        """Finds active donor linked to a Telegram user ID."""
+        try:
+            stmt = (
+                select(Donor)
+                .join(TelegramDonor, Donor.id == TelegramDonor.donor_id)
+                .where(TelegramDonor.telegram_user_id == telegram_user_id)
+            )
+            res = await self.session.execute(stmt)
+            return res.scalar_one_or_none()
+        except Exception as exc:
+            logger.debug("Could not query TelegramDonor table: %s", exc)
+            return None
+
+    async def record_telegram_donor(
+        self,
+        donor_id: int,
+        telegram_user_id: int,
+        telegram_chat_id: int,
+        telegram_username: Optional[str] = None,
+    ) -> Optional[TelegramDonor]:
+        """Persists or updates TelegramDonor link."""
+        try:
+            stmt = select(TelegramDonor).where(TelegramDonor.telegram_user_id == telegram_user_id)
+            res = await self.session.execute(stmt)
+            link = res.scalar_one_or_none()
+            if link:
+                link.donor_id = donor_id
+                link.telegram_chat_id = telegram_chat_id
+                link.telegram_username = telegram_username
+            else:
+                link = TelegramDonor(
+                    donor_id=donor_id,
+                    telegram_user_id=telegram_user_id,
+                    telegram_chat_id=telegram_chat_id,
+                    telegram_username=telegram_username,
+                )
+                self.session.add(link)
+            await self.session.commit()
+            return link
+        except Exception as exc:
+            logger.warning("Could not persist TelegramDonor link: %s", exc)
+            return None
+
+    async def create_donor_review_case(
+        self,
+        telegram_user_id: int,
+        telegram_chat_id: int,
+        phone: str,
+        submitted_name: str,
+        submitted_blood_group: str,
+        submitted_district: str,
+        existing_donor_id: Optional[int],
+        reason: str,
+    ) -> Optional[TelegramDonorReviewCase]:
+        """Creates an admin review case for ambiguous duplicate registrations."""
+        try:
+            review_case = TelegramDonorReviewCase(
+                telegram_user_id=telegram_user_id,
+                telegram_chat_id=telegram_chat_id,
+                phone=phone,
+                submitted_name=submitted_name,
+                submitted_blood_group=submitted_blood_group,
+                submitted_district=submitted_district,
+                existing_donor_id=existing_donor_id,
+                reason=reason,
+                status="PENDING",
+            )
+            self.session.add(review_case)
+            await self.session.commit()
+            return review_case
+        except Exception as exc:
+            logger.warning("Could not persist TelegramDonorReviewCase: %s", exc)
+            return None
+
+    async def save_registered_donor(
+        self,
+        telegram_user_id: int,
+        chat_id: int,
+        username: Optional[str],
+        data: Dict[str, Any],
+    ) -> Tuple[str, Any]:
+        """
+        Safely saves or links a donor record.
+        Returns:
+            ("CREATED", donor)
+            ("UPDATED", existing_donor)
+            ("REVIEW_CASE", review_case_or_data)
+        """
+        donor_repo = DonorRepository(self.session)
+        raw_phone = data.get("phone", "")
+        normalized_phone = normalize_phone_number(raw_phone)
+
+        # Check existing donor by normalized phone
+        existing = await donor_repo.get_by_phone(normalized_phone)
+
+        if existing:
+            # Check if association can be established reliably
+            existing_name = (existing.full_name or "").strip().lower()
+            submitted_name = (data.get("full_name") or "").strip().lower()
+            existing_bg = existing.blood_group.value if hasattr(existing.blood_group, "value") else str(existing.blood_group)
+            submitted_bg = str(data.get("blood_group", ""))
+
+            name_matches = (existing_name == submitted_name)
+            bg_matches = (existing_bg == submitted_bg)
+
+            if name_matches and bg_matches:
+                # Safe update and link (preserve existing availability)
+                existing.district = str(data.get("district", existing.district)).strip()
+                existing.is_active = True
+
+                if data.get("location_consent") and data.get("latitude") is not None and data.get("longitude") is not None:
+                    existing.location = WKTElement(
+                        f"POINT({data['longitude']} {data['latitude']})", srid=4326
+                    )
+                    existing.location_consent = True
+                    existing.location_consent_recorded_at = datetime.now(timezone.utc)
+
+                await self.session.commit()
+                await self.record_telegram_donor(existing.id, telegram_user_id, chat_id, username)
+                return "UPDATED", existing
+            else:
+                # Conflicting record: create admin review case rather than overwriting
+                reason = (
+                    f"Phone matches existing donor {existing.donor_code} ({existing.full_name}, {existing_bg}), "
+                    f"but submitted details conflict ({data.get('full_name')}, {submitted_bg})."
+                )
+                case = await self.create_donor_review_case(
+                    telegram_user_id=telegram_user_id,
+                    telegram_chat_id=chat_id,
+                    phone=normalized_phone,
+                    submitted_name=str(data.get("full_name", "")),
+                    submitted_blood_group=submitted_bg,
+                    submitted_district=str(data.get("district", "")),
+                    existing_donor_id=existing.id,
+                    reason=reason,
+                )
+                return "REVIEW_CASE", case or {"case_id": f"REV-{telegram_user_id}", "reason": reason}
+
+        # Ordinary new registration - mandatory GPS location consent validation
+        if not data.get("location_consent") or data.get("latitude") is None or data.get("longitude") is None:
+            raise ValueError("GPS location sharing and explicit location consent are mandatory to complete voluntary donor registration.")
+
+        donor_code = await donor_repo.generate_next_donor_code()
+
+        location_geom = WKTElement(
+            f"POINT({data['longitude']} {data['latitude']})", srid=4326
+        )
+        consent_val = True
+        consent_time = datetime.now(timezone.utc)
+
+        donor = Donor(
+            donor_code=donor_code,
+            hospital_id=None,
+            full_name=str(data["full_name"]).strip(),
+            blood_group=BloodGroup(data["blood_group"]),
+            phone=normalized_phone,
+            district=str(data["district"]).strip(),
+            location=location_geom,
+            location_consent=consent_val,
+            location_consent_recorded_at=consent_time,
+            is_active=True,
+            is_available=True,
+        )
+
+        try:
+            await donor_repo.add(donor)
+            await self.session.commit()
+            await self.record_telegram_donor(donor.id, telegram_user_id, chat_id, username)
+            return "CREATED", donor
+        except IntegrityError:
+            await self.session.rollback()
+            # Concurrent race condition: phone was just inserted
+            existing_after_race = await donor_repo.get_by_phone(normalized_phone)
+            if existing_after_race:
+                return "UPDATED", existing_after_race
+            raise
+
+    async def revoke_donor_location(self, telegram_user_id: int) -> Tuple[bool, str, Optional[str]]:
+        """
+        Revokes location consent for the donor associated with this Telegram account.
+        Disables location-based matching and clears coordinates.
+        """
+        donor = await self.get_donor_by_telegram_user_id(telegram_user_id)
+        if not donor:
+            # Fallback check: lookup conversation for phone
+            conv = await self.get_conversation(telegram_user_id)
+            if conv and conv.state_data and "phone" in conv.state_data:
+                norm_phone = normalize_phone_number(conv.state_data["phone"])
+                donor_repo = DonorRepository(self.session)
+                donor = await donor_repo.get_by_phone(norm_phone)
+
+        if not donor:
+            return False, "No active voluntary donor registration was found for this Telegram account.", None
+
+        donor.location = None
+        donor.location_consent = False
+        donor.location_consent_recorded_at = None
+        await self.session.commit()
+        return True, "Your GPS location consent has been successfully revoked. You will now be matched based on your district only.", donor.donor_code
+

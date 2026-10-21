@@ -21,12 +21,32 @@ class TelegramChat(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class TelegramContact(BaseModel):
+    phone_number: str
+    first_name: str
+    last_name: Optional[str] = None
+    user_id: Optional[int] = None
+    vcard: Optional[str] = None
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class TelegramLocation(BaseModel):
+    longitude: float
+    latitude: float
+    horizontal_accuracy: Optional[float] = None
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class TelegramMessage(BaseModel):
     message_id: int
     from_user: Optional[TelegramUser] = Field(None, alias="from")
     chat: TelegramChat
     date: int
     text: Optional[str] = None
+    contact: Optional[TelegramContact] = None
+    location: Optional[TelegramLocation] = None
 
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 

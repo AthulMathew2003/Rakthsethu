@@ -1,7 +1,9 @@
 from datetime import date, datetime, timedelta, timezone
+import hashlib
 import logging
 import math
 import re
+import secrets
 from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -100,21 +102,27 @@ class TelegramHandler:
         if text.startswith("/start"):
             await self.cmd_start(chat_id, user_id)
             return
-        elif text.startswith("/help"):
+        elif text.startswith("/help") or text == "ℹ️ Help":
             await self.cmd_help(chat_id)
             return
-        elif text.startswith("/cancel"):
+        elif text.startswith("/cancel") or text in ("❌ Cancel", "❌ Cancel Registration"):
             await self.cmd_cancel(chat_id, user_id)
             return
-        elif text.startswith("/requestblood"):
+        elif text.startswith("/requestblood") or text == "🩸 Request Blood":
             await self.start_request_blood(chat_id, user_id)
             return
-        elif text.startswith("/status"):
+        elif text.startswith("/registerdonor") or text.startswith("/register") or text == "📝 Register as Donor":
+            await self.start_donor_registration(chat_id, user_id)
+            return
+        elif text.startswith("/revokelocation"):
+            await self.cmd_revokelocation(chat_id, user_id)
+            return
+        elif text.startswith("/status") or text == "🔍 Check Request Status":
             parts = text.split()
             req_code = parts[1] if len(parts) > 1 else None
             await self.cmd_status(chat_id, user_id, req_code)
             return
-        elif text.startswith("/link"):
+        elif text.startswith("/link") or text == "🏥 Staff Link":
             parts = text.split()
             token = parts[1] if len(parts) > 1 else None
             username = message.from_user.username if message.from_user else None
@@ -124,7 +132,10 @@ class TelegramHandler:
         # Check conversational state machine
         conv = await self.service.get_conversation(user_id)
         if conv and conv.current_step != "IDLE":
-            await self.handle_conversation_step(conv, text, chat_id, user_id)
+            if conv.current_step.startswith("REG_"):
+                await self.handle_registration_step(conv, message, chat_id, user_id)
+            else:
+                await self.handle_conversation_step(conv, text, chat_id, user_id)
         else:
             # Unrecognized free text message
             await self.client.send_message(
@@ -138,6 +149,28 @@ class TelegramHandler:
     # ─── Commands ─────────────────────────────────────────────────────────
 
     async def cmd_start(self, chat_id: int, user_id: int) -> None:
+        conv = await self.service.get_conversation(user_id)
+        if conv and conv.current_step.startswith("REG_") and conv.current_step not in ("IDLE", "REG_COMPLETED"):
+            resume_text = (
+                "🩸 <b>Welcome to RakthaSethu Blood Donation Network</b>\n\n"
+                "⚠️ <b>Incomplete Donor Registration in Progress:</b>\n"
+                "You have an ongoing voluntary donor registration session. "
+                "Would you like to continue where you left off or cancel and start fresh?"
+            )
+            kb = {
+                "inline_keyboard": [
+                    [{"text": "▶️ Continue Registration", "callback_data": "reg:resume"}],
+                    [{"text": "❌ Cancel Registration", "callback_data": "reg:cancel"}],
+                    [{"text": "🩸 Request Blood", "callback_data": "menu:requestblood"}],
+                    [
+                        {"text": "🔍 Check Request Status", "callback_data": "menu:status"},
+                        {"text": "ℹ️ Help", "callback_data": "menu:help"},
+                    ],
+                ]
+            }
+            await self.client.send_message(chat_id=chat_id, text=resume_text, reply_markup=kb)
+            return
+
         await self.service.reset_conversation(user_id)
         welcome_text = (
             "🩸 <b>Welcome to RakthaSethu Blood Donation Network</b>\n\n"
@@ -145,6 +178,7 @@ class TelegramHandler:
             "and hospital blood banks across Kerala.\n\n"
             "<b>Quick Actions:</b>\n"
             "• 🩸 <b>/requestblood</b> — Submit an urgent clinical blood request\n"
+            "• 📝 <b>/registerdonor</b> — Register as a voluntary blood donor\n"
             "• 🔍 <b>/status [CODE]</b> — Check your blood request status\n"
             "• ℹ️ <b>/help</b> — Learn how to use this service\n"
             "• 🏥 <b>/link [TOKEN]</b> — Link hospital staff account"
@@ -158,9 +192,11 @@ class TelegramHandler:
     async def cmd_help(self, chat_id: int) -> None:
         help_text = (
             "ℹ️ <b>RakthaSethu Telegram Bot Guide</b>\n\n"
-            "<b>Public Requester Commands:</b>\n"
-            "• <code>/requestblood</code> — Guided, step-by-step submission for a blood request.\n"
+            "<b>Public Commands:</b>\n"
+            "• <code>/requestblood</code> — Guided, step-by-step submission for a clinical blood request.\n"
+            "• <code>/registerdonor</code> — Register as a verified voluntary blood donor across Kerala.\n"
             "• <code>/status &lt;REQ_CODE&gt;</code> — View the progress of a request you submitted (e.g. <code>/status REQ0001</code>).\n"
+            "• <code>/revokelocation</code> — Revoke GPS proximity matching consent for your donor profile at any time.\n"
             "• <code>/cancel</code> — Abort the active submission at any time.\n\n"
             "<b>Hospital Staff Commands:</b>\n"
             "• <code>/link &lt;TOKEN&gt;</code> — Link this Telegram account to your verified hospital staff portal.\n\n"
@@ -174,9 +210,10 @@ class TelegramHandler:
         await self.service.reset_conversation(user_id)
         await self.client.send_message(
             chat_id=chat_id,
-            text="❌ Current conversation cancelled. No request was submitted.\nType /requestblood whenever you need to start again.",
+            text="❌ Current conversation cancelled. No information was submitted.\nUse the menu below whenever you wish to proceed.",
             reply_markup=self.build_main_menu_keyboard(),
         )
+
 
     async def cmd_status(self, chat_id: int, user_id: int, req_code: Optional[str]) -> None:
         if not req_code:
@@ -273,6 +310,53 @@ class TelegramHandler:
             reply = f"❌ <b>Linking Failed:</b> {message}"
 
         await self.client.send_message(chat_id=chat_id, text=reply)
+
+    # ─── Voluntary Donor Registration Flow ────────────────────────────────
+
+    async def start_donor_registration(self, chat_id: int, user_id: int) -> None:
+        """
+        Step 1: Explains information being collected and purpose,
+        and obtains explicit consent before proceeding.
+        """
+        await self.service.update_conversation(
+            telegram_user_id=user_id,
+            chat_id=chat_id,
+            step="REG_CONSENT",
+            data_updates={},
+        )
+        consent_text = (
+            "📝 <b>Voluntary Donor Registration</b>\n\n"
+            "Thank you for stepping forward to save lives across Kerala through the RakthaSethu network.\n\n"
+            "<b>Information Collected & Purpose:</b>\n"
+            "• <b>Full Name & Blood Group:</b> For clinical compatibility matching.\n"
+            "• <b>Age or Date of Birth:</b> To ensure compliance with voluntary blood donation eligibility (18–65 years).\n"
+            "• <b>District:</b> To match urgent requests in your home area.\n"
+            "• <b>Mobile Phone Number:</b> Verified via Telegram contact sharing for urgent clinical coordination.\n"
+            "• <b>GPS Location (Optional):</b> For proximity-based emergency matching. (Exact coordinates are never disclosed).\n\n"
+            "🔒 <i>All information is protected under RakthaSethu healthcare privacy guidelines. You can cancel or revoke location consent at any time.</i>\n\n"
+            "Do you consent to providing these details to join the voluntary donor registry?"
+        )
+        kb = {
+            "inline_keyboard": [
+                [{"text": "✅ I Consent & Agree", "callback_data": "reg:consent_yes"}],
+                [{"text": "❌ Decline & Cancel", "callback_data": "reg:consent_no"}],
+            ]
+        }
+        await self.client.send_message(chat_id=chat_id, text=consent_text, reply_markup=kb)
+
+    async def cmd_revokelocation(self, chat_id: int, user_id: int) -> None:
+        """Allows voluntary donors to revoke GPS location consent at any time."""
+        success, message, code = await self.service.revoke_donor_location(user_id)
+        if success:
+            text = (
+                "📍 <b>Location Consent Revoked</b>\n\n"
+                f"• <b>Donor Code:</b> <code>{code}</code>\n"
+                f"• {message}\n\n"
+                "You can re-enable GPS proximity matching at any time by updating your registration."
+            )
+        else:
+            text = f"ℹ️ {message}"
+        await self.client.send_message(chat_id=chat_id, text=text, reply_markup=self.build_main_menu_keyboard())
 
     # ─── Blood Request Guided Conversation ────────────────────────────────
 
@@ -402,6 +486,9 @@ class TelegramHandler:
         if data_str == "menu:requestblood":
             await self.start_request_blood(chat_id, user_id)
             return
+        elif data_str == "menu:register_donor":
+            await self.start_donor_registration(chat_id, user_id)
+            return
         elif data_str == "menu:status":
             await self.client.send_message(
                 chat_id=chat_id,
@@ -413,6 +500,119 @@ class TelegramHandler:
             return
         elif data_str == "menu:link":
             await self.cmd_link(chat_id, user_id, None, None)
+            return
+
+        # 4b. Donor Registration Actions (Consent, Resumption, Confirmation, Edit, Cancel)
+        if data_str == "reg:resume":
+            conv = await self.service.get_conversation(user_id)
+            if conv and conv.current_step.startswith("REG_"):
+                await self.resume_registration(chat_id, user_id, conv)
+            else:
+                await self.start_donor_registration(chat_id, user_id)
+            return
+        elif data_str == "reg:cancel":
+            await self.cmd_cancel(chat_id, user_id)
+            return
+        elif data_str == "reg:consent_no":
+            await self.service.reset_conversation(user_id)
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="❌ Registration cancelled. Details are only collected with your explicit consent.\nYou can return anytime via the main menu.",
+                reply_markup=self.build_main_menu_keyboard(),
+            )
+            return
+        elif data_str == "reg:consent_yes":
+            await self.service.update_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="REG_NAME",
+                data_updates={"consent_recorded_at": datetime.now(timezone.utc).isoformat()},
+            )
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=(
+                    "📝 <b>Donor Registration — Step 1 of 5: Personal Details</b>\n\n"
+                    "Please enter your <b>Full Name</b> (as per official identity):\n\n"
+                    "<i>Type /cancel at any point to stop.</i>"
+                ),
+            )
+            return
+        elif data_str == "reg:resend_otp":
+            await self.resend_registration_otp(chat_id, user_id)
+            return
+        elif data_str == "reg_loc:consent_no":
+            await self.service.reset_conversation(user_id)
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=(
+                    "❌ <b>Registration Cancelled:</b>\n\n"
+                    "GPS location sharing and proximity consent are mandatory to register as a voluntary donor on RakthaSethu so nearby emergency patients can reach you.\n"
+                    "District-only fallback registration is not permitted.\n\n"
+                    "You can restart registration at any time from the main menu."
+                ),
+                reply_markup=self.build_main_menu_keyboard(),
+            )
+            return
+        elif data_str == "reg_loc:consent_yes":
+            await self.service.update_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="REG_LOCATION",
+                data_updates={"location_consent": True},
+            )
+            reply_markup = {
+                "keyboard": [
+                    [{"text": "📍 Share Current Location", "request_location": True}],
+                    [{"text": "❌ Cancel Registration"}]
+                ],
+                "resize_keyboard": True,
+                "one_time_keyboard": True,
+            }
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=(
+                    "📍 <b>Location Sharing (Mandatory):</b>\n\n"
+                    "Please tap the <b>📍 Share Current Location</b> button below to transmit your GPS coordinates directly.\n\n"
+                    "• <i>Exact coordinates are never shown to requesters.</i>\n"
+                    "• <i>Typed place names cannot be accepted.</i>"
+                ),
+                reply_markup=reply_markup,
+            )
+            return
+        elif data_str == "reg:edit":
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="✏️ <b>Edit Registration Details:</b>\nWhich detail would you like to update?",
+                reply_markup=self.build_reg_edit_keyboard(),
+            )
+            return
+        elif data_str.startswith("reg_edit:"):
+            field = data_str.split(":")[1]
+            await self.handle_registration_edit_field(chat_id, user_id, field)
+            return
+        elif data_str == "reg:confirm":
+            conv = await self.service.get_conversation(user_id)
+            conv_data = dict(conv.state_data or {}) if conv else {}
+            if not conv_data.get("location_consent") or conv_data.get("latitude") is None or conv_data.get("longitude") is None:
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text=(
+                        "⚠️ <b>GPS Location Mandatory:</b>\n\n"
+                        "Registration cannot be submitted without valid GPS coordinates and explicit location consent.\n"
+                        "Please share your location before confirming."
+                    ),
+                )
+                return
+
+            acquired, locked_data = await self.service.lock_and_transition_registration(user_id)
+            if not acquired or not locked_data:
+                logger.info("Ignoring duplicate/unlocked reg:confirm for user %s", user_id)
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="⏳ Your registration is already being processed or has already been completed.",
+                )
+                return
+            await self.submit_donor_registration(chat_id, user_id, locked_data, cb.from_user.username)
             return
 
         # 5. Request Confirmation / Cancel (Atomic lock & transition before state lookup)
@@ -438,6 +638,56 @@ class TelegramHandler:
 
         step = conv.current_step
         state_data = dict(conv.state_data or {})
+
+        # Donor Registration: Blood Group Selection
+        if step == "REG_BG" and data_str.startswith("reg_bg:"):
+            bg_val = data_str.split(":")[1]
+            await self.service.update_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="REG_AGE",
+                data_updates={"blood_group": bg_val},
+            )
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=(
+                    f"💉 Selected Blood Group: <b>{bg_val}</b>\n\n"
+                    "🎂 <b>Step 3 of 5: Eligibility Check</b>\n\n"
+                    "Please enter your <b>Age</b> (e.g. <code>25</code>) or <b>Date of Birth</b> (<code>YYYY-MM-DD</code>):\n\n"
+                    "<i>Voluntary donors must be between 18 and 65 years old.</i>"
+                ),
+            )
+            return
+
+        # Donor Registration: District Selection
+        if step == "REG_DISTRICT" and data_str.startswith("reg_dist:"):
+            dist_val = data_str.split(":")[1]
+            await self.service.update_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="REG_PHONE_SHARE",
+                data_updates={"district": dist_val},
+            )
+            reply_markup = {
+                "keyboard": [
+                    [{"text": "📱 Share Phone Number", "request_contact": True}],
+                    [{"text": "❌ Cancel Registration"}]
+                ],
+                "resize_keyboard": True,
+                "one_time_keyboard": True,
+            }
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=(
+                    f"📍 District: <b>{dist_val}</b>\n\n"
+                    "📱 <b>Step 4 of 5: Mobile Phone Verification</b>\n\n"
+                    "Please tap the <b>📱 Share Phone Number</b> button below to share your contact directly from Telegram.\n\n"
+                    "• <i>Typed numbers cannot be accepted.</i>\n"
+                    "• <i>You must share the contact associated with this Telegram account.</i>"
+                ),
+                reply_markup=reply_markup,
+            )
+            return
 
         # 3. Blood Group Selection
         if step == "WAITING_BLOOD_GROUP" and data_str.startswith("bg:"):
@@ -969,6 +1219,7 @@ class TelegramHandler:
         return {
             "inline_keyboard": [
                 [{"text": "🩸 Request Blood", "callback_data": "menu:requestblood"}],
+                [{"text": "📝 Register as Donor", "callback_data": "menu:register_donor"}],
                 [{"text": "🔍 Check Request Status", "callback_data": "menu:status"}],
                 [
                     {"text": "🏥 Staff Link", "callback_data": "menu:link"},
@@ -976,6 +1227,577 @@ class TelegramHandler:
                 ],
             ]
         }
+
+    def build_reg_blood_group_keyboard(self) -> Dict[str, Any]:
+        return {
+            "inline_keyboard": [
+                [{"text": "A+", "callback_data": "reg_bg:A+"}, {"text": "A-", "callback_data": "reg_bg:A-"}],
+                [{"text": "B+", "callback_data": "reg_bg:B+"}, {"text": "B-", "callback_data": "reg_bg:B-"}],
+                [{"text": "AB+", "callback_data": "reg_bg:AB+"}, {"text": "AB-", "callback_data": "reg_bg:AB-"}],
+                [{"text": "O+", "callback_data": "reg_bg:O+"}, {"text": "O-", "callback_data": "reg_bg:O-"}],
+            ]
+        }
+
+    def build_reg_district_keyboard(self) -> Dict[str, Any]:
+        rows = []
+        for i in range(0, len(KERALA_DISTRICTS), 2):
+            row = [{"text": KERALA_DISTRICTS[i], "callback_data": f"reg_dist:{KERALA_DISTRICTS[i]}"}]
+            if i + 1 < len(KERALA_DISTRICTS):
+                row.append({"text": KERALA_DISTRICTS[i + 1], "callback_data": f"reg_dist:{KERALA_DISTRICTS[i + 1]}"})
+            rows.append(row)
+        return {"inline_keyboard": rows}
+
+    def build_reg_edit_keyboard(self) -> Dict[str, Any]:
+        return {
+            "inline_keyboard": [
+                [{"text": "👤 Edit Name", "callback_data": "reg_edit:name"}],
+                [{"text": "💉 Edit Blood Group", "callback_data": "reg_edit:bg"}],
+                [{"text": "🎂 Edit Age / DOB", "callback_data": "reg_edit:age"}],
+                [{"text": "📍 Edit District", "callback_data": "reg_edit:dist"}],
+                [{"text": "🗺️ Edit Location", "callback_data": "reg_edit:loc"}],
+                [{"text": "🔙 Back to Summary", "callback_data": "reg_edit:back"}],
+            ]
+        }
+
+    def _mask_phone(self, phone: str) -> str:
+        clean = str(phone).strip()
+        if len(clean) >= 10:
+            return clean[:5] + "****" + clean[-4:]
+        return clean
+
+    def _parse_age_or_dob(self, text: str) -> Tuple[Optional[int], Optional[str], Optional[str]]:
+        raw = text.strip()
+        # Case A: Pure integer age
+        if raw.isdigit():
+            age = int(raw)
+            if age < 18:
+                return None, None, "⚠️ You must be at least 18 years old to register as a voluntary blood donor under National Blood Transfusion Council (NBTC) guidelines. Please re-enter if this was an error:"
+            if age > 65:
+                return None, None, "⚠️ Voluntary blood donation is recommended up to 65 years of age. Please re-enter if this was an error:"
+            return age, None, None
+
+        # Case B: Date of Birth
+        parsed_date = None
+        for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
+            try:
+                parsed_date = datetime.strptime(raw, fmt).date()
+                break
+            except ValueError:
+                continue
+
+        if not parsed_date:
+            return None, None, "⚠️ Please enter your age (e.g. <code>25</code>) or Date of Birth (<code>YYYY-MM-DD</code>):"
+
+        today = date.today()
+        if parsed_date > today:
+            return None, None, "⚠️ Date of birth cannot be in the future. Please re-enter:"
+
+        age = today.year - parsed_date.year - ((today.month, today.day) < (parsed_date.month, parsed_date.day))
+        if age < 18:
+            return None, None, "⚠️ You must be at least 18 years old to register as a voluntary blood donor under National Blood Transfusion Council (NBTC) guidelines. Please re-enter if this was an error:"
+        if age > 65:
+            return None, None, "⚠️ Voluntary blood donation is recommended up to 65 years of age. Please re-enter if this was an error:"
+
+        return age, parsed_date.isoformat(), None
+
+    async def handle_registration_edit_field(self, chat_id: int, user_id: int, field: str) -> None:
+        conv = await self.service.get_conversation(user_id)
+        if not conv:
+            return
+
+        if field == "name":
+            await self.service.update_conversation(user_id, chat_id, "REG_NAME")
+            await self.client.send_message(chat_id=chat_id, text="👤 Please enter your updated <b>Full Name</b>:")
+        elif field == "bg":
+            await self.service.update_conversation(user_id, chat_id, "REG_BG")
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="💉 Please select your updated <b>Blood Group</b>:",
+                reply_markup=self.build_reg_blood_group_keyboard(),
+            )
+        elif field == "age":
+            await self.service.update_conversation(user_id, chat_id, "REG_AGE")
+            await self.client.send_message(chat_id=chat_id, text="🎂 Please enter your updated <b>Age</b> (18–65) or Date of Birth:")
+        elif field == "dist":
+            await self.service.update_conversation(user_id, chat_id, "REG_DISTRICT")
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="📍 Please select your updated <b>Home District</b>:",
+                reply_markup=self.build_reg_district_keyboard(),
+            )
+        elif field == "loc":
+            await self.service.update_conversation(user_id, chat_id, "REG_LOC_CONSENT")
+            kb = {
+                "inline_keyboard": [
+                    [{"text": "📍 I Consent & Share Location", "callback_data": "reg_loc:consent_yes"}],
+                    [{"text": "❌ Decline & Cancel", "callback_data": "reg_loc:consent_no"}],
+                ]
+            }
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="📍 Do you consent to sharing your GPS location for emergency proximity matching? (Mandatory for voluntary donor registration)",
+                reply_markup=kb,
+            )
+        elif field == "back":
+            await self.service.update_conversation(user_id, chat_id, "REG_CONFIRM")
+            await self.send_registration_summary(chat_id, user_id, conv)
+
+    async def resend_registration_otp(self, chat_id: int, user_id: int) -> None:
+        conv = await self.service.get_conversation(user_id)
+        if not conv or conv.current_step != "REG_OTP":
+            return
+
+        state_data = dict(conv.state_data or {})
+        sent_at_str = state_data.get("otp_sent_at")
+        now = datetime.now(timezone.utc)
+        if sent_at_str:
+            sent_dt = datetime.fromisoformat(sent_at_str)
+            elapsed = (now - sent_dt).total_seconds()
+            if elapsed < 60:
+                wait_sec = int(60 - elapsed)
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text=f"⏳ Please wait {wait_sec} seconds before requesting a new verification code.",
+                )
+                return
+
+        new_otp = f"{secrets.randbelow(900000) + 100000:06d}"
+        new_hash = hashlib.sha256(new_otp.encode("utf-8")).hexdigest()
+
+        await self.service.update_conversation(
+            telegram_user_id=user_id,
+            chat_id=chat_id,
+            step="REG_OTP",
+            data_updates={
+                "otp_hash": new_hash,
+                "otp_sent_at": now.isoformat(),
+                "otp_expires_at": (now + timedelta(minutes=10)).isoformat(),
+                "otp_attempts": 0,
+            },
+        )
+        msg = (
+            f"🔄 <b>New Telegram Verification Code:</b> <code>{new_otp}</code>\n\n"
+            "Please enter this 6-digit code to complete verification.\n"
+            "• <i>Code expires in 10 minutes.</i>"
+        )
+        await self.client.send_message(chat_id=chat_id, text=msg)
+
+    async def resume_registration(self, chat_id: int, user_id: int, conv: Any) -> None:
+        step = conv.current_step
+        if step == "REG_CONSENT":
+            await self.start_donor_registration(chat_id, user_id)
+        elif step == "REG_NAME":
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="📝 <b>Donor Registration — Step 1 of 5:</b>\nPlease enter your <b>Full Name</b>:\n<i>Type /cancel to abort.</i>",
+            )
+        elif step == "REG_BG":
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="💉 <b>Step 2 of 5:</b> Please select your <b>Blood Group</b>:",
+                reply_markup=self.build_reg_blood_group_keyboard(),
+            )
+        elif step == "REG_AGE":
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="🎂 <b>Step 3 of 5:</b> Please enter your <b>Age</b> (18–65) or Date of Birth (<code>YYYY-MM-DD</code>):",
+            )
+        elif step == "REG_DISTRICT":
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="📍 <b>Step 4 of 5:</b> Please select your <b>Home District</b> in Kerala:",
+                reply_markup=self.build_reg_district_keyboard(),
+            )
+        elif step == "REG_PHONE_SHARE":
+            reply_markup = {
+                "keyboard": [
+                    [{"text": "📱 Share Phone Number", "request_contact": True}],
+                    [{"text": "❌ Cancel Registration"}]
+                ],
+                "resize_keyboard": True,
+                "one_time_keyboard": True,
+            }
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=(
+                    "📱 <b>Phone Verification:</b>\n"
+                    "Please tap the <b>📱 Share Phone Number</b> button below to share your contact directly from Telegram."
+                ),
+                reply_markup=reply_markup,
+            )
+        elif step == "REG_OTP":
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="🔐 Please enter the 6-digit verification code sent in this chat (or type /resend for a new code):",
+            )
+        elif step == "REG_LOC_CONSENT":
+            kb = {
+                "inline_keyboard": [
+                    [{"text": "📍 I Consent & Share Location", "callback_data": "reg_loc:consent_yes"}],
+                    [{"text": "❌ Decline & Cancel", "callback_data": "reg_loc:consent_no"}],
+                ]
+            }
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="📍 Do you consent to sharing your GPS location for emergency proximity matching? (Mandatory for registration)",
+                reply_markup=kb,
+            )
+        elif step == "REG_LOCATION":
+            reply_markup = {
+                "keyboard": [
+                    [{"text": "📍 Share Current Location", "request_location": True}],
+                    [{"text": "❌ Cancel Registration"}]
+                ],
+                "resize_keyboard": True,
+                "one_time_keyboard": True,
+            }
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="📍 Please tap <b>Share Current Location</b> below to share your GPS coordinates (Mandatory):",
+                reply_markup=reply_markup,
+            )
+        elif step == "REG_CONFIRM":
+            await self.send_registration_summary(chat_id, user_id, conv)
+        else:
+            await self.start_donor_registration(chat_id, user_id)
+
+    async def send_registration_summary(self, chat_id: int, user_id: int, conv: Any) -> None:
+        data = dict(conv.state_data or {})
+        masked_phone = self._mask_phone(data.get("phone", "Unknown"))
+        has_loc = data.get("location_consent") and data.get("latitude") is not None
+        loc_desc = "✅ Coordinates Received (GPS Proximity Enabled)" if has_loc else "⏭️ Skipped (District Matching Only)"
+
+        summary_text = (
+            "📋 <b>Donor Registration Summary</b>\n\n"
+            f"👤 <b>Full Name:</b> {data.get('full_name')}\n"
+            f"💉 <b>Blood Group:</b> <b>{data.get('blood_group')}</b>\n"
+            f"🎂 <b>Age:</b> {data.get('age')} years\n"
+            f"📍 <b>District:</b> {data.get('district')}\n"
+            f"📱 <b>Phone:</b> <code>{masked_phone}</code> (Verified)\n"
+            f"🗺️ <b>Location:</b> {loc_desc}\n\n"
+            "Please review your details carefully before confirming submission."
+        )
+        kb = {
+            "inline_keyboard": [
+                [{"text": "✅ Confirm & Complete Registration", "callback_data": "reg:confirm"}],
+                [{"text": "✏️ Edit Details", "callback_data": "reg:edit"}],
+                [{"text": "❌ Cancel", "callback_data": "reg:cancel"}],
+            ]
+        }
+        await self.client.send_message(chat_id=chat_id, text=summary_text, reply_markup=kb)
+
+    async def submit_donor_registration(
+        self, chat_id: int, user_id: int, state_data: Dict[str, Any], username: Optional[str]
+    ) -> None:
+        try:
+            status, result = await self.service.save_registered_donor(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                username=username,
+                data=state_data,
+            )
+
+            if status == "CREATED":
+                donor = result
+                reply_text = (
+                    "🎉 <b>Voluntary Donor Registration Successful!</b>\n\n"
+                    f"Welcome to the RakthaSethu network, <b>{donor.full_name}</b>!\n\n"
+                    f"• <b>Donor Code:</b> <code>{donor.donor_code}</code>\n"
+                    f"• <b>Blood Group:</b> {donor.blood_group.value}\n"
+                    f"• <b>District:</b> {donor.district}\n"
+                    f"• <b>Status:</b> Active & Available for Clinical Matching\n\n"
+                    "Thank you for volunteering to save lives. When a compatible clinical blood request "
+                    "is submitted in your area, you may be contacted by authorized hospital coordinators.\n\n"
+                    "<i>You can revoke location consent at any time by typing /revokelocation.</i>"
+                )
+            elif status == "UPDATED":
+                donor = result
+                reply_text = (
+                    "✅ <b>Donor Profile Updated & Linked!</b>\n\n"
+                    f"Welcome back, <b>{donor.full_name}</b>!\n\n"
+                    f"• <b>Donor Code:</b> <code>{donor.donor_code}</code>\n"
+                    f"• <b>Blood Group:</b> {donor.blood_group.value}\n"
+                    f"• <b>District:</b> {donor.district}\n"
+                    f"• <b>Status:</b> Active & Available\n\n"
+                    "Your voluntary donor profile is now linked to this Telegram account."
+                )
+            elif status == "REVIEW_CASE":
+                case = result
+                case_id = getattr(case, "id", None) or (case.get("case_id") if isinstance(case, dict) else "PENDING")
+                reply_text = (
+                    "ℹ️ <b>Registration Submitted for Administrative Review</b>\n\n"
+                    "A donor profile with this phone number is already registered under differing details. "
+                    "To safeguard donor identity and prevent unauthorized record overwriting, an administrative review case has been recorded.\n\n"
+                    f"• <b>Review Case ID:</b> <code>CASE-{case_id}</code>\n"
+                    "• <b>Status:</b> Pending Hospital Desk Verification\n\n"
+                    "Our hospital coordination team will review the submitted details. "
+                    "Thank you for your patience and willingness to donate."
+                )
+            else:
+                reply_text = "✅ Registration processed successfully."
+
+            await self.service.reset_conversation(user_id)
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=reply_text,
+                reply_markup=self.build_main_menu_keyboard(),
+            )
+        except Exception as exc:
+            logger.exception("Error during donor registration submission: %s", exc)
+            await self.service.reset_conversation(user_id)
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="⚠️ An unexpected error occurred while saving your registration. Please try again with /registerdonor.",
+                reply_markup=self.build_main_menu_keyboard(),
+            )
+
+    async def handle_registration_step(
+        self,
+        conv: Any,
+        message: TelegramMessage,
+        chat_id: int,
+        user_id: int,
+    ) -> None:
+        step = conv.current_step
+        text = (message.text or "").strip()
+
+        if text.startswith("/cancel") or text in ("❌ Cancel Registration", "❌ Cancel"):
+            await self.cmd_cancel(chat_id, user_id)
+            return
+
+        if step == "REG_NAME":
+            name = text.strip()
+            if len(name) < 2 or len(name) > 150 or not re.match(r"^[a-zA-Z\s\.\-']+$", name):
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="⚠️ Please enter a valid name (2 to 150 characters, letters only). Please re-enter:",
+                )
+                return
+
+            await self.service.update_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="REG_BG",
+                data_updates={"full_name": name},
+            )
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=f"👤 Name: <b>{name}</b>\n\n💉 <b>Step 2 of 5:</b> Select your <b>Blood Group</b>:",
+                reply_markup=self.build_reg_blood_group_keyboard(),
+            )
+
+        elif step == "REG_AGE":
+            age, dob, err = self._parse_age_or_dob(text)
+            if err:
+                await self.client.send_message(chat_id=chat_id, text=err)
+                return
+
+            data_up = {"age": age}
+            if dob:
+                data_up["dob"] = dob
+
+            await self.service.update_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="REG_DISTRICT",
+                data_updates=data_up,
+            )
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=f"🎂 Age: <b>{age} years</b>\n\n📍 <b>Step 3 of 5:</b> Select your <b>Home District</b> in Kerala:",
+                reply_markup=self.build_reg_district_keyboard(),
+            )
+
+        elif step == "REG_PHONE_SHARE":
+            if not message.contact:
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text=(
+                        "⚠️ <b>Native Verification Required:</b>\n"
+                        "Typed phone numbers cannot be verified. Please tap the native <b>📱 Share Phone Number</b> button below to share your contact directly."
+                    ),
+                    reply_markup={
+                        "keyboard": [
+                            [{"text": "📱 Share Phone Number", "request_contact": True}],
+                            [{"text": "❌ Cancel Registration"}]
+                        ],
+                        "resize_keyboard": True,
+                        "one_time_keyboard": True,
+                    },
+                )
+                return
+
+            # Verify contact belongs to the Telegram account interacting with the bot
+            if message.contact.user_id != user_id:
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text=(
+                        "⛔ <b>Security Check Failed:</b>\n"
+                        "The shared contact does not match this Telegram account. You may only register using your own phone number.\n"
+                        "Please use the <b>📱 Share Phone Number</b> button below."
+                    ),
+                )
+                return
+
+            try:
+                norm_phone = normalize_phone_number(message.contact.phone_number)
+            except Exception:
+                norm_phone = message.contact.phone_number.strip()
+
+            # Generate secure one-time verification code
+            otp = f"{secrets.randbelow(900000) + 100000:06d}"
+            otp_hash = hashlib.sha256(otp.encode("utf-8")).hexdigest()
+            now = datetime.now(timezone.utc)
+
+            await self.service.update_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="REG_OTP",
+                data_updates={
+                    "phone": norm_phone,
+                    "otp_hash": otp_hash,
+                    "otp_sent_at": now.isoformat(),
+                    "otp_expires_at": (now + timedelta(minutes=10)).isoformat(),
+                    "otp_attempts": 0,
+                },
+            )
+
+            # Send OTP through Telegram bot chat (Never log OTP)
+            otp_msg = (
+                f"🔐 <b>Telegram Verification Code:</b> <code>{otp}</code>\n\n"
+                "Please enter this 6-digit code below to confirm control of this Telegram chat session.\n\n"
+                "• <i>This code expires in 10 minutes.</i>\n"
+                "• <i>(This code is delivered through Telegram to confirm bot conversation control; it is not independent proof of mobile-network ownership.)</i>"
+            )
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=otp_msg,
+                reply_markup={"remove_keyboard": True},
+            )
+
+        elif step == "REG_OTP":
+            if text.startswith("/resend"):
+                await self.resend_registration_otp(chat_id, user_id)
+                return
+
+            state_data = dict(conv.state_data or {})
+            otp_hash = state_data.get("otp_hash")
+            expires_at_str = state_data.get("otp_expires_at")
+            attempts = state_data.get("otp_attempts", 0)
+
+            now = datetime.now(timezone.utc)
+            if expires_at_str:
+                exp_dt = datetime.fromisoformat(expires_at_str)
+                if now > exp_dt:
+                    await self.client.send_message(
+                        chat_id=chat_id,
+                        text="⚠️ Verification code expired. Please type /resend to receive a new code or /cancel to abort.",
+                    )
+                    return
+
+            if attempts >= 3:
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="❌ Maximum verification attempts exceeded. Please type /resend to receive a fresh code or /cancel to abort.",
+                )
+                return
+
+            entered_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+            if entered_hash != otp_hash:
+                new_attempts = attempts + 1
+                remaining = max(0, 3 - new_attempts)
+                await self.service.update_conversation(
+                    telegram_user_id=user_id,
+                    chat_id=chat_id,
+                    step="REG_OTP",
+                    data_updates={"otp_attempts": new_attempts},
+                )
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text=f"❌ Incorrect verification code. You have {remaining} attempt(s) remaining. Please try again or type /resend:",
+                )
+                return
+
+            # OTP verified successfully!
+            await self.service.update_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="REG_LOC_CONSENT",
+                data_updates={"phone_verified": True, "otp_hash": None},
+            )
+
+            loc_consent_text = (
+                "📍 <b>Step 5 of 5: Proximity Matching & Location Consent</b>\n\n"
+                "RakthaSethu uses GPS proximity matching to connect emergency patients with the nearest available voluntary donors across Kerala.\n\n"
+                "<b>Privacy & Security Safeguards:</b>\n"
+                "• Your exact coordinates are <b>never disclosed</b> to requesters or arbitrary users.\n"
+                "• Only approximate straight-line distance (e.g. '4.5 km') is used for ranking.\n"
+                "• You can revoke location consent at any time via <code>/revokelocation</code>.\n\n"
+                "Do you consent to sharing your location for emergency proximity matching?"
+            )
+            kb = {
+                "inline_keyboard": [
+                    [{"text": "📍 I Consent & Share Location", "callback_data": "reg_loc:consent_yes"}],
+                    [{"text": "❌ Decline & Cancel", "callback_data": "reg_loc:consent_no"}],
+                ]
+            }
+            await self.client.send_message(chat_id=chat_id, text=loc_consent_text, reply_markup=kb)
+
+        elif step == "REG_LOCATION":
+            if text in ("Skip Location", "⏭️ Skip Location", "/skip"):
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text=(
+                        "⚠️ <b>GPS Location Mandatory:</b>\n\n"
+                        "GPS location sharing is mandatory for voluntary donor registration on RakthaSethu so nearby emergency patients can reach you.\n"
+                        "District-only fallback registration is not permitted.\n\n"
+                        "Please tap <b>📍 Share Current Location</b> below or type /cancel to abort."
+                    ),
+                )
+                return
+
+            if not message.location:
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text=(
+                        "⚠️ <b>Native GPS Location Required:</b>\n"
+                        "Typed place names or addresses cannot be used as GPS coordinates.\n"
+                        "Please tap <b>📍 Share Current Location</b> below."
+                    ),
+                    reply_markup={
+                        "keyboard": [
+                            [{"text": "📍 Share Current Location", "request_location": True}],
+                            [{"text": "❌ Cancel Registration"}]
+                        ],
+                        "resize_keyboard": True,
+                        "one_time_keyboard": True,
+                    },
+                )
+                return
+
+            lat = message.location.latitude
+            lon = message.location.longitude
+
+            if not math.isfinite(lat) or not math.isfinite(lon) or not (-90.0 <= lat <= 90.0) or not (-180.0 <= lon <= 180.0):
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="⚠️ Received coordinates are out of valid range. Please share again or tap Skip Location:",
+                )
+                return
+
+            await self.service.update_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="REG_CONFIRM",
+                data_updates={"latitude": lat, "longitude": lon, "location_consent": True},
+            )
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="✅ GPS coordinates received securely.",
+                reply_markup={"remove_keyboard": True},
+            )
+            updated_conv = await self.service.get_conversation(user_id)
+            await self.send_registration_summary(chat_id, user_id, updated_conv)
 
     def build_blood_group_keyboard(self) -> Dict[str, Any]:
         return {

@@ -134,3 +134,56 @@ class TelegramConversation(Base):
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+
+
+class TelegramDonor(Base):
+    """
+    Persistent mapping of voluntary donors to their Telegram accounts.
+    Allows donors to manage their registration, update availability, or revoke location consent.
+    """
+    __tablename__ = "telegram_donors"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    donor_id: Mapped[int] = mapped_column(
+        ForeignKey("donors.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+    telegram_user_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False, index=True)
+    telegram_chat_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    telegram_username: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+
+class TelegramDonorReviewCase(Base):
+    """
+    Records ambiguous duplicate registrations (e.g. same phone number but conflicting name/blood group)
+    for hospital/system administrator review without overwriting or merging donor records.
+    """
+    __tablename__ = "telegram_donor_review_cases"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    telegram_user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
+    telegram_chat_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    submitted_name: Mapped[str] = mapped_column(String(150), nullable=False)
+    submitted_blood_group: Mapped[str] = mapped_column(String(10), nullable=False)
+    submitted_district: Mapped[str] = mapped_column(String(100), nullable=False)
+    existing_donor_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("donors.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    reason: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="PENDING", nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
