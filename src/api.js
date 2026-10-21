@@ -238,6 +238,18 @@ export async function removeDonorLocation(id) {
   });
 }
 
+// ─── 2.1 Locations Endpoints (Kerala Districts & Local Bodies) ───
+export async function fetchKeralaDistricts() {
+  return request('/locations/districts');
+}
+
+export async function fetchLocalBodies(district, search = '') {
+  const params = new URLSearchParams();
+  if (district) params.set('district', district);
+  if (search) params.set('search', search);
+  return request(`/locations/local-bodies?${params.toString()}`);
+}
+
 // ─── 3. Donor Bulk Import Endpoints ─────────────────────────
 export async function previewDonorImport(file, hospitalId = null) {
   const formData = new FormData();

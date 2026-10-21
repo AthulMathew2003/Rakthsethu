@@ -1,0 +1,5200 @@
+{
+  "Kasaragod": [
+    {
+      "code": "G14023",
+      "name": "Ajanur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14016",
+      "name": "Badiadka",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14029",
+      "name": "Balal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14006",
+      "name": "Bedadka",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14002",
+      "name": "Bellur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14019",
+      "name": "Chemnad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14020",
+      "name": "Chengala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14034",
+      "name": "Cheruvathur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14005",
+      "name": "Delampady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14032",
+      "name": "East Eleri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14014",
+      "name": "Enmakaje",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14027",
+      "name": "Kallar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M14058",
+      "name": "Kanhangad",
+      "type": "Municipality"
+    },
+    {
+      "code": "G14003",
+      "name": "Karadka",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M14059",
+      "name": "Kasaragod",
+      "type": "Municipality"
+    },
+    {
+      "code": "G14033",
+      "name": "Kayyur -  Cheemeni",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14030",
+      "name": "Kinanoor - Karindalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14026",
+      "name": "Kodom -Belur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14001",
+      "name": "Kumbadaje",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14015",
+      "name": "Kumbla",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14007",
+      "name": "Kuttikkol",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14018",
+      "name": "Madhur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14025",
+      "name": "Madikai",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14011",
+      "name": "Mangalpady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14008",
+      "name": "Manjeshwar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14010",
+      "name": "Meenja",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14017",
+      "name": "Mogralputhur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14004",
+      "name": "Muliyar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M14060",
+      "name": "Nileshwar",
+      "type": "Municipality"
+    },
+    {
+      "code": "G14036",
+      "name": "Padne",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14012",
+      "name": "Paivalike",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14022",
+      "name": "Pallikkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14028",
+      "name": "Panathady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14037",
+      "name": "Pilicode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14024",
+      "name": "Pullur-Periya",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14013",
+      "name": "Puthige",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14038",
+      "name": "Trikaripur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14021",
+      "name": "Udma",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14035",
+      "name": "Valiyaparamba",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14009",
+      "name": "Vorkady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G14031",
+      "name": "West Eleri",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Kannur": [
+    {
+      "code": "G13017",
+      "name": "Alakode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13054",
+      "name": "Ancharakandy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M13086",
+      "name": "Anthoor",
+      "type": "Municipality"
+    },
+    {
+      "code": "G13068",
+      "name": "Aralam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13069",
+      "name": "Ayyankunnu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13038",
+      "name": "Azheekode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13019",
+      "name": "Chapparapadavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13045",
+      "name": "Chembilode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13020",
+      "name": "Chengalayi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13004",
+      "name": "Cherukunnu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13009",
+      "name": "Cherupuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13001",
+      "name": "Cheruthazham",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13034",
+      "name": "Chirakkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13056",
+      "name": "Chittariparamba",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13061",
+      "name": "Chokli",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13050",
+      "name": "Dharmadam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13011",
+      "name": "Eramam- Kuttoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13051",
+      "name": "Eranholi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13026",
+      "name": "Eruvessy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13003",
+      "name": "Ezhome",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13025",
+      "name": "Irikkur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M13083",
+      "name": "Iritty",
+      "type": "Municipality"
+    },
+    {
+      "code": "G13046",
+      "name": "Kadambur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13024",
+      "name": "Kadannappalli- Panappuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13067",
+      "name": "Kadirur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13007",
+      "name": "Kalliassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13075",
+      "name": "Kanichar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13012",
+      "name": "Kankole- Alapadamba",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13006",
+      "name": "Kannapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "C13006",
+      "name": "Kannur",
+      "type": "Municipal Corporation"
+    },
+    {
+      "code": "G13013",
+      "name": "Karivellur- Peralam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13070",
+      "name": "Keezhallur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13076",
+      "name": "Kelakam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13040",
+      "name": "Kolachery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13079",
+      "name": "Kolayad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13072",
+      "name": "Koodali",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M13054",
+      "name": "Koothuparamba",
+      "type": "Municipality"
+    },
+    {
+      "code": "G13060",
+      "name": "Kottayam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13077",
+      "name": "Kottiyoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13014",
+      "name": "Kunhimangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13058",
+      "name": "Kunnothuparamba",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13021",
+      "name": "Kurumathoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13033",
+      "name": "Kuttiattoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13002",
+      "name": "Madayi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13027",
+      "name": "Malappattam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13080",
+      "name": "Malur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13059",
+      "name": "Mangattidam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M13057",
+      "name": "Mattannur",
+      "type": "Municipality"
+    },
+    {
+      "code": "G13005",
+      "name": "Mattool",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13029",
+      "name": "Mayyil",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13066",
+      "name": "Mokeri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13041",
+      "name": "Munderi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13078",
+      "name": "Muzhakkunnu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13048",
+      "name": "Muzhappilangad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13018",
+      "name": "Naduvil",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13008",
+      "name": "Narath",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13053",
+      "name": "New Mahe",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13031",
+      "name": "Padiyoor Kalliad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13065",
+      "name": "Panniyannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M13084",
+      "name": "Panoor",
+      "type": "Municipality"
+    },
+    {
+      "code": "G13039",
+      "name": "Pappinissery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13022",
+      "name": "Pariyaram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13057",
+      "name": "Pattiam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13023",
+      "name": "Pattuvam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13073",
+      "name": "Payam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M13056",
+      "name": "Payyannur",
+      "type": "Municipality"
+    },
+    {
+      "code": "G13028",
+      "name": "Payyavoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13047",
+      "name": "Peralassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13081",
+      "name": "Peravoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13010",
+      "name": "Peringome Vayakkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13052",
+      "name": "Pinarayi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13015",
+      "name": "Ramanthali",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M13085",
+      "name": "Sreekandapuram",
+      "type": "Municipality"
+    },
+    {
+      "code": "M13053",
+      "name": "Taliparamba",
+      "type": "Municipality"
+    },
+    {
+      "code": "M13055",
+      "name": "Thalassery",
+      "type": "Municipality"
+    },
+    {
+      "code": "G13071",
+      "name": "Thillankeri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13055",
+      "name": "Thripangottoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13016",
+      "name": "Udayagiri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13032",
+      "name": "Ulikkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13037",
+      "name": "Valapattanam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G13049",
+      "name": "Vengad",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Wayanad": [
+    {
+      "code": "G12010",
+      "name": "Ambalavayal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12005",
+      "name": "Edavaka",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M12051",
+      "name": "Kalpetta",
+      "type": "Municipality"
+    },
+    {
+      "code": "G12022",
+      "name": "Kaniyambetta",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12018",
+      "name": "Kottathara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M12081",
+      "name": "Mananthavadi",
+      "type": "Municipality"
+    },
+    {
+      "code": "G12011",
+      "name": "Meenangadi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12016",
+      "name": "Meppadi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12025",
+      "name": "Mullankolly",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12017",
+      "name": "Muppainadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12019",
+      "name": "Muttil",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12009",
+      "name": "Nenmeni",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12008",
+      "name": "Noolpuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12020",
+      "name": "Padinjarathara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12021",
+      "name": "Panamaram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12023",
+      "name": "Poothady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12014",
+      "name": "Pozhuthana",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12024",
+      "name": "Pulpally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M12082",
+      "name": "Sulthanbethery",
+      "type": "Municipality"
+    },
+    {
+      "code": "G12015",
+      "name": "Thariode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12006",
+      "name": "Thavinhal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12003",
+      "name": "Thirunelly",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12004",
+      "name": "Thondernadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12002",
+      "name": "Vellamunda",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12012",
+      "name": "Vengappally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G12013",
+      "name": "Vythiri",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Kozhikode": [
+    {
+      "code": "G11043",
+      "name": "Arikkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11046",
+      "name": "Atholi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11019",
+      "name": "Ayancheri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11001",
+      "name": "Azhiyur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11035",
+      "name": "Balussery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11034",
+      "name": "Chakkittappara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11030",
+      "name": "Changaroth",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11068",
+      "name": "Chathamangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11005",
+      "name": "Chekkiad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11048",
+      "name": "Chelannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11042",
+      "name": "Chemanchery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11045",
+      "name": "Chengottukave",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11028",
+      "name": "Cheruvannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11002",
+      "name": "Chorode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11010",
+      "name": "Edacheri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11003",
+      "name": "Eramala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M11080",
+      "name": "Faroke",
+      "type": "Municipality"
+    },
+    {
+      "code": "G11072",
+      "name": "Kadalundi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11047",
+      "name": "Kakkodi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11049",
+      "name": "Kakkur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11066",
+      "name": "Karasseri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11061",
+      "name": "Kattippara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11015",
+      "name": "Kavilumpara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11014",
+      "name": "Kayakkodi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11031",
+      "name": "Kayanna",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11024",
+      "name": "Keezhariyur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11055",
+      "name": "Kizhakkoth",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11062",
+      "name": "Kodenchery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11063",
+      "name": "Kodiyathur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M11078",
+      "name": "Koduvally",
+      "type": "Municipality"
+    },
+    {
+      "code": "M11049",
+      "name": "Koilandy",
+      "type": "Municipality"
+    },
+    {
+      "code": "G11054",
+      "name": "Koodaranhi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11041",
+      "name": "Koorachundu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11032",
+      "name": "Koothali",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11037",
+      "name": "Kottur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "C11005",
+      "name": "Kozhikode",
+      "type": "Municipal Corporation"
+    },
+    {
+      "code": "G11067",
+      "name": "Kunnamangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11012",
+      "name": "Kunnummal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11064",
+      "name": "Kuruvattur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11016",
+      "name": "Kuttiady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11056",
+      "name": "Madavoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11021",
+      "name": "Maniyur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11017",
+      "name": "Maruthonkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11065",
+      "name": "Mavoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11027",
+      "name": "Meppayoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11044",
+      "name": "Moodadi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M11079",
+      "name": "Mukkam",
+      "type": "Municipality"
+    },
+    {
+      "code": "G11011",
+      "name": "Nadapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11036",
+      "name": "Naduvannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11050",
+      "name": "Nanmanda",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11051",
+      "name": "Narikkuni",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11018",
+      "name": "Naripatta",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11029",
+      "name": "Nochad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11075",
+      "name": "Olavanna",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11060",
+      "name": "Omasery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11004",
+      "name": "Onchiyam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11040",
+      "name": "Panangad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M11076",
+      "name": "Payyoli",
+      "type": "Municipality"
+    },
+    {
+      "code": "G11033",
+      "name": "Perambra",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11071",
+      "name": "Perumanna",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11070",
+      "name": "Peruvayal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11006",
+      "name": "Purameri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11058",
+      "name": "Puthuppadi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M11077",
+      "name": "Ramanattukara",
+      "type": "Municipality"
+    },
+    {
+      "code": "G11052",
+      "name": "Thalakkulathur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11059",
+      "name": "Thamarassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11025",
+      "name": "Thikkodi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11022",
+      "name": "Thiruvallur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11053",
+      "name": "Thiruvambady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11007",
+      "name": "Thuneri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11023",
+      "name": "Thurayur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11038",
+      "name": "Ulliyeri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11039",
+      "name": "Unnikulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M11050",
+      "name": "Vadakara",
+      "type": "Municipality"
+    },
+    {
+      "code": "G11008",
+      "name": "Valayam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11009",
+      "name": "Vanimel",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11013",
+      "name": "Velom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G11020",
+      "name": "Villiappally",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Malappuram": [
+    {
+      "code": "G10072",
+      "name": "Abdurehman Nagar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10096",
+      "name": "Alamkode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10043",
+      "name": "Aliparamba",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10026",
+      "name": "Amarambalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10037",
+      "name": "Anakayam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10050",
+      "name": "Angadippuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10029",
+      "name": "Areacode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10057",
+      "name": "Athavanad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10006",
+      "name": "Chaliyar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10034",
+      "name": "Cheacode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10015",
+      "name": "Chelembra",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10066",
+      "name": "Cheriyamundam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10008",
+      "name": "Cherukavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10023",
+      "name": "Chokkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10005",
+      "name": "Chungathara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10003",
+      "name": "Edakkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10028",
+      "name": "Edapatta",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10094",
+      "name": "Edappal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10078",
+      "name": "Edarikkode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10036",
+      "name": "Edavanna",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10058",
+      "name": "Edayur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10044",
+      "name": "Elamkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10059",
+      "name": "Irumbiliyum",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10095",
+      "name": "Kalady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10022",
+      "name": "Kalikavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10063",
+      "name": "Kalpakancheri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10076",
+      "name": "Kannamangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10027",
+      "name": "Karulai",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10024",
+      "name": "Karuvarakundu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10031",
+      "name": "Kavannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10046",
+      "name": "Keezhattur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10032",
+      "name": "Keezhuparamba",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10042",
+      "name": "Kodur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10088",
+      "name": "Kondotty",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10052",
+      "name": "Koottilangadi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10047",
+      "name": "Kottakkal",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10051",
+      "name": "Kuruva",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10061",
+      "name": "Kuttippuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10033",
+      "name": "Kuzhimanna",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10055",
+      "name": "Makkaraparamba",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10045",
+      "name": "Malappuram",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10018",
+      "name": "Mampad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10087",
+      "name": "Mangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10046",
+      "name": "Manjeri",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10056",
+      "name": "Mankada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10060",
+      "name": "Marakkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10097",
+      "name": "Maranchery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10045",
+      "name": "Melattur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10081",
+      "name": "Moonniyur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10054",
+      "name": "Moorkanad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10004",
+      "name": "Moothedam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10038",
+      "name": "Morayur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10014",
+      "name": "Muthuvallur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10080",
+      "name": "Nannambra",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10098",
+      "name": "Nannamukku",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10048",
+      "name": "Nilambur",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10068",
+      "name": "Niramaruthoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10077",
+      "name": "Oorakam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10041",
+      "name": "Othukkungal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10067",
+      "name": "Ozhoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10009",
+      "name": "Pallikkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10020",
+      "name": "Pandikkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10073",
+      "name": "Parappanangadi",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10073",
+      "name": "Parappur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10044",
+      "name": "Perinthalmanna",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10071",
+      "name": "Perumanna Clari",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10099",
+      "name": "Perumbadappu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10085",
+      "name": "Peruvallur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10039",
+      "name": "Ponmala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10065",
+      "name": "Ponmundam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10042",
+      "name": "Ponnani",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10040",
+      "name": "Pookkottur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10019",
+      "name": "Porur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10002",
+      "name": "Pothukal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10049",
+      "name": "Pulamanthole",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10012",
+      "name": "Pulikkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10035",
+      "name": "Pulpetta",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10086",
+      "name": "Purathur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10053",
+      "name": "Puzhakkatiri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10090",
+      "name": "Thalakkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10069",
+      "name": "Thanalur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10072",
+      "name": "Thanoor",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10092",
+      "name": "Thavanur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10047",
+      "name": "Thazhekkode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10082",
+      "name": "Thenhippalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10074",
+      "name": "Thennela",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10091",
+      "name": "Thirunavaya",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10017",
+      "name": "Thiruvali",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10021",
+      "name": "Thrikkalangode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10088",
+      "name": "Thriprangode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10025",
+      "name": "Thuvvur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10043",
+      "name": "Tirur",
+      "type": "Municipality"
+    },
+    {
+      "code": "M10075",
+      "name": "Tirurangadi",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10030",
+      "name": "Urangattiri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M10074",
+      "name": "Valanchery",
+      "type": "Municipality"
+    },
+    {
+      "code": "G10070",
+      "name": "Valavannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10084",
+      "name": "Vallikkunnu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10093",
+      "name": "Vattamkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10011",
+      "name": "Vazhakkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10010",
+      "name": "Vazhayur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10001",
+      "name": "Vazhikkadavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10100",
+      "name": "Veliyancode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10075",
+      "name": "Vengara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10048",
+      "name": "Vettathur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10089",
+      "name": "Vettom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G10016",
+      "name": "Wandoor",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Palakkad": [
+    {
+      "code": "G09040",
+      "name": "Agali",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09078",
+      "name": "Akathethara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09032",
+      "name": "Alanallur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09084",
+      "name": "Alathur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09016",
+      "name": "Ambalapara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09001",
+      "name": "Anakkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09017",
+      "name": "Ananganadi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09071",
+      "name": "Ayiloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09018",
+      "name": "Chalavara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09002",
+      "name": "Chalissery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M09070",
+      "name": "Cherupulassery",
+      "type": "Municipality"
+    },
+    {
+      "code": "M09041",
+      "name": "Chittur-Thathamangalam",
+      "type": "Municipality"
+    },
+    {
+      "code": "G09062",
+      "name": "Elappully",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09073",
+      "name": "Elavanchery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09085",
+      "name": "Erimayoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09057",
+      "name": "Eruthempathy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09025",
+      "name": "Kadampazhipuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09036",
+      "name": "Kanjirapuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09056",
+      "name": "Kannadi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09091",
+      "name": "Kannambra",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09003",
+      "name": "Kappoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09029",
+      "name": "Karakurissi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09033",
+      "name": "Karimba",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09026",
+      "name": "Karimpuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09086",
+      "name": "Kavassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09046",
+      "name": "Keralasseri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09087",
+      "name": "Kizhakkanchery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09083",
+      "name": "Kodumba",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09065",
+      "name": "Koduvayur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09064",
+      "name": "Kollengode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09045",
+      "name": "Kongad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09008",
+      "name": "Koppam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09050",
+      "name": "Kottayi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09034",
+      "name": "Kottoppadam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09058",
+      "name": "Kozhinjampara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09009",
+      "name": "Kulukkallur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09035",
+      "name": "Kumaramputhur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09051",
+      "name": "Kuthanur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09052",
+      "name": "Kuzhalmannam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09019",
+      "name": "Lekkidi-Perur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09079",
+      "name": "Malampuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09048",
+      "name": "Mankara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M09071",
+      "name": "Mannarkkdu",
+      "type": "Municipality"
+    },
+    {
+      "code": "G09047",
+      "name": "Mannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09080",
+      "name": "Marutha Road",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09053",
+      "name": "Mathur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09075",
+      "name": "Melarcode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09044",
+      "name": "Mundur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09066",
+      "name": "Muthalamada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09010",
+      "name": "Muthuthala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09004",
+      "name": "Nagalassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09059",
+      "name": "Nalleppilly",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09023",
+      "name": "Nellaya",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09072",
+      "name": "Nelliyampathy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09076",
+      "name": "Nemmara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09011",
+      "name": "Ongallur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M09039",
+      "name": "Ottappalam",
+      "type": "Municipality"
+    },
+    {
+      "code": "M09040",
+      "name": "Palakkad",
+      "type": "Municipality"
+    },
+    {
+      "code": "G09074",
+      "name": "Pallassana",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09049",
+      "name": "Parli",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09015",
+      "name": "Paruthur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M09069",
+      "name": "Pattambi",
+      "type": "Municipality"
+    },
+    {
+      "code": "G09070",
+      "name": "Pattanchery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09005",
+      "name": "Pattithara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09054",
+      "name": "Peringottukurissi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09060",
+      "name": "Perumatty",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09069",
+      "name": "Peruvemba",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09043",
+      "name": "Pirayiri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09063",
+      "name": "Polpully",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09031",
+      "name": "Pookkottukavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09067",
+      "name": "Pudunagaram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09081",
+      "name": "Puduppariyaram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09041",
+      "name": "Pudur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09082",
+      "name": "Pudusserri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09088",
+      "name": "Puthukode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09042",
+      "name": "Sholayur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M09038",
+      "name": "Shornur",
+      "type": "Municipality"
+    },
+    {
+      "code": "G09027",
+      "name": "Sreekrishnapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09089",
+      "name": "Tarur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09038",
+      "name": "Thachampara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09030",
+      "name": "Thachanattukara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09039",
+      "name": "Thenkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09055",
+      "name": "Thenkurissi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09006",
+      "name": "Thirumittakode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09013",
+      "name": "Thiruvegappura",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09021",
+      "name": "Thrikkadeiri",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09007",
+      "name": "Thrithala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09061",
+      "name": "Vadakarapathy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09090",
+      "name": "VadakkencheryGP",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09068",
+      "name": "Vadavannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09022",
+      "name": "Vallapuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09077",
+      "name": "Vandazhi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09020",
+      "name": "Vaniyamkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09028",
+      "name": "Vellinezhi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G09014",
+      "name": "Vilayur",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Thrissur": [
+    {
+      "code": "G08031",
+      "name": "Adat",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08062",
+      "name": "Alagappanagar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08078",
+      "name": "Aloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08079",
+      "name": "Annamanada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08053",
+      "name": "Anthikkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08057",
+      "name": "Arimbur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08088",
+      "name": "Athirappilly",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08032",
+      "name": "Avanur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08058",
+      "name": "Avinissery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M08032",
+      "name": "Chalakudy",
+      "type": "Municipality"
+    },
+    {
+      "code": "M08035",
+      "name": "Chavakkad",
+      "type": "Municipality"
+    },
+    {
+      "code": "G08055",
+      "name": "Chazhoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08021",
+      "name": "Chelakkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08059",
+      "name": "Cherpu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08006",
+      "name": "Choondal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08007",
+      "name": "Chowannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08014",
+      "name": "Desamangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08046",
+      "name": "Edathiruthy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08051",
+      "name": "Edavilangu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08037",
+      "name": "Elavally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08041",
+      "name": "Engandiyoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08052",
+      "name": "Eriyad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08015",
+      "name": "Erumapetty",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M08036",
+      "name": "Guruvayoor",
+      "type": "Municipality"
+    },
+    {
+      "code": "M08033",
+      "name": "Irinjalakuda",
+      "type": "Municipality"
+    },
+    {
+      "code": "G08012",
+      "name": "Kadangode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08001",
+      "name": "Kadappuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08008",
+      "name": "Kadavalloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08083",
+      "name": "Kadukutty",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08047",
+      "name": "Kaipamangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08033",
+      "name": "Kaiparambu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08009",
+      "name": "Kandanassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08069",
+      "name": "Karalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08010",
+      "name": "Kattakampal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08070",
+      "name": "Kattoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08063",
+      "name": "Kodakara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08084",
+      "name": "Kodassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M08034",
+      "name": "Kodungallur",
+      "type": "Municipality"
+    },
+    {
+      "code": "G08036",
+      "name": "Kolazhy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08023",
+      "name": "Kondazhy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08085",
+      "name": "Koratty",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M08037",
+      "name": "Kunnamkulam",
+      "type": "Municipality"
+    },
+    {
+      "code": "G08080",
+      "name": "Kuzhur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08027",
+      "name": "Madakkathara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08081",
+      "name": "Mala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08056",
+      "name": "Manalur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08048",
+      "name": "Mathilakam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08064",
+      "name": "Mattathur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08086",
+      "name": "Meloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08034",
+      "name": "Mulamkunnathukavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08038",
+      "name": "Mullassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08017",
+      "name": "Mullurkkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08071",
+      "name": "Muriyad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08028",
+      "name": "Nadathara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08044",
+      "name": "Nattika",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08065",
+      "name": "Nenmanikkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08002",
+      "name": "Orumanayoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08073",
+      "name": "Padiyoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08029",
+      "name": "Pananchery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08024",
+      "name": "Panjal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08060",
+      "name": "Paralam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08072",
+      "name": "Parappookkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08087",
+      "name": "Pariyaram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08039",
+      "name": "Pavaratty",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08025",
+      "name": "Pazhayannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08049",
+      "name": "Perinjanam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08074",
+      "name": "Poomangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08011",
+      "name": "Porkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08082",
+      "name": "Poyya",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08066",
+      "name": "Pudukkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08003",
+      "name": "Punnayoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08004",
+      "name": "Punnayoorkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08075",
+      "name": "Puthenchira",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08030",
+      "name": "Puthur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08050",
+      "name": "Sree Narayanapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08043",
+      "name": "Thalikulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08054",
+      "name": "Thanniam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08018",
+      "name": "Thekkumkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08026",
+      "name": "Thiruvilwamala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08035",
+      "name": "Tholur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08067",
+      "name": "Thrikkur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "C08004",
+      "name": "Thrissur",
+      "type": "Municipal Corporation"
+    },
+    {
+      "code": "M08068",
+      "name": "Vadakkancherry",
+      "type": "Municipality"
+    },
+    {
+      "code": "G08005",
+      "name": "Vadakkekkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08042",
+      "name": "Vadanappilly",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08045",
+      "name": "Valappad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08061",
+      "name": "Vallachira",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08022",
+      "name": "Vallathole Nagar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08068",
+      "name": "Varantharappilly",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08019",
+      "name": "Varavoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08076",
+      "name": "Vellangalur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08077",
+      "name": "Velookkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08013",
+      "name": "Velur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G08040",
+      "name": "Venkitangu",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Ernakulam": [
+    {
+      "code": "G07052",
+      "name": "Aikkaranadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07008",
+      "name": "Alangad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07025",
+      "name": "Aluva",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07046",
+      "name": "Amballur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07028",
+      "name": "Angamaly",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07078",
+      "name": "Arakkuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07018",
+      "name": "Asamannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07077",
+      "name": "Avoly",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07081",
+      "name": "Ayavana",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07014",
+      "name": "Ayyampuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07039",
+      "name": "Chellanam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07001",
+      "name": "Chendamangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07071",
+      "name": "Chengamanadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07031",
+      "name": "Cheranallur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07005",
+      "name": "Chittattukara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07027",
+      "name": "Choornikkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07044",
+      "name": "Chottanikara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07045",
+      "name": "Edakkattuvayal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07028",
+      "name": "Edathala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07036",
+      "name": "Edavanakad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07033",
+      "name": "Elamkunnapuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07064",
+      "name": "Elanji",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07029",
+      "name": "Eloor",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07003",
+      "name": "Ezhikkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07030",
+      "name": "Kadamakkudy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07009",
+      "name": "Kadungalloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07016",
+      "name": "Kalady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07026",
+      "name": "Kalamassery",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07080",
+      "name": "Kalloorkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07015",
+      "name": "Kanjoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07013",
+      "name": "Karukutty",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07006",
+      "name": "Karumalloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07057",
+      "name": "Kavalangad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07059",
+      "name": "Keerampara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07029",
+      "name": "Keezhmadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07026",
+      "name": "Kizhakkambalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "C07003",
+      "name": "Kochi",
+      "type": "Municipal Corporation"
+    },
+    {
+      "code": "M07067",
+      "name": "Koothattukulam",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07022",
+      "name": "Koovappady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07023",
+      "name": "Kothamangalam",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07063",
+      "name": "Kottapady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07002",
+      "name": "Kottuvally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07041",
+      "name": "Kumbalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07040",
+      "name": "Kumbalanghy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07053",
+      "name": "Kunnathunad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07074",
+      "name": "Kunnukara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07062",
+      "name": "Kuttampuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07038",
+      "name": "Kuzhuppilly",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07017",
+      "name": "Malayattoor- Neeleswaram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07047",
+      "name": "Maneedu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07082",
+      "name": "Manjallur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07012",
+      "name": "Manjapra",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07031",
+      "name": "Maradu",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07083",
+      "name": "Marady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07051",
+      "name": "Mazhuvannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07010",
+      "name": "Mookkanoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07019",
+      "name": "Mudakkuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07043",
+      "name": "Mulamthuruthy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07032",
+      "name": "Mulavukadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07022",
+      "name": "Muvattupuzha",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07035",
+      "name": "Nayarambalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07072",
+      "name": "Nedumbassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07055",
+      "name": "Nellikuzhy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07034",
+      "name": "Njarakkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07027",
+      "name": "North Paravur",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07023",
+      "name": "Okkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07054",
+      "name": "Paingottoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07079",
+      "name": "Paipra",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07068",
+      "name": "Palakuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07061",
+      "name": "Pallarimangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07037",
+      "name": "Pallippuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07069",
+      "name": "Pampakuda",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07073",
+      "name": "Parakkadavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07024",
+      "name": "Perumbavoor",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07056",
+      "name": "Pindimana",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07066",
+      "name": "Piravom",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07048",
+      "name": "Poothrika",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07060",
+      "name": "Pothanikkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07076",
+      "name": "Puthenvelikara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07070",
+      "name": "Ramamangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07021",
+      "name": "Rayamangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07075",
+      "name": "Sreemoolanagaram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07066",
+      "name": "Thirumaradi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07049",
+      "name": "Thiruvaniyoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M07030",
+      "name": "Thrikkakara",
+      "type": "Municipality"
+    },
+    {
+      "code": "M07021",
+      "name": "Thrippunithura",
+      "type": "Municipality"
+    },
+    {
+      "code": "G07011",
+      "name": "Thuravoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07042",
+      "name": "Udayamperoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07004",
+      "name": "Vadakkekara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07050",
+      "name": "Vadavucode-Puthencruz",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07084",
+      "name": "Valakom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07058",
+      "name": "Varapetty",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07007",
+      "name": "Varapuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07025",
+      "name": "Vazhakkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07024",
+      "name": "Vengola",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G07020",
+      "name": "Vengoor",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Idukki": [
+    {
+      "code": "G06001",
+      "name": "Adimali",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06025",
+      "name": "Alakode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06031",
+      "name": "Arakulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06040",
+      "name": "Ayyappancoil",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06003",
+      "name": "Baisonvalley",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06041",
+      "name": "Chakkupallam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06011",
+      "name": "Chinnakanal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06013",
+      "name": "Devikulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06014",
+      "name": "Edamalakudy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06044",
+      "name": "Edavetty",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06052",
+      "name": "Elappara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06039",
+      "name": "Erattayar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06029",
+      "name": "Idukki-Kanjikuzhy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06032",
+      "name": "Kamakshy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06038",
+      "name": "Kanchiyar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06008",
+      "name": "Kanthalloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06027",
+      "name": "Karimannoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06045",
+      "name": "Karimkunnam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06017",
+      "name": "Karunapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M06065",
+      "name": "Kattappana",
+      "type": "Municipality"
+    },
+    {
+      "code": "G06024",
+      "name": "Kodikulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06050",
+      "name": "Kokkayar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06002",
+      "name": "Konnathady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06028",
+      "name": "Kudayathoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06042",
+      "name": "Kumaramangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06049",
+      "name": "Kumily",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06046",
+      "name": "Manakkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06012",
+      "name": "Mankulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06006",
+      "name": "Marayoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06034",
+      "name": "Mariyapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06007",
+      "name": "Munnar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06043",
+      "name": "Muttom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06019",
+      "name": "Nedumkandom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06005",
+      "name": "Pallivasal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06015",
+      "name": "Pampadumpara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06051",
+      "name": "Peermade",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06048",
+      "name": "Peruvanthanam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06047",
+      "name": "Purapuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06018",
+      "name": "Rajakkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06021",
+      "name": "Rajakumary",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06010",
+      "name": "Santhanpara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06016",
+      "name": "Senapathy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M06020",
+      "name": "Thodupuzha",
+      "type": "Municipality"
+    },
+    {
+      "code": "G06020",
+      "name": "Udumbanchola",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06023",
+      "name": "Udumbannoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06036",
+      "name": "Upputhara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06037",
+      "name": "Vandanmedu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06053",
+      "name": "Vandiperiyar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06022",
+      "name": "Vannappuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06030",
+      "name": "Vathikudy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06009",
+      "name": "Vattavada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06033",
+      "name": "Vazhathope",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06004",
+      "name": "Vellathooval",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G06026",
+      "name": "Velliyamattom",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Kottayam": [
+    {
+      "code": "G05043",
+      "name": "Akalakkunnam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05016",
+      "name": "Arpookkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05017",
+      "name": "Athirampuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05073",
+      "name": "Ayarkunnam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05019",
+      "name": "Aymanam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05028",
+      "name": "Bharananganam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M05016",
+      "name": "Changanassery",
+      "type": "Municipality"
+    },
+    {
+      "code": "G05002",
+      "name": "Chempu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05056",
+      "name": "Chirakkadavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05044",
+      "name": "Elikkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M05064",
+      "name": "Erattupetta",
+      "type": "Municipality"
+    },
+    {
+      "code": "G05063",
+      "name": "Erumely",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M05063",
+      "name": "Ettumanoor",
+      "type": "Municipality"
+    },
+    {
+      "code": "G05031",
+      "name": "Kadanadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05020",
+      "name": "Kadaplamattom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05007",
+      "name": "Kaduthuruthy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05008",
+      "name": "Kallara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05022",
+      "name": "Kanakkary",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05057",
+      "name": "Kangazha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05064",
+      "name": "Kanjirappally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05029",
+      "name": "Karoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05061",
+      "name": "Karukachal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05049",
+      "name": "Kidangoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05045",
+      "name": "Kooroppada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05065",
+      "name": "Koottickal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05067",
+      "name": "Koruthode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M05017",
+      "name": "Kottayam",
+      "type": "Municipality"
+    },
+    {
+      "code": "G05030",
+      "name": "Kozhuvanal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05014",
+      "name": "Kumarakom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05024",
+      "name": "Kuravilangadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05069",
+      "name": "Kurichy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05051",
+      "name": "Madappally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05048",
+      "name": "Manarcadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05062",
+      "name": "Manimala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05027",
+      "name": "Manjoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05021",
+      "name": "Marangattupally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05003",
+      "name": "Maravanthuruthu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05032",
+      "name": "Meenachil",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05050",
+      "name": "Meenadom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05034",
+      "name": "Melukavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05035",
+      "name": "Moonnilavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05009",
+      "name": "Mulakkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05066",
+      "name": "Mundakayam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05033",
+      "name": "Mutholy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05058",
+      "name": "Nedumkunnam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05013",
+      "name": "Neendoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05010",
+      "name": "Njeezhoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05052",
+      "name": "Paippadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M05019",
+      "name": "Palai",
+      "type": "Municipality"
+    },
+    {
+      "code": "G05047",
+      "name": "Pallickathodu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05046",
+      "name": "Pampady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05070",
+      "name": "Panachikadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05068",
+      "name": "Parathodu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05036",
+      "name": "Poonjar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05037",
+      "name": "Poonjar Thekkekkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05071",
+      "name": "Puthuppally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05026",
+      "name": "Ramapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05004",
+      "name": "T V Puram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05039",
+      "name": "Teekoy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05040",
+      "name": "Thalanadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05041",
+      "name": "Thalappalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05001",
+      "name": "Thalayazham",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05011",
+      "name": "Thalayolaparambu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05042",
+      "name": "Thidanadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05015",
+      "name": "Thiruvarppu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05053",
+      "name": "Thrikkodithanam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05006",
+      "name": "Udayanapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05025",
+      "name": "Uzhavoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M05018",
+      "name": "Vaikom",
+      "type": "Municipality"
+    },
+    {
+      "code": "G05054",
+      "name": "Vakathanam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05055",
+      "name": "Vazhappally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05060",
+      "name": "Vazhoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05005",
+      "name": "Vechoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05023",
+      "name": "Veliyannoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05059",
+      "name": "Vellavoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05012",
+      "name": "Velloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G05072",
+      "name": "Vijayapuram",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Alappuzha": [
+    {
+      "code": "G04070",
+      "name": "Aarattupuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04040",
+      "name": "Ala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M04014",
+      "name": "Alappuzha",
+      "type": "Municipality"
+    },
+    {
+      "code": "G04023",
+      "name": "Ambalappuzha North",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04022",
+      "name": "Ambalappuzha South",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04001",
+      "name": "Arookutty",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04006",
+      "name": "Aroor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04018",
+      "name": "Aryad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04063",
+      "name": "Bharanikkavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04042",
+      "name": "Budhannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04029",
+      "name": "Champakkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M04013",
+      "name": "Chengannur",
+      "type": "Municipality"
+    },
+    {
+      "code": "G04002",
+      "name": "Chennam Pallippuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04057",
+      "name": "Chennithala Thripperuthura",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04068",
+      "name": "Cheppad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04039",
+      "name": "Cheriyanad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M04015",
+      "name": "Cherthala",
+      "type": "Municipality"
+    },
+    {
+      "code": "G04014",
+      "name": "Cherthala South",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04053",
+      "name": "Cheruthana",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04056",
+      "name": "Chettikulangara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04073",
+      "name": "Chingoli",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04060",
+      "name": "Chunakkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04072",
+      "name": "Devikulangara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04027",
+      "name": "Edathua",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04007",
+      "name": "Ezhupunna",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M04062",
+      "name": "Harippad",
+      "type": "Municipality"
+    },
+    {
+      "code": "G04016",
+      "name": "Kadakkarapally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04028",
+      "name": "Kainakary",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04067",
+      "name": "Kandalloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04013",
+      "name": "Kanjikkuzhy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04047",
+      "name": "Karthikapally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04050",
+      "name": "Karuvatta",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04033",
+      "name": "Kavalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M04011",
+      "name": "Kayamkulam",
+      "type": "Municipality"
+    },
+    {
+      "code": "G04009",
+      "name": "Kodamthuruth",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04071",
+      "name": "Krishnapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04049",
+      "name": "Kumarapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04008",
+      "name": "Kuthiathode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04019",
+      "name": "Mannanchery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04059",
+      "name": "Mannar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04015",
+      "name": "Mararikkulam North",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04020",
+      "name": "Mararikkulam South",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M04012",
+      "name": "Mavelikkara",
+      "type": "Municipality"
+    },
+    {
+      "code": "G04064",
+      "name": "Mavelikkara -Thamarakkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04055",
+      "name": "Mavelikkara Thekkekkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04021",
+      "name": "Muhamma",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04045",
+      "name": "Mulakkuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04069",
+      "name": "Muthukulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04036",
+      "name": "Muttar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04032",
+      "name": "Nedumudi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04035",
+      "name": "Neelamperoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04061",
+      "name": "Nooranad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04062",
+      "name": "Palamel",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04052",
+      "name": "Pallippad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04003",
+      "name": "Panavally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04043",
+      "name": "Pandanad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04066",
+      "name": "Pathiyoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04011",
+      "name": "Pattanakkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04004",
+      "name": "Perumbalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04034",
+      "name": "Pulincunnu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04041",
+      "name": "Puliyoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04025",
+      "name": "Punnapra North",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04024",
+      "name": "Punnapra South",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04026",
+      "name": "Purakkad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04037",
+      "name": "Ramankary",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04030",
+      "name": "Thakazhy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04031",
+      "name": "Thalavady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04017",
+      "name": "Thanneermukkam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04058",
+      "name": "Thazhakkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04044",
+      "name": "Thiruvanvandoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04048",
+      "name": "Thrikkunnappuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04010",
+      "name": "Thuravoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04005",
+      "name": "Thycattussery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04065",
+      "name": "Vallikkunnam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04012",
+      "name": "Vayalar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04054",
+      "name": "Veeyapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04038",
+      "name": "Veliyanad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G04046",
+      "name": "Venmany",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Pathanamthitta": [
+    {
+      "code": "M03008",
+      "name": "Adoor",
+      "type": "Municipality"
+    },
+    {
+      "code": "G03001",
+      "name": "Anikkadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03046",
+      "name": "Aranmula",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03036",
+      "name": "Aruvappulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03013",
+      "name": "Ayiroor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03020",
+      "name": "Chenneerkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03022",
+      "name": "Cherukol",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03031",
+      "name": "Chittar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03049",
+      "name": "Earathu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03021",
+      "name": "Elanthoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03048",
+      "name": "Enadimangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03014",
+      "name": "Eraviperoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03050",
+      "name": "Ezhamkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03017",
+      "name": "Ezhumattoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03051",
+      "name": "Kadambanad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03008",
+      "name": "Kadapra",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03052",
+      "name": "Kalanjoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03004",
+      "name": "Kallooppara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03002",
+      "name": "Kaviyoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03053",
+      "name": "Kodumon",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03015",
+      "name": "Koipram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03035",
+      "name": "Konni",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03003",
+      "name": "Kottanad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03005",
+      "name": "Kottangal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03023",
+      "name": "Kozhanchery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03045",
+      "name": "Kulanada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03006",
+      "name": "Kunnanthanam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03009",
+      "name": "Kuttoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03041",
+      "name": "Malayalapuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03007",
+      "name": "Mallappally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03024",
+      "name": "Mallappuzhassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03047",
+      "name": "Mezhuvely",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03038",
+      "name": "Mylapra",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03033",
+      "name": "Naranammoozhy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03025",
+      "name": "Naranganam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03011",
+      "name": "Nedumpram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03010",
+      "name": "Niranam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03019",
+      "name": "Omalloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03054",
+      "name": "Pallickal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M03061",
+      "name": "Pandalam",
+      "type": "Municipality"
+    },
+    {
+      "code": "G03042",
+      "name": "Panthalam-Thekkekkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M03009",
+      "name": "Pathanamthitta",
+      "type": "Municipality"
+    },
+    {
+      "code": "G03012",
+      "name": "Peringara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03037",
+      "name": "Pramadam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03018",
+      "name": "Puramattam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03027",
+      "name": "Ranni",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03026",
+      "name": "Ranni Pazhavangady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03028",
+      "name": "Ranny Angady",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03029",
+      "name": "Ranny Perunadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03032",
+      "name": "Seethathodu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03040",
+      "name": "Thannithodu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M03010",
+      "name": "Thiruvalla",
+      "type": "Municipality"
+    },
+    {
+      "code": "G03016",
+      "name": "Thottappuzhassery",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03044",
+      "name": "Thumpamon",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03030",
+      "name": "Vadasserikkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03039",
+      "name": "Vallikkodu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G03034",
+      "name": "Vechoochira",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Kollam": [
+    {
+      "code": "G02069",
+      "name": "Adichanalloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02005",
+      "name": "Alappad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02028",
+      "name": "Alayaman",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02029",
+      "name": "Anchal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02033",
+      "name": "Aryankavu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02060",
+      "name": "Chadayamangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02068",
+      "name": "Chathannur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02049",
+      "name": "Chavara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02070",
+      "name": "Chirakkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02058",
+      "name": "Chithara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02004",
+      "name": "Clappana",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02046",
+      "name": "East Kallada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02030",
+      "name": "Edamulakkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02063",
+      "name": "Elamadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02054",
+      "name": "Elampalloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02037",
+      "name": "Ezhukone",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02061",
+      "name": "Ittiva",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02059",
+      "name": "Kadakkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02067",
+      "name": "Kalluvathukkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02031",
+      "name": "Karavaloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02036",
+      "name": "Kareepra",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M02007",
+      "name": "Karunagappally",
+      "type": "Municipality"
+    },
+    {
+      "code": "C02002",
+      "name": "Kollam",
+      "type": "Municipal Corporation"
+    },
+    {
+      "code": "G02056",
+      "name": "Kottamkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M02087",
+      "name": "Kottarakkara",
+      "type": "Municipality"
+    },
+    {
+      "code": "G02018",
+      "name": "Kulakkada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02002",
+      "name": "Kulasekharapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02026",
+      "name": "Kulathupuzha",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02065",
+      "name": "Kummil",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02044",
+      "name": "Kundara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02011",
+      "name": "Kunnathur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02047",
+      "name": "Mandrothuruthu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02053",
+      "name": "Mayyanad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02016",
+      "name": "Melila",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02017",
+      "name": "Mylom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02013",
+      "name": "Mynagappally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02057",
+      "name": "Nedumpana",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02038",
+      "name": "Neduvathur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02052",
+      "name": "Neendakara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02064",
+      "name": "Nilamel",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02001",
+      "name": "Oachira",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02042",
+      "name": "Panayam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02051",
+      "name": "Panmana",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M02005",
+      "name": "Paravoor",
+      "type": "Municipality"
+    },
+    {
+      "code": "G02025",
+      "name": "Pathanapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02024",
+      "name": "Pattazhi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02023",
+      "name": "Pattazhi Vadakkekara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02019",
+      "name": "Pavithreswaram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02045",
+      "name": "Perayam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02043",
+      "name": "Perinad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02022",
+      "name": "Piravanthur",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02066",
+      "name": "Poothakkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02035",
+      "name": "Pooyappally",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02010",
+      "name": "Poruvazhi",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M02006",
+      "name": "Punalur",
+      "type": "Municipality"
+    },
+    {
+      "code": "G02007",
+      "name": "Sasthamcotta",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02012",
+      "name": "Sooranad North",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02009",
+      "name": "Sooranad South",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02021",
+      "name": "Thalavoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02003",
+      "name": "Thazhava",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02048",
+      "name": "Thekkumbhagam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02032",
+      "name": "Thenmala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02050",
+      "name": "Thevalakkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02006",
+      "name": "Thodiyoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02041",
+      "name": "Thrikkaruva",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02055",
+      "name": "Thrikkovilvattom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02014",
+      "name": "Ummannoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02062",
+      "name": "Velinalloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02034",
+      "name": "Veliyam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02015",
+      "name": "Vettikavala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02020",
+      "name": "Vilakkudy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02008",
+      "name": "West Kallada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G02027",
+      "name": "Yeroor",
+      "type": "Grama Panchayat"
+    }
+  ],
+  "Thiruvananthapuram": [
+    {
+      "code": "G01014",
+      "name": "Amboori",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01043",
+      "name": "Anadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01061",
+      "name": "Anchuthengu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01027",
+      "name": "Andoorkonam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01041",
+      "name": "Aruvikkara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01035",
+      "name": "Aryanadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01011",
+      "name": "Aryankode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01015",
+      "name": "Athiyanoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M01003",
+      "name": "Attingal",
+      "type": "Municipality"
+    },
+    {
+      "code": "G01031",
+      "name": "Azhoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01021",
+      "name": "Balaramapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01071",
+      "name": "Chemmaruthy",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01004",
+      "name": "Chenkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01068",
+      "name": "Cherunniyoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01063",
+      "name": "Chirayinkeezhu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01069",
+      "name": "Edava",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01070",
+      "name": "Elakamon",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01066",
+      "name": "Kadakkavoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01028",
+      "name": "Kadinamkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01051",
+      "name": "Kallara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01013",
+      "name": "Kallikkadu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01026",
+      "name": "Kalliyoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01016",
+      "name": "Kanjiramkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01040",
+      "name": "Karakulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01054",
+      "name": "Karavaram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01002",
+      "name": "Karode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01017",
+      "name": "Karumkulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01032",
+      "name": "Kattakada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01057",
+      "name": "Kilimanoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01064",
+      "name": "Kizhuvilam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01009",
+      "name": "Kollayil",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01018",
+      "name": "Kottukal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01003",
+      "name": "Kulathoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01008",
+      "name": "Kunnathukal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01037",
+      "name": "Kuttichal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01059",
+      "name": "Madavoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01023",
+      "name": "Malayinkeezhu",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01072",
+      "name": "Manamboor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01029",
+      "name": "Mangalapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01046",
+      "name": "Manickal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01020",
+      "name": "Maranalloor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01065",
+      "name": "Mudakkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01055",
+      "name": "Nagaroor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01049",
+      "name": "Nanniyode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01058",
+      "name": "Navayikulam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M01002",
+      "name": "Nedumangad",
+      "type": "Municipality"
+    },
+    {
+      "code": "G01047",
+      "name": "Nellanad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M01001",
+      "name": "Neyyattinkara",
+      "type": "Municipality"
+    },
+    {
+      "code": "G01012",
+      "name": "Ottasekaramangalam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01073",
+      "name": "Ottoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01022",
+      "name": "Pallichal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01060",
+      "name": "Pallikkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01044",
+      "name": "Panavoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01052",
+      "name": "Pangode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01001",
+      "name": "Parassala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01056",
+      "name": "Pazhayakunnummel",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01050",
+      "name": "Peringammala",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01010",
+      "name": "Perumkadavila",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01034",
+      "name": "Poovachal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01006",
+      "name": "Poovar",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01030",
+      "name": "Pothencode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01053",
+      "name": "Pulimath",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01048",
+      "name": "Pullampara",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01005",
+      "name": "Thirupuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "C01001",
+      "name": "Thiruvananthapuram",
+      "type": "Municipal Corporation"
+    },
+    {
+      "code": "G01039",
+      "name": "Tholicode",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01038",
+      "name": "Uzhamalackal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01062",
+      "name": "Vakkom",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01045",
+      "name": "Vamanapuram",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "M01004",
+      "name": "Varkala",
+      "type": "Municipality"
+    },
+    {
+      "code": "G01033",
+      "name": "Vellanad",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01007",
+      "name": "Vellarada",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01042",
+      "name": "Vembayam",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01019",
+      "name": "Venganoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01067",
+      "name": "Vettoor",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01024",
+      "name": "Vilappil",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01025",
+      "name": "Vilavoorkal",
+      "type": "Grama Panchayat"
+    },
+    {
+      "code": "G01036",
+      "name": "Vithura",
+      "type": "Grama Panchayat"
+    }
+  ]
+}

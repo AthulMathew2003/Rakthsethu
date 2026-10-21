@@ -61,8 +61,11 @@ import {
   updateUser,
   updateUserStatus,
   deleteUser,
-  logoutUser
+  logoutUser,
+  fetchLocalBodies,
+  fetchKeralaDistricts
 } from './api.js';
+import { DISTRICTS } from './types.js';
 import HospitalsPage from './Hospitals.jsx';
 import BloodRequestsPage from './BloodRequests.jsx';
 import BloodDonationsPage from './BloodDonations.jsx';
@@ -193,15 +196,32 @@ export default function Dashboard({ user, onLogout }) {
   const [isMatchingModalOpen, setIsMatchingModalOpen] = useState(false);
   const [standaloneMatchingReq, setStandaloneMatchingReq] = useState(null);
 
+  // Cascading Location & Local Body State
+  const [localBodies, setLocalBodies] = useState([]);
+  const [localBodiesLoading, setLocalBodiesLoading] = useState(false);
+  const [localBodiesError, setLocalBodiesError] = useState(null);
+  const [panchayatSearch, setPanchayatSearch] = useState('');
+
   // Form State for Add/Edit
   const [donorForm, setDonorForm] = useState({
     name: '',
     group: 'O+',
     phone: '',
     email: '',
+    district: '',
+    panchayat: '',
     location: '',
     lastDonation: '',
     status: 'Active'
+  });
+
+  const filteredLocalBodies = localBodies.filter((lb) => {
+    if (!panchayatSearch.trim()) return true;
+    const term = panchayatSearch.toLowerCase();
+    return (
+      lb.name.toLowerCase().includes(term) ||
+      (lb.type && lb.type.toLowerCase().includes(term))
+    );
   });
 
   const menuItems = [
@@ -495,7 +515,8 @@ export default function Dashboard({ user, onLogout }) {
         group: d.blood_group,
         phone: d.phone,
         email: d.email || '—',
-        location: d.district || d.location,
+        district: d.district || d.location || '',
+        location: d.district || d.location || '',
         panchayat: d.panchayat || '',
         lastDonation: d.last_donation_date || 'Never',
         status: d.is_available ? 'Active' : 'Inactive',
@@ -529,6 +550,45 @@ export default function Dashboard({ user, onLogout }) {
     }
   };
 
+  // ─── Cascading Location Handler ───────────────────────────
+  const loadLocalBodiesForDistrict = useCallback(async (districtName) => {
+    if (!districtName) {
+      setLocalBodies([]);
+      setLocalBodiesLoading(false);
+      setLocalBodiesError(null);
+      return;
+    }
+    setLocalBodiesLoading(true);
+    setLocalBodiesError(null);
+    try {
+      const res = await fetchLocalBodies(districtName);
+      const items = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      setLocalBodies(items);
+    } catch (err) {
+      console.error('Failed to load local bodies:', err);
+      setLocalBodiesError(err.message || 'Failed to load local bodies');
+      setLocalBodies([]);
+    } finally {
+      setLocalBodiesLoading(false);
+    }
+  }, []);
+
+  const handleDistrictChange = (newDistrict) => {
+    setDonorForm((prev) => ({
+      ...prev,
+      district: newDistrict,
+      panchayat: '',
+      location: newDistrict,
+    }));
+    setPanchayatSearch('');
+    if (newDistrict) {
+      loadLocalBodiesForDistrict(newDistrict);
+    } else {
+      setLocalBodies([]);
+      setLocalBodiesError(null);
+    }
+  };
+
   // ─── Add / Edit submission handlers ───────────────────────
   const handleOpenAddModal = () => {
     setDonorForm({
@@ -536,30 +596,46 @@ export default function Dashboard({ user, onLogout }) {
       group: 'O+',
       phone: '',
       email: '',
-      location: 'Kottayam',
+      district: '',
+      panchayat: '',
+      location: '',
       lastDonation: '',
-      status: 'Active'
+      status: 'Active',
     });
+    setLocalBodies([]);
+    setLocalBodiesError(null);
+    setPanchayatSearch('');
     setIsAddingDonor(true);
   };
 
   const handleOpenEditModal = (donor) => {
+    const dist = donor.district || donor.location || '';
+    const panch = donor.panchayat || '';
     setDonorForm({
       name: donor.name,
       group: donor.group,
       phone: donor.phone,
       email: donor.email === '—' ? '' : donor.email,
-      location: donor.location || 'Kottayam',
+      district: dist,
+      panchayat: panch,
+      location: dist,
       lastDonation: donor.lastDonation === 'Never' ? '' : donor.lastDonation,
       status: donor.status,
     });
+    setPanchayatSearch('');
     setEditingDonor(donor);
+    if (dist) {
+      loadLocalBodiesForDistrict(dist);
+    } else {
+      setLocalBodies([]);
+      setLocalBodiesError(null);
+    }
   };
 
   const handleSaveDonor = async (e) => {
     e.preventDefault();
-    if (!donorForm.name || !donorForm.phone || !donorForm.location) {
-      alert('Please fill in all required fields.');
+    if (!donorForm.name || !donorForm.phone || !donorForm.district || !donorForm.panchayat) {
+      alert('Please fill in all required fields, including District and Panchayat / Local Body.');
       return;
     }
 
@@ -570,7 +646,8 @@ export default function Dashboard({ user, onLogout }) {
         blood_group: donorForm.group,
         phone: donorForm.phone,
         email: donorForm.email ? donorForm.email : undefined,
-        district: donorForm.location,
+        district: donorForm.district,
+        panchayat: donorForm.panchayat,
         is_available: donorForm.status === 'Active',
       };
 
@@ -1490,9 +1567,9 @@ export default function Dashboard({ user, onLogout }) {
                     }}
                     className="toolbar-select"
                   >
-                    <option value="All">All Locations</option>
-                    {locations.filter(loc => loc !== 'All').map(loc => (
-                      <option key={loc} value={loc}>{loc}</option>
+                    <option value="All">All Districts</option>
+                    {DISTRICTS.map((dist) => (
+                      <option key={dist} value={dist}>{dist}</option>
                     ))}
                   </select>
                 </div>
@@ -1570,7 +1647,16 @@ export default function Dashboard({ user, onLogout }) {
                               </td>
                               <td className="donor-phone-cell">{donor.phone}</td>
                               <td className="donor-email-cell">{donor.email}</td>
-                              <td>{donor.location}</td>
+                              <td>
+                                {donor.panchayat ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <span style={{ fontWeight: 500, color: 'var(--dark-text)' }}>{donor.panchayat}</span>
+                                    <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{donor.district || donor.location}</span>
+                                  </div>
+                                ) : (
+                                  <span>{donor.district || donor.location || '—'}</span>
+                                )}
+                              </td>
                               <td>
                                 {donor.hasLocation && donor.locationConsent ? (
                                   <span className="status-pill-badge active-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '0.75rem' }} title="GPS Location Registered with Valid Consent">
@@ -1751,18 +1837,73 @@ export default function Dashboard({ user, onLogout }) {
                 </div>
 
                 <div className="form-group-item">
-                  <label htmlFor="modal-location">Location <span className="req-star">*</span></label>
+                  <label htmlFor="modal-district">District <span className="req-star">*</span></label>
                   <select
-                    id="modal-location"
-                    value={donorForm.location}
-                    onChange={(e) => setDonorForm({ ...donorForm, location: e.target.value })}
+                    id="modal-district"
+                    value={donorForm.district}
+                    onChange={(e) => handleDistrictChange(e.target.value)}
                     required
                   >
-                    <option value="">Select Location</option>
-                    {locations.filter(loc => loc !== 'All').map(loc => (
-                      <option key={loc} value={loc}>{loc}</option>
+                    <option value="">Select District</option>
+                    {DISTRICTS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
                     ))}
                   </select>
+                </div>
+
+                <div className="form-group-item">
+                  <label htmlFor="modal-panchayat">
+                    Panchayat / Local Body <span className="req-star">*</span>
+                    {localBodiesLoading && (
+                      <span style={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 400 }}> (Loading...)</span>
+                    )}
+                  </label>
+                  {donorForm.district && localBodies.length > 8 && (
+                    <input
+                      type="text"
+                      id="modal-panchayat-search"
+                      placeholder="Type to filter local bodies..."
+                      value={panchayatSearch}
+                      onChange={(e) => setPanchayatSearch(e.target.value)}
+                      className="panchayat-search-input"
+                    />
+                  )}
+                  <select
+                    id="modal-panchayat"
+                    value={donorForm.panchayat}
+                    onChange={(e) => setDonorForm({ ...donorForm, panchayat: e.target.value })}
+                    disabled={!donorForm.district || localBodiesLoading}
+                    required
+                  >
+                    {!donorForm.district ? (
+                      <option value="">Select a district first</option>
+                    ) : localBodiesLoading ? (
+                      <option value="">Loading local bodies...</option>
+                    ) : localBodiesError ? (
+                      <option value="">Error loading local bodies</option>
+                    ) : filteredLocalBodies.length === 0 ? (
+                      <option value="">
+                        {panchayatSearch ? 'No matching local bodies' : 'No local bodies found'}
+                      </option>
+                    ) : (
+                      <>
+                        <option value="">Select Panchayat / Local Body</option>
+                        {donorForm.panchayat && !filteredLocalBodies.some(lb => lb.name.toLowerCase() === donorForm.panchayat.toLowerCase()) && (
+                          <option value={donorForm.panchayat}>{donorForm.panchayat} (Stored)</option>
+                        )}
+                        {filteredLocalBodies.map((lb) => (
+                          <option key={lb.code || lb.name} value={lb.name}>
+                            {lb.name} ({lb.type})
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                  {localBodiesError && (
+                    <span style={{ color: '#E11D48', fontSize: '0.75rem', marginTop: '2px' }}>
+                      {localBodiesError}
+                    </span>
+                  )}
                 </div>
 
                 <div className="form-group-item">
@@ -1845,8 +1986,12 @@ export default function Dashboard({ user, onLogout }) {
                   <span className="detail-val">{viewingDonor.email}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-lbl">Location</span>
-                  <span className="detail-val">{viewingDonor.location}</span>
+                  <span className="detail-lbl">District</span>
+                  <span className="detail-val">{viewingDonor.district || viewingDonor.location || '—'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-lbl">Panchayat / Local Body</span>
+                  <span className="detail-val">{viewingDonor.panchayat || '—'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-lbl">Last Donation</span>

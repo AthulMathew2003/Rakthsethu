@@ -17,6 +17,7 @@ from app.schemas.donor import DonorCreate, DonorListQuery, DonorResponse, DonorU
 
 
 from app.core.phone_utils import normalize_phone_number
+from app.core.location_service import validate_district_and_panchayat
 
 
 class DonorService:
@@ -26,6 +27,11 @@ class DonorService:
         self.hospital_repo = HospitalRepository(session)
 
     async def create_donor(self, data: DonorCreate) -> DonorResponse:
+        # Validate district and local body
+        canonical_dist, canonical_panchayat = validate_district_and_panchayat(
+            data.district, data.panchayat
+        )
+
         normalized_phone = normalize_phone_number(data.phone)
 
         # Check unique phone constraint
@@ -62,8 +68,8 @@ class DonorService:
             gender=data.gender.strip() if data.gender else None,
             phone=normalized_phone,
             email=str(data.email).lower().strip() if data.email else None,
-            district=data.district.strip(),
-            panchayat=data.panchayat.strip() if data.panchayat else None,
+            district=canonical_dist,
+            panchayat=canonical_panchayat,
             address=data.address.strip() if data.address else None,
             location=location_geom,
             location_consent=consent_val,
@@ -108,6 +114,18 @@ class DonorService:
             hospital = await self.hospital_repo.get_by_id(update_dict["hospital_id"])
             if not hospital:
                 raise ResourceNotFoundException("Hospital", update_dict["hospital_id"])
+
+        # Validate district and local body if updated
+        if "district" in update_dict or "panchayat" in update_dict:
+            target_dist = update_dict.get("district", donor.district)
+            target_panchayat = update_dict.get("panchayat", donor.panchayat)
+            canonical_dist, canonical_panchayat = validate_district_and_panchayat(
+                target_dist, target_panchayat
+            )
+            if "district" in update_dict:
+                update_dict["district"] = canonical_dist
+            if "panchayat" in update_dict:
+                update_dict["panchayat"] = canonical_panchayat
 
         # Handle spatial location update/clearing
         if update_dict.get("remove_location"):

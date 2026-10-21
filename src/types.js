@@ -15,18 +15,18 @@ export const BLOOD_GROUPS = [
 ];
 
 export const DISTRICTS = [
-  'Kottayam',
-  'Ernakulam',
-  'Kozhikode',
-  'Thiruvananthapuram',
   'Alappuzha',
+  'Ernakulam',
   'Idukki',
   'Kannur',
   'Kasaragod',
   'Kollam',
+  'Kottayam',
+  'Kozhikode',
   'Malappuram',
   'Palakkad',
   'Pathanamthitta',
+  'Thiruvananthapuram',
   'Thrissur',
   'Wayanad'
 ];

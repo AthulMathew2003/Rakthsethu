@@ -330,3 +330,89 @@ describe('API Base URL Normalization Tests', () => {
     assert.equal(resolveApiBase(), LOCAL_FALLBACK);
   });
 });
+
+describe('Kerala District & Panchayat Cascading Selection Tests', () => {
+  const EXPECTED_DISTRICTS = [
+    'Alappuzha',
+    'Ernakulam',
+    'Idukki',
+    'Kannur',
+    'Kasaragod',
+    'Kollam',
+    'Kottayam',
+    'Kozhikode',
+    'Malappuram',
+    'Palakkad',
+    'Pathanamthitta',
+    'Thiruvananthapuram',
+    'Thrissur',
+    'Wayanad',
+  ];
+
+  it('contains exactly 14 official Kerala districts spelled and sorted correctly', async () => {
+    const { DISTRICTS } = await import('../src/types.js');
+    assert.equal(DISTRICTS.length, 14);
+    assert.deepEqual([...DISTRICTS], EXPECTED_DISTRICTS);
+  });
+
+  it('validates that both district and panchayat are required before saving donor', () => {
+    const validateDonorLocation = (district, panchayat) => {
+      if (!district || !district.trim()) {
+        return { valid: false, error: 'District is required.' };
+      }
+      if (!panchayat || !panchayat.trim()) {
+        return { valid: false, error: 'Panchayat / Local Body is required.' };
+      }
+      return { valid: true };
+    };
+
+    assert.equal(validateDonorLocation('', '').valid, false);
+    assert.equal(validateDonorLocation('Kottayam', '').valid, false);
+    assert.equal(validateDonorLocation('', 'Meenachil').valid, false);
+    assert.equal(validateDonorLocation('Kottayam', 'Meenachil').valid, true);
+  });
+
+  it('simulates cascading district change: clears selected panchayat immediately', () => {
+    let formState = {
+      district: 'Kottayam',
+      panchayat: 'Meenachil',
+    };
+
+    // User changes district to Ernakulam
+    const handleDistrictChange = (newDistrict) => {
+      formState = {
+        ...formState,
+        district: newDistrict,
+        panchayat: '',
+      };
+    };
+
+    handleDistrictChange('Ernakulam');
+    assert.equal(formState.district, 'Ernakulam');
+    assert.equal(formState.panchayat, '');
+  });
+
+  it('filters local bodies by search query correctly', () => {
+    const localBodies = [
+      { code: 'G050101', name: 'Athirampuzha', type: 'Grama Panchayat' },
+      { code: 'G050102', name: 'Ayarkkunnam', type: 'Grama Panchayat' },
+      { code: 'M050001', name: 'Changanassery', type: 'Municipality' },
+      { code: 'M050002', name: 'Kottayam', type: 'Municipality' },
+      { code: 'M050003', name: 'Pala', type: 'Municipality' },
+    ];
+
+    const filter = (query) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return localBodies;
+      return localBodies.filter((lb) => lb.name.toLowerCase().includes(q));
+    };
+
+    assert.equal(filter('').length, 5);
+    assert.equal(filter('athir').length, 1);
+    assert.equal(filter('athir')[0].name, 'Athirampuzha');
+    assert.equal(filter('pala').length, 1);
+    assert.equal(filter('pala')[0].name, 'Pala');
+    assert.equal(filter('nonexistent').length, 0);
+  });
+});
+

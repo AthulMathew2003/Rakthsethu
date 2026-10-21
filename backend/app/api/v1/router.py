@@ -5,6 +5,7 @@ from app.api.v1.donations import router as donations_router
 from app.api.v1.donor_import import router as donor_import_router
 from app.api.v1.donors import router as donors_router
 from app.api.v1.hospitals import router as hospitals_router
+from app.api.v1.locations import router as locations_router
 from app.api.v1.matching import router as matching_router
 from app.telegram.router import router as telegram_router
 
@@ -12,6 +13,7 @@ from app.telegram.router import router as telegram_router
 v1_router = APIRouter(prefix="/api/v1")
 
 v1_router.include_router(auth_router)
+v1_router.include_router(locations_router)
 v1_router.include_router(hospitals_router)
 v1_router.include_router(donor_import_router)
 v1_router.include_router(donors_router)
