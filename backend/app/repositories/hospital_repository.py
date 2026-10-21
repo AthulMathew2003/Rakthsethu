@@ -52,3 +52,16 @@ class HospitalRepository(BaseRepository[Hospital]):
         items = list(result.scalars().all())
 
         return items, total
+
+    async def list_active_by_district(self, district: str) -> List[Hospital]:
+        """Fetch all active hospitals in a given district."""
+        stmt = (
+            select(Hospital)
+            .where(
+                func.lower(Hospital.district) == district.lower().strip(),
+                Hospital.is_active == True,
+            )
+            .order_by(Hospital.name.asc())
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

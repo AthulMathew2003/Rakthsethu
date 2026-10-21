@@ -31,3 +31,5 @@ dist-ssr
 *.sln
 *.sw?
 
+# Administrative & local bootstrap scripts
+backend/bootstrap_superadmin.py

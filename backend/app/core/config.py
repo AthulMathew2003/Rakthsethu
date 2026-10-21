@@ -60,6 +60,11 @@ class Settings(BaseSettings):
     DEFAULT_PROXIMITY_RADIUS_KM: float = 25.0
     MAX_PROXIMITY_RADIUS_KM: float = 100.0
 
+    # Telegram Bot Integration (Phase 8)
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_WEBHOOK_SECRET: str = ""
+    TELEGRAM_BOT_USERNAME: str = "Rakthasethu_bot"
+
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),
         env_file_encoding="utf-8",

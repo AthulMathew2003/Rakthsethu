@@ -7,6 +7,7 @@ from app.models.enums import UserRole
 from app.models.user import User
 from app.schemas.auth import LoginRequest, TokenResponse, UserCreate, UserResponse
 from app.services.auth_service import AuthService
+from app.telegram.schemas import TelegramLinkTokenResponse
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -53,3 +54,25 @@ async def create_user_account(
     service = AuthService(session)
     new_user = await service.register_user(user_data)
     return success_response(data=new_user, message="User account created successfully.")
+
+
+@router.post(
+    "/telegram-link-token",
+    response_model=ApiResponse[TelegramLinkTokenResponse],
+    summary="Generate single-use, 10-minute linking token for Telegram Bot staff account",
+)
+async def generate_telegram_link_token(
+    current_user: User = Depends(require_role(UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN, UserRole.STAFF)),
+    session: AsyncSession = Depends(get_db),
+):
+    from app.core.config import settings
+    from app.telegram.service import TelegramService
+
+    service = TelegramService(session)
+    token = await service.create_link_token(current_user.id)
+    resp = TelegramLinkTokenResponse(
+        link_token=token,
+        expires_in_seconds=600,
+        bot_username=settings.TELEGRAM_BOT_USERNAME,
+    )
+    return success_response(data=resp, message="Telegram linking token generated successfully.")
