@@ -750,3 +750,220 @@ async def test_16_donor_service_effective_donation_date_consistency():
             assert resp.last_donation_date == date(2026, 6, 1)
             assert resp.last_donation_date_source == "SELF_REPORTED"
 
+
+# ─── 17. donor_date:enter and donor_date:never do not raise AttributeError ───
+
+@pytest.mark.asyncio
+async def test_17_donor_date_enter_and_never_callbacks_create_conversation_without_attribute_error():
+    """Verify donor_date:enter and donor_date:never callbacks create conversation without AttributeError."""
+    conv = TelegramConversation(
+        telegram_user_id=899,
+        chat_id=500,
+        current_step="IDLE",
+        state_data={},
+    )
+    mock_session = create_mock_session(conv)
+    mock_client = MockTelegramClient()
+    handler = TelegramHandler(session=mock_session, client=mock_client)
+
+    fake_donor = MagicMock()
+    fake_donor.id = 899
+    fake_donor.last_donation_date = None
+    fake_donor.last_donation_date_source = None
+    fake_donor.last_donation_date_updated_at = None
+    fake_donor.is_available = True
+
+    with patch.object(handler.service, "get_donor_by_telegram_user_id", new=AsyncMock(return_value=fake_donor)):
+        with patch.object(
+            handler.service,
+            "get_donor_last_donation_info",
+            new=AsyncMock(return_value=(None, None, None, None)),
+        ):
+            # 1. Test donor_date:enter callback
+            cb_enter = TelegramCallbackQuery(
+                id="cb_enter",
+                from_user=TelegramUser(id=899, first_name="Tester"),
+                message=TelegramMessage(
+                    message_id=310,
+                    chat=TelegramChat(id=500, type="private"),
+                    from_user=TelegramUser(id=899, first_name="Tester"),
+                    date=123456,
+                ),
+                data="donor_date:enter",
+            )
+            # Must NOT raise AttributeError: 'TelegramService' object has no attribute 'get_or_create_conversation'
+            await handler.handle_callback_query(cb_enter)
+            assert conv.current_step == "DONOR_UPDATE_LAST_DONATION_DATE"
+            assert any("enter your last blood donation date" in m["text"].lower() for m in mock_client.sent_messages)
+
+            # 2. Test donor_date:never callback
+            mock_client.sent_messages.clear()
+            cb_never = TelegramCallbackQuery(
+                id="cb_never",
+                from_user=TelegramUser(id=899, first_name="Tester"),
+                message=TelegramMessage(
+                    message_id=311,
+                    chat=TelegramChat(id=500, type="private"),
+                    from_user=TelegramUser(id=899, first_name="Tester"),
+                    date=123456,
+                ),
+                data="donor_date:never",
+            )
+            # Must NOT raise AttributeError
+            await handler.handle_callback_query(cb_never)
+            assert conv.current_step == "DONOR_CONFIRM_LAST_DONATION_DATE"
+            assert conv.state_data.get("source") == "NEVER_DONATED"
+            assert any("confirm: never donated blood" in m["text"].lower() for m in mock_client.sent_messages)
+
+
+# ─── 18. TelegramService get_or_create_conversation implementation ────────────
+
+@pytest.mark.asyncio
+async def test_18_service_get_or_create_conversation_method():
+    """Verify TelegramService.get_or_create_conversation handles both data and data_updates kwargs."""
+    from app.telegram.service import TelegramService
+
+    conv = TelegramConversation(
+        telegram_user_id=950,
+        chat_id=500,
+        current_step="IDLE",
+        state_data={},
+    )
+    mock_session = create_mock_session(conv)
+    service = TelegramService(session=mock_session)
+
+    # 1. Calling with `data`
+    c1 = await service.get_or_create_conversation(
+        telegram_user_id=950,
+        chat_id=500,
+        step="STEP_A",
+        data={"key1": "val1"},
+    )
+    assert c1.current_step == "STEP_A"
+    assert c1.state_data.get("key1") == "val1"
+
+    # 2. Calling with `data_updates`
+    c2 = await service.get_or_create_conversation(
+        telegram_user_id=950,
+        chat_id=500,
+        step="STEP_B",
+        data_updates={"key2": "val2"},
+    )
+    assert c2.current_step == "STEP_B"
+    assert c2.state_data.get("key2") == "val2"
+
+
+# ─── 19. Full end-to-end flow: date entry, text input, confirmation ──────────
+
+@pytest.mark.asyncio
+async def test_19_full_end_to_end_flow_date_entry_and_confirmation():
+    """Verify full interactive flow from donor_date:enter through text input to confirmation."""
+    conv = TelegramConversation(
+        telegram_user_id=960,
+        chat_id=500,
+        current_step="IDLE",
+        state_data={},
+    )
+    mock_session = create_mock_session(conv)
+    mock_client = MockTelegramClient()
+    handler = TelegramHandler(session=mock_session, client=mock_client)
+
+    fake_donor = MagicMock()
+    fake_donor.id = 960
+    fake_donor.last_donation_date = None
+    fake_donor.last_donation_date_source = None
+    fake_donor.last_donation_date_updated_at = None
+    fake_donor.is_available = True
+
+    with patch.object(handler.service, "get_donor_by_telegram_user_id", new=AsyncMock(return_value=fake_donor)):
+        with patch.object(
+            handler.service,
+            "get_donor_last_donation_info",
+            new=AsyncMock(return_value=(None, None, None, None)),
+        ):
+            with patch("app.repositories.donor_repository.DonorRepository.get_latest_donation_date", new=AsyncMock(return_value=None)):
+                # Step 1: User clicks "Enter Donation Date"
+                cb_enter = TelegramCallbackQuery(
+                    id="cb_e2e_enter",
+                    from_user=TelegramUser(id=960, first_name="Tester"),
+                    message=TelegramMessage(
+                        message_id=320,
+                        chat=TelegramChat(id=500, type="private"),
+                        from_user=TelegramUser(id=960, first_name="Tester"),
+                        date=123456,
+                    ),
+                    data="donor_date:enter",
+                )
+                await handler.handle_callback_query(cb_enter)
+                assert conv.current_step == "DONOR_UPDATE_LAST_DONATION_DATE"
+
+                # Step 2: User sends text message with date "15-07-2026"
+                msg = TelegramMessage(
+                    message_id=321,
+                    chat=TelegramChat(id=500, type="private"),
+                    from_user=TelegramUser(id=960, first_name="Tester"),
+                    date=123456,
+                    text="15-07-2026",
+                )
+                await handler.handle_donor_update_step(conv, msg, chat_id=500, user_id=960)
+                assert conv.current_step == "DONOR_CONFIRM_LAST_DONATION_DATE"
+                assert conv.state_data.get("pending_date") == "2026-07-15"
+
+                # Step 3: User confirms save
+                cb_save = TelegramCallbackQuery(
+                    id="cb_e2e_save",
+                    from_user=TelegramUser(id=960, first_name="Tester"),
+                    message=TelegramMessage(
+                        message_id=322,
+                        chat=TelegramChat(id=500, type="private"),
+                        from_user=TelegramUser(id=960, first_name="Tester"),
+                        date=123456,
+                    ),
+                    data="donor_date:confirm_save",
+                )
+                await handler.handle_callback_query(cb_save)
+                assert fake_donor.last_donation_date == date(2026, 7, 15)
+                assert fake_donor.last_donation_date_source == "SELF_REPORTED"
+                assert conv.current_step == "IDLE"
+
+
+# ─── 20. Unlinked users cannot access date entry or never donated ────────────
+
+@pytest.mark.asyncio
+async def test_20_unlinked_user_rejected_from_enter_and_never():
+    """Unlinked telegram users are rejected from donor_date:enter and donor_date:never."""
+    mock_session = create_mock_session(None)
+    mock_client = MockTelegramClient()
+    handler = TelegramHandler(session=mock_session, client=mock_client)
+
+    with patch.object(handler.service, "get_donor_by_telegram_user_id", new=AsyncMock(return_value=None)):
+        # 1. Attempt donor_date:enter
+        cb_enter = TelegramCallbackQuery(
+            id="cb_unlinked_enter",
+            from_user=TelegramUser(id=9999, first_name="Stranger"),
+            message=TelegramMessage(
+                message_id=330,
+                chat=TelegramChat(id=500, type="private"),
+                from_user=TelegramUser(id=9999, first_name="Stranger"),
+                date=123456,
+            ),
+            data="donor_date:enter",
+        )
+        await handler.handle_callback_query(cb_enter)
+        assert any("unauthorized" in m["text"].lower() for m in mock_client.sent_messages)
+
+        # 2. Attempt donor_date:never
+        mock_client.sent_messages.clear()
+        cb_never = TelegramCallbackQuery(
+            id="cb_unlinked_never",
+            from_user=TelegramUser(id=9999, first_name="Stranger"),
+            message=TelegramMessage(
+                message_id=331,
+                chat=TelegramChat(id=500, type="private"),
+                from_user=TelegramUser(id=9999, first_name="Stranger"),
+                date=123456,
+            ),
+            data="donor_date:never",
+        )
+        await handler.handle_callback_query(cb_never)
+        assert any("unauthorized" in m["text"].lower() for m in mock_client.sent_messages)

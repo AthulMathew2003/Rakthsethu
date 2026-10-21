@@ -136,6 +136,27 @@ class TelegramService:
         await self.session.refresh(conv)
         return conv
 
+    async def get_or_create_conversation(
+        self,
+        telegram_user_id: int,
+        chat_id: int,
+        step: str = "IDLE",
+        data: Optional[Dict[str, Any]] = None,
+        data_updates: Optional[Dict[str, Any]] = None,
+    ) -> TelegramConversation:
+        """
+        Gets an existing conversation or creates one, updating step and state data.
+        Safe for repeated Telegram callback delivery and concurrent state transitions.
+        Supports both `data` and `data_updates` keyword arguments.
+        """
+        effective_data = data if data is not None else data_updates
+        return await self.update_conversation(
+            telegram_user_id=telegram_user_id,
+            chat_id=chat_id,
+            step=step,
+            data_updates=effective_data,
+        )
+
     async def reset_conversation(self, telegram_user_id: int) -> None:
         conv = await self.get_conversation(telegram_user_id)
         if conv:

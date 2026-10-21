@@ -882,11 +882,11 @@ class TelegramHandler:
                     reply_markup=self.build_main_menu_keyboard(is_donor=False),
                 )
                 return
-            await self.service.get_or_create_conversation(
+            await self.service.update_conversation(
                 telegram_user_id=user_id,
                 chat_id=chat_id,
                 step="DONOR_UPDATE_LAST_DONATION_DATE",
-                data={},
+                data_updates={"pending_date": None, "action": "ENTER_DATE"},
             )
             enter_text = (
                 "📅 <b>Please enter your last blood donation date:</b>\n\n"
@@ -928,11 +928,11 @@ class TelegramHandler:
                 return
 
             # Show confirmation for Never Donated
-            await self.service.get_or_create_conversation(
+            await self.service.update_conversation(
                 telegram_user_id=user_id,
                 chat_id=chat_id,
                 step="DONOR_CONFIRM_LAST_DONATION_DATE",
-                data={
+                data_updates={
                     "pending_date": None,
                     "action": "CLEAR_DATE",
                     "source": "NEVER_DONATED",
