@@ -65,6 +65,12 @@ class Settings(BaseSettings):
     TELEGRAM_WEBHOOK_SECRET: str = ""
     TELEGRAM_BOT_USERNAME: str = "Rakthasethu_bot"
 
+    @field_validator("TELEGRAM_BOT_TOKEN", "TELEGRAM_WEBHOOK_SECRET", mode="before")
+    def strip_telegram_credentials(cls, v: Union[str, None]) -> str:
+        if isinstance(v, str):
+            return v.strip().strip("'\"")
+        return ""
+
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),
         env_file_encoding="utf-8",
