@@ -7,9 +7,15 @@ from app.core.config import settings
 logger = logging.getLogger("rakthasethu.telegram")
 
 
+def redact_sensitive_data(text: str) -> str:
+    """Redact Telegram bot token and phone numbers in logs, URLs, and exceptions."""
+    val = re.sub(r"bot\d+:[A-Za-z0-9_-]+", "bot[REDACTED]", str(text))
+    val = re.sub(r"(?:\+91|91|0)?[6-9]\d{9}", "[REDACTED_PHONE]", val)
+    return val
+
+
 def redact_telegram_token(text: str) -> str:
-    """Redact Telegram bot token in logs, URLs, and exceptions."""
-    return re.sub(r"bot\d+:[A-Za-z0-9_-]+", "bot[REDACTED]", str(text))
+    return redact_sensitive_data(text)
 
 
 class TelegramClient:

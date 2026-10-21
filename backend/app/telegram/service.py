@@ -137,6 +137,29 @@ class TelegramService:
             conv.state_data = {}
             await self.session.commit()
 
+    async def lock_and_transition_confirmation(
+        self, telegram_user_id: int
+    ) -> Tuple[bool, Optional[Dict[str, Any]]]:
+        """
+        Atomically inspects and locks conversation in CONFIRMATION step.
+        If yes, transitions to SUBMITTING and returns (True, state_data).
+        If already SUBMITTING or IDLE, returns (False, None) to prevent duplicate submissions.
+        """
+        stmt = (
+            select(TelegramConversation)
+            .where(TelegramConversation.telegram_user_id == telegram_user_id)
+            .with_for_update()
+        )
+        result = await self.session.execute(stmt)
+        conv = result.scalar_one_or_none()
+        if not conv or conv.current_step != "CONFIRMATION":
+            return False, None
+
+        state_data = dict(conv.state_data or {})
+        conv.current_step = "SUBMITTING"
+        await self.session.commit()
+        return True, state_data
+
     # ─── 3. Request Ownership & Access Control ────────────────────────────
 
     async def record_telegram_blood_request(
@@ -172,6 +195,45 @@ class TelegramService:
             select(BloodRequest)
             .options(selectinload(BloodRequest.hospital))
             .where(func.upper(BloodRequest.request_code) == request_code.strip().upper())
+        )
+        result = await self.session.execute(stmt)
+        req = result.scalar_one_or_none()
+        if not req:
+            return False, False, None, None
+
+        # Check 1: Is caller the verified public requester who submitted it?
+        stmt_owner = select(TelegramBloodRequest).where(
+            TelegramBloodRequest.blood_request_id == req.id,
+            TelegramBloodRequest.telegram_user_id == telegram_user_id,
+        )
+        owner_res = await self.session.execute(stmt_owner)
+        if owner_res.scalar_one_or_none() is not None:
+            return True, False, req, req.hospital
+
+        # Check 2: Is caller an authorized linked hospital staff member?
+        linked_staff = await self.get_linked_staff(telegram_user_id)
+        if linked_staff and linked_staff.is_active:
+            user = linked_staff.user
+            if user and user.is_active:
+                if user.role == UserRole.SUPER_ADMIN or user.hospital_id == req.hospital_id:
+                    return True, True, req, req.hospital
+
+        return False, False, req, None
+
+    async def verify_request_access_by_id(
+        self,
+        request_id: int,
+        telegram_user_id: int,
+    ) -> Tuple[bool, bool, Optional[BloodRequest], Optional[Hospital]]:
+        """
+        Verifies whether a Telegram user is authorized to inspect a blood request by database ID.
+        Returns:
+            (is_authorized, is_staff, blood_request, hospital)
+        """
+        stmt = (
+            select(BloodRequest)
+            .options(selectinload(BloodRequest.hospital))
+            .where(BloodRequest.id == request_id)
         )
         result = await self.session.execute(stmt)
         req = result.scalar_one_or_none()

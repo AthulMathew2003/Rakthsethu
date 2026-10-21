@@ -1,10 +1,12 @@
 from datetime import date, datetime, timedelta, timezone
 import logging
+import math
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.phone_utils import normalize_phone_number
 from app.models.enums import BloodGroup, RequestStatus, RequestUrgency, UserRole
 from app.repositories.hospital_repository import HospitalRepository
 from app.schemas.blood_request import BloodRequestCreate
@@ -218,20 +220,24 @@ class TelegramHandler:
             f"📊 <b>Current Status:</b> <b>{req.status.value}</b>\n\n"
         )
 
+        kb_rows = [
+            [{"text": "📍 View Nearest Potential Donors", "callback_data": f"match:p:{req.id}:1:25"}]
+        ]
+
         if is_staff:
             status_text += "<i>[Authorized Staff View]</i>"
-            kb = {
-                "inline_keyboard": [
-                    [{"text": "🔍 Check Matching Donors", "callback_data": f"staff_match:{req.id}"}]
-                ]
-            }
-            await self.client.send_message(chat_id=chat_id, text=status_text, reply_markup=kb)
+            kb_rows.insert(0, [{"text": "🔍 Check Matching Donors (Staff Portal)", "callback_data": f"staff_match:{req.id}"}])
         else:
             status_text += (
                 "<i>Donor outreach is actively coordinated with the hospital blood bank. "
                 "Donor contact details are protected under RakthaSethu privacy rules.</i>"
             )
-            await self.client.send_message(chat_id=chat_id, text=status_text)
+
+        await self.client.send_message(
+            chat_id=chat_id,
+            text=status_text,
+            reply_markup={"inline_keyboard": kb_rows},
+        )
 
     async def cmd_link(self, chat_id: int, user_id: int, token: Optional[str], username: Optional[str]) -> None:
         if not token:
@@ -373,14 +379,26 @@ class TelegramHandler:
         data_str = cb.data or ""
         await self.client.answer_callback_query(cb.id)
 
-        conv = await self.service.get_conversation(user_id)
-        if not conv:
+        # 1. No-op button click (e.g. current page indicator)
+        if data_str == "noop":
             return
 
-        step = conv.current_step
-        state_data = dict(conv.state_data or {})
+        # 2. Donor match pagination and radius expansion dispatch
+        if data_str.startswith("match:p:") or data_str.startswith("match:r:"):
+            await self.handle_donor_match_page(chat_id, user_id, cb)
+            return
 
-        # 1. Main menu navigation
+        # 3. Staff Donor Matching Dispatch
+        if data_str.startswith("staff_match:"):
+            req_id_str = data_str.split(":")[1]
+            try:
+                req_id = int(req_id_str)
+                await self.handle_staff_match_view(chat_id, user_id, req_id)
+            except Exception as exc:
+                logger.error("Error in staff_match: %s", exc)
+            return
+
+        # 4. Main menu navigation
         if data_str == "menu:requestblood":
             await self.start_request_blood(chat_id, user_id)
             return
@@ -397,15 +415,29 @@ class TelegramHandler:
             await self.cmd_link(chat_id, user_id, None, None)
             return
 
-        # 2. Staff Donor Matching Dispatch
-        if data_str.startswith("staff_match:"):
-            req_id_str = data_str.split(":")[1]
-            try:
-                req_id = int(req_id_str)
-                await self.handle_staff_match_view(chat_id, user_id, req_id)
-            except Exception as exc:
-                logger.error("Error in staff_match: %s", exc)
+        # 5. Request Confirmation / Cancel (Atomic lock & transition before state lookup)
+        if data_str == "req:cancel":
+            await self.cmd_cancel(chat_id, user_id)
             return
+        elif data_str == "req:confirm":
+            acquired, locked_data = await self.service.lock_and_transition_confirmation(user_id)
+            if not acquired or not locked_data:
+                logger.info("Ignoring duplicate/unlocked req:confirm for user %s", user_id)
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="⏳ Your request is already being processed or has already been submitted.",
+                )
+                return
+            await self.submit_blood_request(chat_id, user_id, locked_data, cb.from_user.username)
+            return
+
+        # 6. Check active conversation for sequential flow
+        conv = await self.service.get_conversation(user_id)
+        if not conv:
+            return
+
+        step = conv.current_step
+        state_data = dict(conv.state_data or {})
 
         # 3. Blood Group Selection
         if step == "WAITING_BLOOD_GROUP" and data_str.startswith("bg:"):
@@ -560,14 +592,6 @@ class TelegramHandler:
             await self.client.send_message(chat_id=chat_id, text=summary, reply_markup=kb)
             return
 
-        # 9. Confirmation Submit
-        if step == "CONFIRMATION":
-            if data_str == "req:cancel":
-                await self.cmd_cancel(chat_id, user_id)
-                return
-            elif data_str == "req:confirm":
-                await self.submit_blood_request(chat_id, user_id, state_data, cb.from_user.username)
-                return
 
     async def submit_blood_request(
         self,
@@ -577,9 +601,21 @@ class TelegramHandler:
         username: Optional[str],
     ) -> None:
         try:
-            # Construct validated domain schema
+            # 1. Hospital validation: ensure hospital exists and is active
+            hosp_id = int(data["hospital_id"])
+            hosp_repo = HospitalRepository(self.session)
+            hospital = await hosp_repo.get_by_id(hosp_id)
+            if not hospital or not hospital.is_active:
+                await self.service.reset_conversation(user_id)
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="⚠️ The selected hospital is inactive or unavailable. Please restart your request with /requestblood.",
+                )
+                return
+
+            # 2. Construct validated domain schema
             req_dto = BloodRequestCreate(
-                hospital_id=int(data["hospital_id"]),
+                hospital_id=hosp_id,
                 patient_name=str(data["patient_name"]),
                 blood_group=BloodGroup(data["blood_group"]),
                 units_requested=int(data["units_requested"]),
@@ -594,7 +630,7 @@ class TelegramHandler:
             service = BloodRequestService(self.session)
             created_req = await service.create_blood_request(req_dto)
 
-            # Record private ownership binding in database
+            # 3. Record private ownership binding in database
             await self.service.record_telegram_blood_request(
                 blood_request_id=created_req.id,
                 telegram_user_id=user_id,
@@ -602,28 +638,282 @@ class TelegramHandler:
                 telegram_username=username,
             )
 
-            # Reset conversation state
+            # 4. Reset conversation state
             await self.service.reset_conversation(user_id)
 
-            success_msg = (
-                "🎉 <b>Blood Request Submitted Successfully!</b>\n\n"
-                f"📌 <b>Request Code:</b> <code>{created_req.request_code}</code>\n"
-                f"🏥 <b>Assigned Hospital:</b> {created_req.hospital_name}\n"
-                f"📊 <b>Status:</b> PENDING\n\n"
-                f"Our network has logged this request with the hospital blood bank team.\n\n"
-                f"Check your request status at any time with:\n"
-                f"<code>/status {created_req.request_code}</code>"
+            # 5. Format and display nearest-donor ranking view (never show matches before save)
+            text, reply_markup = await self.format_donor_matches_view(
+                req_id=created_req.id,
+                user_id=user_id,
+                page=1,
+                radius_km=settings.DEFAULT_PROXIMITY_RADIUS_KM,
+                is_initial=True,
             )
+
             await self.client.send_message(
                 chat_id=chat_id,
-                text=success_msg,
-                reply_markup=self.build_main_menu_keyboard(),
+                text=text,
+                reply_markup=reply_markup,
             )
         except Exception as exc:
             logger.exception("Failed to submit blood request from Telegram: %s", exc)
             await self.client.send_message(
                 chat_id=chat_id,
                 text=f"⚠️ Failed to submit request: {exc}. Please type /cancel and try again.",
+            )
+
+    def _format_donor_contact(self, donor_item: Any) -> str:
+        """
+        Formats donor contact phone number for eligible matches:
+        - If a valid phone number exists in the donor record: displays the normalized phone number.
+        - If a phone number is absent or invalid: displays 'Contact the registered hospital for assistance.'
+        """
+        phone_raw = getattr(donor_item, "phone", None)
+        if phone_raw and str(phone_raw).strip():
+            try:
+                norm_phone = normalize_phone_number(str(phone_raw).strip())
+                return f"<code>{norm_phone}</code>"
+            except Exception:
+                return "Contact the registered hospital for assistance."
+        return "Contact the registered hospital for assistance."
+
+    async def format_donor_matches_view(
+        self,
+        req_id: int,
+        user_id: int,
+        page: int = 1,
+        radius_km: float = 25.0,
+        is_initial: bool = False,
+    ) -> Tuple[str, Optional[Dict[str, Any]]]:
+        """
+        Formats a privacy-preserving summary of potential matching donors,
+        ranked nearest first using PostGIS proximity queries.
+        Displays donor reference code, blood group, approximate distance, and contact phone number.
+        Never reveals donor full names, exact coordinates, street addresses, or internal database IDs.
+        """
+        is_auth, is_staff, req, hosp = await self.service.verify_request_access_by_id(req_id, user_id)
+        if not req:
+            return "⚠️ Blood request not found.", None
+        if not is_auth:
+            return "⛔ <b>Access Denied:</b> You are not authorized to view matches for this blood request.", None
+
+        hosp_name = hosp.name if hosp else (req.hospital.name if req.hospital else "Assigned Hospital")
+        hosp_has_location = (
+            hosp is not None
+            and hosp.latitude is not None
+            and hosp.longitude is not None
+        )
+
+        safe_radius_km = min(max(1.0, float(radius_km)), settings.MAX_PROXIMITY_RADIUS_KM)
+
+        matching_service = MatchingService(self.session)
+        from app.schemas.matching import MatchDonorsRequest
+
+        match_req = MatchDonorsRequest(
+            blood_group=req.blood_group,
+            district=req.district,
+            hospital_id=req.hospital_id,
+            radius_km=safe_radius_km,
+            required_units=req.units_requested,
+            required_date=req.required_date,
+            limit=settings.MAX_MATCH_LIMIT,
+            include_fallback=True,
+        )
+
+        try:
+            match_result = await matching_service.find_matching_donors(match_req)
+        except Exception as exc:
+            logger.error("Matching calculation error for req_id=%s: %s", req_id, exc)
+            fallback_text = (
+                f"🩸 <b>Blood Request Registered</b>\n\n"
+                f"📌 <b>Request ID:</b> <code>{req.request_code}</code>\n"
+                f"🏥 <b>Hospital:</b> {hosp_name}\n"
+                f"💉 <b>Blood Group:</b> {req.blood_group.value} ({req.units_requested} Unit{'s' if req.units_requested > 1 else ''})\n\n"
+                f"Your request has been logged with the hospital network. Matching donors could not be calculated at this time.\n\n"
+                f"Check status anytime: <code>/status {req.request_code}</code>"
+            )
+            return fallback_text, self.build_main_menu_keyboard()
+
+        # Build Title / Header
+        if is_initial:
+            header = (
+                "🩸 <b>Blood Request Registered</b>\n\n"
+                f"📌 <b>Request ID:</b> <code>{req.request_code}</code>\n"
+                f"🏥 <b>Hospital:</b> {hosp_name}\n"
+                f"💉 <b>Blood Group:</b> {req.blood_group.value} ({req.units_requested} Unit{'s' if req.units_requested > 1 else ''})\n\n"
+            )
+        else:
+            header = (
+                f"📍 <b>Nearest Potential Donors for #{req.request_code}</b>\n\n"
+                f"🏥 <b>Hospital:</b> {hosp_name}\n"
+                f"💉 <b>Blood Group:</b> {req.blood_group.value} ({req.units_requested} Unit{'s' if req.units_requested > 1 else ''})\n\n"
+            )
+
+        if not hosp_has_location or match_result.origin_type == "DISTRICT_DEFAULT":
+            header += "📍 <i>Note: Hospital coordinates are unavailable. Displaying district-level matches.</i>\n\n"
+
+        # Case A: 0 matches found
+        if match_result.total_eligible_found == 0:
+            radius_desc = f"within {int(safe_radius_km)} km of {hosp_name}" if hosp_has_location else f"in {req.district}"
+            body = (
+                f"We searched {radius_desc}, but found no potential matching donors at this time.\n\n"
+                f"<b>Next Steps:</b>\n"
+                f"• Contact {hosp_name} directly to explore reserve inventory or regional blood bank transfers.\n"
+                f"• Broaden the search radius using the button below if appropriate.\n"
+                f"• Check your request status anytime with: <code>/status {req.request_code}</code>\n\n"
+                f"<i>These are potential matches, not confirmed availability.</i>"
+            )
+
+            kb_rows = []
+            if hosp_has_location:
+                if safe_radius_km < 50.0 and 50.0 <= settings.MAX_PROXIMITY_RADIUS_KM:
+                    kb_rows.append([{"text": "🔍 Broaden Search to 50 km", "callback_data": f"match:r:{req.id}:50"}])
+                elif safe_radius_km < 100.0 and 100.0 <= settings.MAX_PROXIMITY_RADIUS_KM:
+                    kb_rows.append([{"text": "🔍 Broaden Search to 100 km", "callback_data": f"match:r:{req.id}:100"}])
+
+            kb_rows.append([{"text": "📊 Check Status", "callback_data": "menu:status"}])
+            kb_rows.append([{"text": "🏠 Main Menu", "callback_data": "menu:help"}])
+            return header + body, {"inline_keyboard": kb_rows}
+
+        # Case B: Potential matches found
+        PAGE_SIZE = 5
+        items = match_result.items
+        total_items = len(items)
+        total_pages = max(1, math.ceil(total_items / PAGE_SIZE))
+        page = max(1, min(page, total_pages))
+
+        start_idx = (page - 1) * PAGE_SIZE
+        end_idx = start_idx + PAGE_SIZE
+        page_items = items[start_idx:end_idx]
+
+        match_count = match_result.total_eligible_found
+        match_word = "potential match" if match_count == 1 else "potential matches"
+        radius_info = f" within {int(safe_radius_km)} km" if (hosp_has_location and match_result.origin_type != "DISTRICT_DEFAULT") else ""
+
+        body = f"We found {match_count} {match_word}{radius_info}, ranked by proximity:\n\n"
+
+        for i, d in enumerate(page_items):
+            rank = start_idx + i + 1
+            if d.distance_km is not None:
+                dist_str = f"approximately {d.distance_km} km away"
+            else:
+                dist_str = f"Distance unknown (district match: {d.district})"
+
+            contact_str = self._format_donor_contact(d)
+
+            body += (
+                f"<b>Potential donor {rank}</b>\n"
+                f"- Donor reference: <code>{d.donor_code}</code>\n"
+                f"- Blood group: {d.blood_group.value}\n"
+                f"- Distance: {dist_str}\n"
+                f"- Contact: {contact_str}\n\n"
+            )
+
+        body += (
+            "<i>These are potential matches, not confirmed availability. "
+            "Please verify availability before coordinating a donation. "
+            "Contact the registered hospital or authorized staff to confirm donor availability and coordinate donation.</i>"
+        )
+
+        kb_rows = []
+        # Pagination row
+        if total_pages > 1:
+            nav_buttons = []
+            if page > 1:
+                nav_buttons.append({"text": "◀ Prev", "callback_data": f"match:p:{req.id}:{page - 1}:{int(safe_radius_km)}"})
+            nav_buttons.append({"text": f"{page} / {total_pages}", "callback_data": "noop"})
+            if page < total_pages:
+                nav_buttons.append({"text": "Next ▶", "callback_data": f"match:p:{req.id}:{page + 1}:{int(safe_radius_km)}"})
+            kb_rows.append(nav_buttons)
+
+        # Radius expansion row
+        if hosp_has_location and match_result.origin_type != "DISTRICT_DEFAULT":
+            if safe_radius_km < 50.0 and 50.0 <= settings.MAX_PROXIMITY_RADIUS_KM:
+                kb_rows.append([{"text": "🔍 Expand Radius to 50 km", "callback_data": f"match:r:{req.id}:50"}])
+            elif safe_radius_km < 100.0 and 100.0 <= settings.MAX_PROXIMITY_RADIUS_KM:
+                kb_rows.append([{"text": "🔍 Expand Radius to 100 km", "callback_data": f"match:r:{req.id}:100"}])
+
+        # Authorized staff portal view
+        if is_staff:
+            kb_rows.append([{"text": "🏥 Staff Outreach View", "callback_data": f"staff_match:{req.id}"}])
+
+        return header + body, {"inline_keyboard": kb_rows}
+
+    async def handle_donor_match_page(
+        self,
+        chat_id: int,
+        user_id: int,
+        cb: TelegramCallbackQuery,
+    ) -> None:
+        """
+        Handles pagination and radius broadening callbacks securely:
+        - match:p:<req_id>:<page>:<radius>
+        - match:r:<req_id>:<radius>
+        Revalidates request ownership and radius constraints on every callback.
+        """
+        data_str = cb.data or ""
+        try:
+            parts = data_str.split(":")
+            if parts[1] == "p" and len(parts) >= 5:
+                req_id = int(parts[2])
+                page = int(parts[3])
+                radius_km = float(parts[4])
+            elif parts[1] == "r" and len(parts) >= 4:
+                req_id = int(parts[2])
+                page = 1
+                radius_km = float(parts[3])
+            else:
+                logger.warning("Invalid match callback format: %s", data_str)
+                return
+        except (ValueError, IndexError) as err:
+            logger.warning("Failed to parse match callback %s: %s", data_str, err)
+            return
+
+        if not math.isfinite(radius_km) or radius_km <= 0 or radius_km > settings.MAX_PROXIMITY_RADIUS_KM:
+            logger.warning("Rejected invalid radius_km in callback: %s", radius_km)
+            return
+
+        if page < 1:
+            page = 1
+
+        is_auth, is_staff, req, hosp = await self.service.verify_request_access_by_id(req_id, user_id)
+        if not req:
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="⚠️ Blood request not found.",
+            )
+            return
+
+        if not is_auth:
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="⛔ <b>Access Denied:</b> You are not authorized to view matches for this blood request.",
+            )
+            return
+
+        text, reply_markup = await self.format_donor_matches_view(
+            req_id=req_id,
+            user_id=user_id,
+            page=page,
+            radius_km=radius_km,
+            is_initial=False,
+        )
+
+        if cb.message:
+            res = await self.client.edit_message_text(
+                chat_id=chat_id,
+                message_id=cb.message.message_id,
+                text=text,
+                reply_markup=reply_markup,
+            )
+            if not res.get("ok"):
+                # Fallback to new message if edit fails (e.g. text unmodified)
+                pass
+        else:
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=text,
+                reply_markup=reply_markup,
             )
 
     async def handle_staff_match_view(self, chat_id: int, user_id: int, req_id: int) -> None:
