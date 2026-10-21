@@ -111,8 +111,14 @@ class MatchingService:
 
             proximity_items: List[MatchedDonorItem] = []
             for donor, last_donation_date, dist_meters in proximity_rows:
+                # Authoritative effective donation date: hospital verified vs donor reported
+                effective_last_donation = last_donation_date
+                if donor.last_donation_date is not None:
+                    if effective_last_donation is None or donor.last_donation_date > effective_last_donation:
+                        effective_last_donation = donor.last_donation_date
+
                 cooldown = calculate_cooldown_eligibility(
-                    last_donation_date=last_donation_date,
+                    last_donation_date=effective_last_donation,
                     donation_type=request.donation_type,
                     reference_date=ref_date,
                 )
@@ -126,10 +132,13 @@ class MatchingService:
                 else:
                     reasons.append(f"Compatible blood group ({donor.blood_group.value} -> {request.blood_group.value})")
 
-                if last_donation_date is None:
-                    reasons.append("First-time donor (eligible)")
+                if effective_last_donation is None:
+                    if getattr(donor, "last_donation_date_source", None) == "NEVER_DONATED":
+                        reasons.append("Self-reported first-time donor (no recorded rest interval)")
+                    else:
+                        reasons.append("No previous donation recorded (cooldown satisfied)")
                 else:
-                    reasons.append(f"{cooldown.days_since_last_donation} days since last donation (eligible)")
+                    reasons.append(f"{cooldown.days_since_last_donation} days since last donation (cooldown satisfied)")
 
                 proximity_items.append(
                     MatchedDonorItem(
@@ -185,8 +194,13 @@ class MatchingService:
                 fallback_rows = fb_res.all()
 
                 for donor, last_donation_date in fallback_rows:
+                    effective_last_donation = last_donation_date
+                    if donor.last_donation_date is not None:
+                        if effective_last_donation is None or donor.last_donation_date > effective_last_donation:
+                            effective_last_donation = donor.last_donation_date
+
                     cooldown = calculate_cooldown_eligibility(
-                        last_donation_date=last_donation_date,
+                        last_donation_date=effective_last_donation,
                         donation_type=request.donation_type,
                         reference_date=ref_date,
                     )
@@ -203,10 +217,13 @@ class MatchingService:
                     if panchayat_clean and donor.panchayat and donor.panchayat.strip().lower() == panchayat_clean:
                         reasons.append(f"Panchayat proximity ({donor.panchayat})")
 
-                    if last_donation_date is None:
-                        reasons.append("First-time donor (eligible)")
+                    if effective_last_donation is None:
+                        if getattr(donor, "last_donation_date_source", None) == "NEVER_DONATED":
+                            reasons.append("Self-reported first-time donor (no recorded rest interval)")
+                        else:
+                            reasons.append("No previous donation recorded (cooldown satisfied)")
                     else:
-                        reasons.append(f"{cooldown.days_since_last_donation} days since last donation (eligible)")
+                        reasons.append(f"{cooldown.days_since_last_donation} days since last donation (cooldown satisfied)")
 
                     fallback_items.append(
                         MatchedDonorItem(
@@ -264,8 +281,13 @@ class MatchingService:
 
             eligible_items = []
             for donor, last_donation_date in candidates:
+                effective_last_donation = last_donation_date
+                if donor.last_donation_date is not None:
+                    if effective_last_donation is None or donor.last_donation_date > effective_last_donation:
+                        effective_last_donation = donor.last_donation_date
+
                 cooldown = calculate_cooldown_eligibility(
-                    last_donation_date=last_donation_date,
+                    last_donation_date=effective_last_donation,
                     donation_type=request.donation_type,
                     reference_date=ref_date,
                 )
@@ -282,10 +304,13 @@ class MatchingService:
                 if panchayat_clean and donor.panchayat and donor.panchayat.strip().lower() == panchayat_clean:
                     reasons.append(f"Panchayat proximity ({donor.panchayat})")
 
-                if last_donation_date is None:
-                    reasons.append("First-time donor (eligible)")
+                if effective_last_donation is None:
+                    if getattr(donor, "last_donation_date_source", None) == "NEVER_DONATED":
+                        reasons.append("Self-reported first-time donor (no recorded rest interval)")
+                    else:
+                        reasons.append("No previous donation recorded (cooldown satisfied)")
                 else:
-                    reasons.append(f"{cooldown.days_since_last_donation} days since last donation (eligible)")
+                    reasons.append(f"{cooldown.days_since_last_donation} days since last donation (cooldown satisfied)")
 
                 eligible_items.append(
                     MatchedDonorItem(

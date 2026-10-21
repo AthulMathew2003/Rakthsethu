@@ -89,9 +89,10 @@ class DonorService:
         if not donor:
             raise ResourceNotFoundException("Donor", donor_id)
 
-        latest_donation = await self.donor_repo.get_latest_donation_date(donor_id)
+        eff_date, source = await self.donor_repo.get_effective_last_donation_date(donor)
         donor_resp = DonorResponse.model_validate(donor)
-        donor_resp.last_donation_date = latest_donation
+        donor_resp.last_donation_date = eff_date
+        donor_resp.last_donation_date_source = source
         return donor_resp
 
     async def update_donor(self, donor_id: int, data: DonorUpdate) -> DonorResponse:
@@ -176,9 +177,10 @@ class DonorService:
         await self.session.commit()
         await self.session.refresh(donor)
 
-        latest_donation = await self.donor_repo.get_latest_donation_date(donor.id)
+        eff_date, source = await self.donor_repo.get_effective_last_donation_date(donor)
         donor_resp = DonorResponse.model_validate(donor)
-        donor_resp.last_donation_date = latest_donation
+        donor_resp.last_donation_date = eff_date
+        donor_resp.last_donation_date_source = source
         return donor_resp
 
     async def update_donor_location(
@@ -194,9 +196,10 @@ class DonorService:
         await self.session.commit()
         await self.session.refresh(donor)
 
-        latest_donation = await self.donor_repo.get_latest_donation_date(donor.id)
+        eff_date, source = await self.donor_repo.get_effective_last_donation_date(donor)
         donor_resp = DonorResponse.model_validate(donor)
-        donor_resp.last_donation_date = latest_donation
+        donor_resp.last_donation_date = eff_date
+        donor_resp.last_donation_date_source = source
         return donor_resp
 
     async def remove_donor_location(self, donor_id: int) -> DonorResponse:
@@ -210,9 +213,10 @@ class DonorService:
         await self.session.commit()
         await self.session.refresh(donor)
 
-        latest_donation = await self.donor_repo.get_latest_donation_date(donor.id)
+        eff_date, source = await self.donor_repo.get_effective_last_donation_date(donor)
         donor_resp = DonorResponse.model_validate(donor)
-        donor_resp.last_donation_date = latest_donation
+        donor_resp.last_donation_date = eff_date
+        donor_resp.last_donation_date_source = source
         return donor_resp
 
     async def list_donors(self, query: DonorListQuery) -> PaginatedData[DonorResponse]:
@@ -222,7 +226,27 @@ class DonorService:
         response_items = []
         for donor in items:
             resp = DonorResponse.model_validate(donor)
-            resp.last_donation_date = latest_dates.get(donor.id)
+            verified_date = latest_dates.get(donor.id)
+            self_date = donor.last_donation_date
+            if verified_date and self_date:
+                if verified_date >= self_date:
+                    resp.last_donation_date = verified_date
+                    resp.last_donation_date_source = "HOSPITAL_VERIFIED"
+                else:
+                    resp.last_donation_date = self_date
+                    resp.last_donation_date_source = donor.last_donation_date_source or "SELF_REPORTED"
+            elif verified_date:
+                resp.last_donation_date = verified_date
+                resp.last_donation_date_source = "HOSPITAL_VERIFIED"
+            elif self_date:
+                resp.last_donation_date = self_date
+                resp.last_donation_date_source = donor.last_donation_date_source or "SELF_REPORTED"
+            elif getattr(donor, "last_donation_date_source", None) == "NEVER_DONATED":
+                resp.last_donation_date = None
+                resp.last_donation_date_source = "NEVER_DONATED"
+            else:
+                resp.last_donation_date = None
+                resp.last_donation_date_source = None
             response_items.append(resp)
 
         return PaginatedData(

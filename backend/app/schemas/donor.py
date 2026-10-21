@@ -97,6 +97,8 @@ class DonorResponse(DonorBase):
     location_consent: bool = Field(default=False, description="Whether donor consented to location-based proximity matching")
     location_consent_recorded_at: Optional[datetime] = None
     last_donation_date: Optional[date] = None
+    last_donation_date_source: Optional[str] = None
+    last_donation_date_updated_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 

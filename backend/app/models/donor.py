@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Any, List, Optional
 from geoalchemy2 import Geography
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin
@@ -45,6 +45,11 @@ class Donor(Base, TimestampMixin):
     )
     location_consent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     location_consent_recorded_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_donation_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True, index=True)
+    last_donation_date_source: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    last_donation_date_updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)

@@ -10,9 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.phone_utils import normalize_phone_number
 from app.models.enums import BloodGroup, RequestStatus, RequestUrgency, UserRole
+from app.models.telegram import TelegramConversation
 from app.repositories.hospital_repository import HospitalRepository
 from app.schemas.blood_request import BloodRequestCreate
 from app.services.blood_request_service import BloodRequestService
+from app.services.cooldown_service import calculate_cooldown_eligibility
 from app.services.matching_service import MatchingService
 from app.telegram.client import TelegramClient
 from app.telegram.schemas import (
@@ -120,6 +122,9 @@ class TelegramHandler:
         elif text.startswith("/updatedetails") or text == "✏️ Update My Details":
             await self.show_donor_update_menu(chat_id, user_id)
             return
+        elif text.startswith("/updatedonationdate") or text == "🩸 Update Last Donation Date":
+            await self.start_update_last_donation_flow(chat_id, user_id)
+            return
         elif text.startswith("/revokelocation"):
             await self.cmd_revokelocation(chat_id, user_id)
             return
@@ -140,6 +145,8 @@ class TelegramHandler:
         if conv and conv.current_step != "IDLE":
             if conv.current_step.startswith("REG_"):
                 await self.handle_registration_step(conv, message, chat_id, user_id)
+            elif conv.current_step.startswith("DONOR_"):
+                await self.handle_donor_update_step(conv, message, chat_id, user_id)
             else:
                 await self.handle_conversation_step(conv, text, chat_id, user_id)
         else:
@@ -453,6 +460,14 @@ class TelegramHandler:
             )
             return
 
+        eff_date, source, _, _ = await self.service.get_donor_last_donation_info(user_id)
+        if eff_date:
+            last_don_str = f"{eff_date.strftime('%d-%m-%Y')} ({'Hospital-Verified' if source == 'HOSPITAL_VERIFIED' else 'Self-Reported'})"
+        elif source == "NEVER_DONATED":
+            last_don_str = "Never donated (Confirmed)"
+        else:
+            last_don_str = "Not recorded / Unknown"
+
         avail_badge = "🟢 Available for Matching" if donor.is_available else "🟡 Temporarily Unavailable"
         loc_badge = "📍 GPS Proximity Enabled" if (donor.location_consent and donor.location is not None) else "📍 District Matching Only"
         masked_phone = self._mask_phone(donor.phone)
@@ -464,13 +479,15 @@ class TelegramHandler:
             f"• <b>Full Name:</b> {donor.full_name}\n"
             f"• <b>Blood Group:</b> <b>{donor.blood_group.value}</b>\n"
             f"• <b>Home District:</b> {donor.district}{panchayat_str}\n"
+            f"• <b>Last Blood Donation:</b> {last_don_str}\n"
             f"• <b>Verified Mobile:</b> <code>{masked_phone}</code>\n"
             f"• <b>Matching Status:</b> {avail_badge}\n"
             f"• <b>Location Mode:</b> {loc_badge}\n\n"
-            "<i>To update your availability, district, or location consent, choose an action below:</i>"
+            "<i>To update your details, donation date, or location consent, choose an action below:</i>"
         )
         kb = {
             "inline_keyboard": [
+                [{"text": "🩸 Update Last Donation Date", "callback_data": "donor_up:update_last_donation"}],
                 [{"text": "✏️ Update My Details", "callback_data": "menu:update_donor_details"}],
                 [{"text": "🩸 Request Blood", "callback_data": "menu:requestblood"}],
                 [{"text": "🏠 Main Menu", "callback_data": "menu:home"}],
@@ -489,11 +506,20 @@ class TelegramHandler:
             )
             return
 
+        eff_date, source, _, _ = await self.service.get_donor_last_donation_info(user_id)
+        if eff_date:
+            last_don_str = f"{eff_date.strftime('%d-%m-%Y')} ({'Hospital-Verified' if source == 'HOSPITAL_VERIFIED' else 'Self-Reported'})"
+        elif source == "NEVER_DONATED":
+            last_don_str = "Never donated (Confirmed)"
+        else:
+            last_don_str = "Not recorded / Unknown"
+
         toggle_btn = "🔴 Mark as Temporarily Unavailable" if donor.is_available else "🟢 Mark as Available for Matching"
         curr_status = "Available for emergency matching" if donor.is_available else "Temporarily Unavailable"
 
         kb = {
             "inline_keyboard": [
+                [{"text": "🩸 Update Last Donation Date", "callback_data": "donor_up:update_last_donation"}],
                 [{"text": toggle_btn, "callback_data": "donor_up:toggle_avail"}],
                 [{"text": "📍 Update Home District", "callback_data": "donor_up:change_district"}],
                 [{"text": "🚫 Revoke GPS Location Consent", "callback_data": "donor_up:revoke_gps"}],
@@ -503,10 +529,177 @@ class TelegramHandler:
         text = (
             "✏️ <b>Update Voluntary Donor Details</b>\n\n"
             f"• <b>Current Status:</b> {curr_status}\n"
-            f"• <b>Current District:</b> {donor.district}\n\n"
+            f"• <b>Current District:</b> {donor.district}\n"
+            f"• <b>Last Donation Date:</b> {last_don_str}\n\n"
             "Choose a setting to update safely:"
         )
         await self.client.send_message(chat_id=chat_id, text=text, reply_markup=kb)
+
+    async def start_update_last_donation_flow(self, chat_id: int, user_id: int) -> None:
+        """Entry point for authenticated donors to view and update their last donation date."""
+        donor = await self.service.get_donor_by_telegram_user_id(user_id)
+        if not donor:
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="⚠️ <b>Unauthorized:</b> You must be a registered voluntary donor to update donation dates.\nPlease register from the main menu.",
+                reply_markup=self.build_main_menu_keyboard(is_donor=False),
+            )
+            return
+
+        eff_date, source, verified_date, self_date = await self.service.get_donor_last_donation_info(user_id)
+        if eff_date:
+            date_str = f"{eff_date.strftime('%d-%m-%Y')} ({'Hospital-Verified' if source == 'HOSPITAL_VERIFIED' else 'Self-Reported'})"
+        elif source == "NEVER_DONATED":
+            date_str = "Never donated (Confirmed)"
+        else:
+            date_str = "Not recorded / Unknown"
+
+        text = (
+            "🩸 <b>Update Last Blood Donation Date</b>\n\n"
+            f"• <b>Currently Recorded:</b> <b>{date_str}</b>\n\n"
+            "Have you donated blood recently?\n\n"
+            f"• If you have donated blood, entering the date helps our emergency matching system respect your required rest period ({settings.WHOLE_BLOOD_COOLDOWN_DAYS} days for whole blood).\n"
+            "• If you have never donated blood before, select <i>Never Donated</i> to record your history as a first-time donor.\n\n"
+            "Please choose an option below:"
+        )
+        kb = {
+            "inline_keyboard": [
+                [{"text": "📅 Enter Donation Date", "callback_data": "donor_date:enter"}],
+                [{"text": "🌱 I Have Never Donated Blood", "callback_data": "donor_date:never"}],
+                [{"text": "🔙 Back to Update Menu", "callback_data": "menu:update_donor_details"}],
+                [{"text": "❌ Cancel", "callback_data": "donor_date:cancel"}],
+            ]
+        }
+        await self.client.send_message(chat_id=chat_id, text=text, reply_markup=kb)
+
+    async def handle_donor_update_step(
+        self,
+        conv: TelegramConversation,
+        message: TelegramMessage,
+        chat_id: int,
+        user_id: int,
+    ) -> None:
+        """Handles conversational text input for donor profile updates."""
+        donor = await self.service.get_donor_by_telegram_user_id(user_id)
+        if not donor:
+            await self.service.reset_conversation(user_id)
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="⚠️ <b>Unauthorized:</b> No registered donor profile was found for this Telegram account.",
+                reply_markup=self.build_main_menu_keyboard(is_donor=False),
+            )
+            return
+
+        text = (message.text or "").strip()
+
+        if conv.current_step == "DONOR_UPDATE_LAST_DONATION_DATE":
+            # Attempt to parse DD-MM-YYYY (or with / or .)
+            parsed_date: Optional[date] = None
+            clean_date_str = re.sub(r"[/.]", "-", text)
+            parts = clean_date_str.split("-")
+            if len(parts) == 3:
+                try:
+                    d, m, y = int(parts[0]), int(parts[1]), int(parts[2])
+                    parsed_date = date(y, m, d)
+                except (ValueError, TypeError):
+                    parsed_date = None
+
+            if not parsed_date:
+                err_text = (
+                    "❌ <b>Invalid Date Format or Calendar Date:</b>\n\n"
+                    "Please enter a valid past calendar date in the format <b>DD-MM-YYYY</b>.\n"
+                    "<i>Example:</i> <code>15-08-2026</code>"
+                )
+                kb = {
+                    "inline_keyboard": [
+                        [{"text": "🔙 Back", "callback_data": "donor_up:update_last_donation"}],
+                        [{"text": "❌ Cancel", "callback_data": "donor_date:cancel"}],
+                    ]
+                }
+                await self.client.send_message(chat_id=chat_id, text=err_text, reply_markup=kb)
+                return
+
+            today = date.today()
+            if parsed_date > today:
+                err_text = (
+                    "❌ <b>Future Date Not Permitted:</b>\n\n"
+                    "A blood donation date cannot be in the future. Please enter a date on or before today.\n"
+                    "<i>Format:</i> <b>DD-MM-YYYY</b>"
+                )
+                kb = {
+                    "inline_keyboard": [
+                        [{"text": "🔙 Back", "callback_data": "donor_up:update_last_donation"}],
+                        [{"text": "❌ Cancel", "callback_data": "donor_date:cancel"}],
+                    ]
+                }
+                await self.client.send_message(chat_id=chat_id, text=err_text, reply_markup=kb)
+                return
+
+            if parsed_date < today - timedelta(days=365 * 50):
+                err_text = (
+                    "❌ <b>Date Outside Supported Range:</b>\n\n"
+                    "The donation date entered is more than 50 years in the past. Please enter a valid recent date.\n"
+                    "<i>Format:</i> <b>DD-MM-YYYY</b>"
+                )
+                kb = {
+                    "inline_keyboard": [
+                        [{"text": "🔙 Back", "callback_data": "donor_up:update_last_donation"}],
+                        [{"text": "❌ Cancel", "callback_data": "donor_date:cancel"}],
+                    ]
+                }
+                await self.client.send_message(chat_id=chat_id, text=err_text, reply_markup=kb)
+                return
+
+            # Compute cooldown preview
+            cooldown = calculate_cooldown_eligibility(parsed_date, "Whole Blood", reference_date=today)
+            if cooldown.is_eligible:
+                cooldown_status = f"🟢 <b>Eligible now</b> ({cooldown.days_since_last_donation} days since donation)"
+            else:
+                cooldown_status = f"🟡 <b>On Rest Cooldown</b> until <b>{cooldown.eligible_from.strftime('%d-%m-%Y')}</b> ({cooldown.days_remaining} days remaining)"
+
+            # Update conversation step to confirmation
+            conv.current_step = "DONOR_CONFIRM_LAST_DONATION_DATE"
+            conv.state_data = {
+                "pending_date": parsed_date.isoformat(),
+                "action": "SET_DATE",
+                "source": "SELF_REPORTED",
+                "donor_updated_at": donor.last_donation_date_updated_at.isoformat() if donor.last_donation_date_updated_at else None,
+            }
+            await self.session.commit()
+
+            confirm_text = (
+                "📋 <b>Confirm Last Blood Donation Date</b>\n\n"
+                f"• <b>Entered Date:</b> <b>{parsed_date.strftime('%d-%m-%Y')}</b>\n"
+                f"• <b>Rest Period (Whole Blood):</b> {settings.WHOLE_BLOOD_COOLDOWN_DAYS} days\n"
+                f"• <b>Cooldown Status:</b> {cooldown_status}\n"
+                "• <b>Provenance:</b> Voluntary Donor Self-Reported\n\n"
+                "<i>Note: Your emergency matching availability status (is_available) will remain unchanged.</i>\n\n"
+                "Save this donation date to your profile?"
+            )
+            kb = {
+                "inline_keyboard": [
+                    [{"text": "✅ Confirm & Save", "callback_data": "donor_date:confirm_save"}],
+                    [{"text": "✏️ Change Date", "callback_data": "donor_date:enter"}],
+                    [{"text": "❌ Cancel", "callback_data": "donor_date:cancel"}],
+                ]
+            }
+            await self.client.send_message(chat_id=chat_id, text=confirm_text, reply_markup=kb)
+            return
+
+        elif conv.current_step == "DONOR_CONFIRM_LAST_DONATION_DATE":
+            # If user sent text instead of tapping button, remind them
+            remind_text = (
+                "ℹ️ Please confirm your donation date using the buttons below, or click Change Date / Cancel:"
+            )
+            kb = {
+                "inline_keyboard": [
+                    [{"text": "✅ Confirm & Save", "callback_data": "donor_date:confirm_save"}],
+                    [{"text": "✏️ Change Date", "callback_data": "donor_date:enter"}],
+                    [{"text": "❌ Cancel", "callback_data": "donor_date:cancel"}],
+                ]
+            }
+            await self.client.send_message(chat_id=chat_id, text=remind_text, reply_markup=kb)
+            return
 
     async def cmd_revokelocation(self, chat_id: int, user_id: int) -> None:
         """Allows voluntary donors to revoke GPS location consent at any time."""
@@ -677,7 +870,191 @@ class TelegramHandler:
             return
 
         # 4a. Registered Donor Profile Management Actions
-        if data_str == "donor_up:toggle_avail":
+        if data_str == "donor_up:update_last_donation":
+            await self.start_update_last_donation_flow(chat_id, user_id)
+            return
+        elif data_str == "donor_date:enter":
+            donor = await self.service.get_donor_by_telegram_user_id(user_id)
+            if not donor:
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="⚠️ <b>Unauthorized:</b> You must be a registered voluntary donor to update your donation date.",
+                    reply_markup=self.build_main_menu_keyboard(is_donor=False),
+                )
+                return
+            await self.service.get_or_create_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="DONOR_UPDATE_LAST_DONATION_DATE",
+                data={},
+            )
+            enter_text = (
+                "📅 <b>Please enter your last blood donation date:</b>\n\n"
+                "Format: <b>DD-MM-YYYY</b> (for example, <code>15-08-2026</code>)\n\n"
+                "<i>Note: The date must be a past date within the last 50 years.</i>"
+            )
+            kb = {
+                "inline_keyboard": [
+                    [{"text": "🔙 Back", "callback_data": "donor_up:update_last_donation"}],
+                    [{"text": "❌ Cancel", "callback_data": "donor_date:cancel"}],
+                ]
+            }
+            await self.client.send_message(chat_id=chat_id, text=enter_text, reply_markup=kb)
+            return
+        elif data_str == "donor_date:never":
+            donor = await self.service.get_donor_by_telegram_user_id(user_id)
+            if not donor:
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="⚠️ <b>Unauthorized:</b> You must be a registered voluntary donor.",
+                    reply_markup=self.build_main_menu_keyboard(is_donor=False),
+                )
+                return
+
+            _, _, verified_date, _ = await self.service.get_donor_last_donation_info(user_id)
+            if verified_date:
+                v_text = (
+                    "ℹ️ <b>Hospital-Verified Record On File:</b>\n\n"
+                    f"A hospital-verified donation from <b>{verified_date.strftime('%d-%m-%Y')}</b> is linked to your donor profile. "
+                    "Clinical records cannot be cleared by self-reporting."
+                )
+                kb = {
+                    "inline_keyboard": [
+                        [{"text": "🔙 Back", "callback_data": "donor_up:update_last_donation"}],
+                        [{"text": "🏠 Main Menu", "callback_data": "menu:home"}],
+                    ]
+                }
+                await self.client.send_message(chat_id=chat_id, text=v_text, reply_markup=kb)
+                return
+
+            # Show confirmation for Never Donated
+            await self.service.get_or_create_conversation(
+                telegram_user_id=user_id,
+                chat_id=chat_id,
+                step="DONOR_CONFIRM_LAST_DONATION_DATE",
+                data={
+                    "pending_date": None,
+                    "action": "CLEAR_DATE",
+                    "source": "NEVER_DONATED",
+                    "donor_updated_at": donor.last_donation_date_updated_at.isoformat() if donor.last_donation_date_updated_at else None,
+                },
+            )
+            never_text = (
+                "📋 <b>Confirm: Never Donated Blood</b>\n\n"
+                "• <b>Status:</b> Confirmed Never Donated (First-time donor)\n"
+                f"• <b>Cooldown Policy:</b> No required rest cooldown ({settings.WHOLE_BLOOD_COOLDOWN_DAYS} days whole blood cooldown does not apply).\n"
+                "• <b>Clinical Note:</b> Standard health screening by medical staff is still required prior to any physical donation.\n\n"
+                "Would you like to confirm that you have never donated blood?"
+            )
+            kb = {
+                "inline_keyboard": [
+                    [{"text": "✅ Confirm & Save", "callback_data": "donor_date:confirm_save"}],
+                    [{"text": "🔙 Back", "callback_data": "donor_up:update_last_donation"}],
+                    [{"text": "❌ Cancel", "callback_data": "donor_date:cancel"}],
+                ]
+            }
+            await self.client.send_message(chat_id=chat_id, text=never_text, reply_markup=kb)
+            return
+        elif data_str == "donor_date:confirm_save":
+            donor = await self.service.get_donor_by_telegram_user_id(user_id)
+            if not donor:
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="⚠️ <b>Unauthorized:</b> You must be a registered voluntary donor.",
+                    reply_markup=self.build_main_menu_keyboard(is_donor=False),
+                )
+                return
+
+            conv = await self.service.get_conversation(user_id)
+            if not conv or conv.current_step != "DONOR_CONFIRM_LAST_DONATION_DATE":
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="⚠️ This confirmation request has expired or was already processed. Please use the menu below:",
+                    reply_markup=self.build_main_menu_keyboard(is_donor=True),
+                )
+                return
+
+            # Check expiration (2 hours TTL)
+            if conv.updated_at:
+                now_utc = datetime.now(timezone.utc)
+                conv_time = conv.updated_at if conv.updated_at.tzinfo else conv.updated_at.replace(tzinfo=timezone.utc)
+                if (now_utc - conv_time).total_seconds() > 7200:
+                    await self.service.reset_conversation(user_id)
+                    await self.client.send_message(
+                        chat_id=chat_id,
+                        text="⚠️ This confirmation session has expired. Please start again from the menu below:",
+                        reply_markup=self.build_main_menu_keyboard(is_donor=True),
+                    )
+                    return
+
+            # Prevent stale callbacks from overwriting newer updates
+            expected_updated_at = conv.state_data.get("donor_updated_at")
+            donor_updated_dt = getattr(donor, "last_donation_date_updated_at", None)
+            current_updated_at = donor_updated_dt.isoformat() if isinstance(donor_updated_dt, datetime) else None
+            if expected_updated_at and current_updated_at and expected_updated_at != current_updated_at:
+                await self.service.reset_conversation(user_id)
+                await self.client.send_message(
+                    chat_id=chat_id,
+                    text="⚠️ A newer update to your donation record was made while this confirmation was pending. This older request has been discarded.",
+                    reply_markup=self.build_main_menu_keyboard(is_donor=True),
+                )
+                return
+
+            pending_date_str = conv.state_data.get("pending_date")
+            target_date: Optional[date] = None
+            if pending_date_str:
+                try:
+                    target_date = date.fromisoformat(pending_date_str)
+                except (ValueError, TypeError):
+                    target_date = None
+
+            save_source = conv.state_data.get("source", "SELF_REPORTED") if target_date is None else "SELF_REPORTED"
+
+            # Reset conversation immediately to prevent repeated/concurrent execution
+            await self.service.reset_conversation(user_id)
+
+            success, msg, updated_donor = await self.service.update_donor_last_donation_date(
+                telegram_user_id=user_id,
+                new_date=target_date,
+                source=save_source,
+            )
+
+            if success and updated_donor:
+                if target_date:
+                    date_display = target_date.strftime("%d-%m-%Y")
+                    rec_type = "Voluntary Donor Self-Reported"
+                elif save_source == "NEVER_DONATED":
+                    date_display = "Never Donated (Confirmed)"
+                    rec_type = "Voluntary Donor Self-Reported (First-time donor)"
+                else:
+                    date_display = "Donation history unknown / not recorded"
+                    rec_type = "Unrecorded"
+
+                reply = (
+                    "✅ <b>Last Blood Donation Date Updated Successfully!</b>\n\n"
+                    f"• <b>Recorded Status:</b> <b>{date_display}</b>\n"
+                    f"• <b>Record Type:</b> {rec_type}\n"
+                    f"• <b>Availability Status:</b> Unchanged ({'Available' if updated_donor.is_available else 'Unavailable'})\n\n"
+                    f"{msg}"
+                )
+            else:
+                reply = f"❌ <b>Could Not Update Date:</b>\n\n{msg}"
+
+            await self.client.send_message(
+                chat_id=chat_id,
+                text=reply,
+                reply_markup=self.build_main_menu_keyboard(is_donor=True),
+            )
+            return
+        elif data_str == "donor_date:cancel":
+            await self.service.reset_conversation(user_id)
+            await self.client.send_message(
+                chat_id=chat_id,
+                text="❌ Last donation date update was cancelled. Your profile remains unchanged.",
+                reply_markup=self.build_main_menu_keyboard(is_donor=True),
+            )
+            return
+        elif data_str == "donor_up:toggle_avail":
             success, msg, new_avail = await self.service.toggle_donor_availability(user_id)
             await self.client.send_message(
                 chat_id=chat_id,

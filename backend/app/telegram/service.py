@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 import hashlib
 import logging
 import secrets
@@ -646,5 +646,84 @@ class TelegramService:
         donor.district = new_district.strip()
         await self.session.commit()
         return True, f"Your home district has been updated to <b>{donor.district}</b>."
+
+    async def get_donor_last_donation_info(
+        self, telegram_user_id: int
+    ) -> Tuple[Optional[date], Optional[str], Optional[date], Optional[date]]:
+        """
+        Returns (effective_date, effective_source, verified_date, self_reported_date)
+        for the voluntary donor linked to this Telegram user.
+        """
+        donor = await self.get_donor_by_telegram_user_id(telegram_user_id)
+        if not donor:
+            return None, None, None, None
+
+        donor_repo = DonorRepository(self.session)
+        verified_date = await donor_repo.get_latest_donation_date(donor.id)
+        self_date = donor.last_donation_date
+        eff_date, source = await donor_repo.get_effective_last_donation_date(donor)
+        return eff_date, source, verified_date, self_date
+
+    async def update_donor_last_donation_date(
+        self,
+        telegram_user_id: int,
+        new_date: Optional[date],
+        source: Optional[str] = "SELF_REPORTED",
+    ) -> Tuple[bool, str, Optional[Donor]]:
+        """
+        Transactionally updates the self-reported last blood donation date for the authenticated donor.
+        - Resolves donor solely by telegram_user_id (no external ID spoofing).
+        - Preserves existing hospital-verified donation ledger in donations table.
+        - Tracks provenance: 'SELF_REPORTED' or 'NEVER_DONATED'.
+        - Strictly leaves donor.is_available unchanged.
+        """
+        donor = await self.get_donor_by_telegram_user_id(telegram_user_id)
+        if not donor:
+            return False, "Unauthorized: No active voluntary donor registration is linked to this Telegram account.", None
+
+        donor_repo = DonorRepository(self.session)
+        verified_date = await donor_repo.get_latest_donation_date(donor.id)
+
+        # 1. Clearing date / "Never Donated"
+        if new_date is None:
+            effective_source = source if source in ("NEVER_DONATED", "SELF_REPORTED") else None
+            donor.last_donation_date = None
+            donor.last_donation_date_source = effective_source
+            donor.last_donation_date_updated_at = datetime.now(timezone.utc)
+            # donor.is_available is deliberately untouched
+            await self.session.commit()
+
+            if verified_date:
+                return (
+                    True,
+                    f"Self-reported status noted, but hospital-verified donation on {verified_date.strftime('%d-%m-%Y')} remains authoritative on record.",
+                    donor,
+                )
+            if effective_source == "NEVER_DONATED":
+                return True, "Your status has been recorded as: Confirmed Never Donated.", donor
+            return True, "Your last donation date has been reset to: Donation history unknown / not recorded.", donor
+
+        # 2. Date validation
+        today = date.today()
+        if new_date > today:
+            return False, "Donation date cannot be in the future.", None
+        if new_date < today - timedelta(days=365 * 50):
+            return False, "Donation date cannot be more than 50 years in the past.", None
+
+        # 3. Update self-reported fields on Donor (preserves verified ledger unchanged)
+        donor.last_donation_date = new_date
+        donor.last_donation_date_source = "SELF_REPORTED"
+        donor.last_donation_date_updated_at = datetime.now(timezone.utc)
+        # donor.is_available is deliberately untouched
+        await self.session.commit()
+
+        if verified_date and isinstance(verified_date, date) and verified_date > new_date:
+            return (
+                True,
+                f"Date recorded as self-reported ({new_date.strftime('%d-%m-%Y')}). Note: Hospital-verified donation from {verified_date.strftime('%d-%m-%Y')} is more recent and will govern cooldown.",
+                donor,
+            )
+
+        return True, f"Last donation date successfully updated to {new_date.strftime('%d-%m-%Y')} (Self-Reported).", donor
 
 

@@ -39,6 +39,31 @@ class DonorRepository(BaseRepository[Donor]):
         )
         return (await self.session.execute(stmt)).scalar_one_or_none()
 
+    async def get_effective_last_donation_date(
+        self, donor: Donor
+    ) -> Tuple[Optional[date], Optional[str]]:
+        """
+        Determines the authoritative effective last donation date and provenance.
+        - If a hospital-verified donation exists in the ledger, it is evaluated against self-reported date.
+        - The more recent date governs cooldown.
+        - Provenance distinguishes 'HOSPITAL_VERIFIED' vs 'SELF_REPORTED'.
+        """
+        verified_date = await self.get_latest_donation_date(donor.id)
+        self_date = donor.last_donation_date
+
+        if verified_date and self_date:
+            if verified_date >= self_date:
+                return verified_date, "HOSPITAL_VERIFIED"
+            else:
+                return self_date, donor.last_donation_date_source or "SELF_REPORTED"
+        elif verified_date:
+            return verified_date, "HOSPITAL_VERIFIED"
+        elif self_date:
+            return self_date, donor.last_donation_date_source or "SELF_REPORTED"
+        elif getattr(donor, "last_donation_date_source", None) == "NEVER_DONATED":
+            return None, "NEVER_DONATED"
+        return None, None
+
     async def list_donors(
         self, query: DonorListQuery, include_inactive: bool = False
     ) -> Tuple[List[Donor], Dict[int, Optional[date]], int]:
